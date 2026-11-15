@@ -1,6 +1,7 @@
 #!/bin/sh
 # game-factory CLI.  usage:
 #   bin/factory new <dir> "<Game Title>"   scaffold a new Godot game repo with tooling, swarm tracker and templates
+#   bin/factory new <dir> "<Game Title>" --web   scaffold a zero-dependency browser (Canvas/ES-module) game with serve/shot tools + tracker
 #   bin/factory sync <dir>                 refresh tools/ and swarm/ in an existing game repo from this factory
 set -eu
 FACT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -12,8 +13,19 @@ sync_tools() { # $1 = target dir
 }
 case "$cmd" in
   new)
-    D="${2:?usage: factory new <dir> \"<Title>\"}"; NAME="${3:-My Game}"
+    D="${2:?usage: factory new <dir> \"<Title>\" [--web]}"; NAME="${3:-My Game}"
     [ -e "$D" ] && { echo "$D exists" >&2; exit 1; }
+    if [ "${4:-}" = "--web" ]; then
+      mkdir -p "$D/src" "$D/test" "$D/docs/swarm" "$D/tools"
+      sync_tools "$D"; (cd "$D/tools" && rm -f *.sh fetch_assets.mjs); cp "$FACT"/tools/web/*.mjs "$D/tools/"
+      for f in index.html style.css src/main.js; do sed "s#__NAME__#$NAME#g" "$FACT/templates/web-project/$f" > "$D/$f"; done
+      cp "$FACT/templates/web-project/package.json" "$D/package.json"; cp "$FACT"/templates/web-project/test/* "$D/test/"
+      cp "$FACT/swarm/templates/SWARM.md" "$D/docs/swarm/SWARM.md"; cp "$FACT/swarm/templates/CHECKPOINT.md" "$D/docs/CHECKPOINT.md"
+      cp "$FACT/swarm/templates/LEARNINGS.md" "$D/docs/LEARNINGS.md"; cp "$FACT/swarm/PLAYBOOK.md" "$D/docs/PLAYBOOK.md"
+      printf '.tracker/\nout/\ndist/\n*.log\nnode_modules/\ndocs/CHECKPOINT.md\ndocs/swarm/prompts/\ndocs/swarm/progress/\n' > "$D/.gitignore"
+      printf '# %s\n\nScaffolded by `game-factory new --web`. `npm start` serves the game (port 4781); `npm run plan` then `npm run tracker` opens the swarm tracker (port 4780).\n' "$NAME" > "$D/README.md"
+      (cd "$D" && git init -q -b main); echo "created web game $D"; exit 0
+    fi
     mkdir -p "$D/game/autoload" "$D/game/tests" "$D/docs/swarm" "$D/assets-src"
     sync_tools "$D"
     cp "$FACT"/templates/godot-project/autoload/*.gd "$D/game/autoload/"
