@@ -1,0 +1,81 @@
+[gd_scene load_steps=2 format=3 uid="uid://b7factoryshot01"]
+
+[sub_resource type="GDScript" id="GDScript_shot"]
+script/source = "extends Node
+## Screenshot harness used by tools/shot.sh (owner: godot-core).
+## User args (after `--`): --target=<res://scene.tscn | level-id> --out=<abs.png>
+##   [--cam=x,y,z,yaw,pitch] (metres, degrees; yaw 0 looks -Z) [--frames=N] [--fov=deg]
+## Loads the target, optionally places a camera, waits N rendered frames (SDFGI/fog/TAA settle),
+## then saves the viewport to PNG and quits with 0 (or 1 on failure).
+
+var _args: Dictionary = {}
+var _cam: Camera3D = null
+
+
+func _ready() -> void:
+	for a: String in OS.get_cmdline_user_args():
+		if a.begins_with(\"--\") and \"=\" in a:
+			var kv: PackedStringArray = a.substr(2).split(\"=\", true, 1)
+			_args[kv[0]] = kv[1]
+	var target: String = String(_args.get(\"target\", \"\"))
+	var out: String = String(_args.get(\"out\", \"\"))
+	if target == \"\" or out == \"\":
+		_fail(\"usage: --target=<scene|level-id> --out=<png>\")
+		return
+	if target.ends_with(\".tscn\") or target.ends_with(\".scn\"):
+		if not target.begins_with(\"res://\"):
+			target = \"res://\" + target.trim_prefix(\"game/\")
+		var ps: PackedScene = load(target) as PackedScene
+		if ps == null:
+			_fail(\"cannot load scene \" + target)
+			return
+		add_child(ps.instantiate())
+	else:
+		if Defs.level_index(target) < 0:
+			_fail(\"unknown level id \" + target)
+			return
+		Game.set_level_parent(self)
+		Game.new_game(target)
+	if _args.has(\"cam\"):
+		_place_camera(String(_args[\"cam\"]))
+	var frames: int = int(_args.get(\"frames\", \"90\"))
+	for i: int in frames:
+		if _cam != null:
+			_cam.make_current()
+		await RenderingServer.frame_post_draw
+	var img: Image = get_viewport().get_texture().get_image()
+	if img == null or img.is_empty():
+		_fail(\"empty viewport image\")
+		return
+	var err: Error = img.save_png(out)
+	if err != OK:
+		_fail(\"save_png failed: %d\" % err)
+		return
+	print(\"SHOT_OK %s %dx%d\" % [out, img.get_width(), img.get_height()])
+	get_tree().quit(0)
+
+
+func _place_camera(spec: String) -> void:
+	var p: PackedFloat64Array = []
+	for s: String in spec.split(\",\"):
+		p.append(float(s))
+	while p.size() < 5:
+		p.append(0.0)
+	var cam: Camera3D = Camera3D.new()
+	cam.name = \"ShotCamera\"
+	cam.fov = float(_args.get(\"fov\", \"70\"))
+	cam.far = 500.0
+	add_child(cam)
+	cam.global_position = Vector3(p[0], p[1], p[2])
+	cam.rotation = Vector3(deg_to_rad(p[4]), deg_to_rad(p[3]), 0.0)
+	cam.make_current()
+	_cam = cam
+
+
+func _fail(msg: String) -> void:
+	printerr(\"SHOT_FAIL \" + msg)
+	get_tree().quit(1)
+"
+
+[node name="Shot" type="Node"]
+script = SubResource("GDScript_shot")

@@ -1,0 +1,276 @@
+{
+ "version": 1,
+ "note": "Edit and re-run: node tools/fetch_assets.mjs. 2K max; Poly Haven and ambientCG are CC0.",
+ "assets": [
+  {
+   "id": "brick_wall_001",
+   "source": "polyhaven",
+   "assetId": "brick_wall_001",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "cellar brick"
+  },
+  {
+   "id": "brick_moss_001",
+   "source": "polyhaven",
+   "assetId": "brick_moss_001",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "cellar brick, mossy"
+  },
+  {
+   "id": "mossy_stone_wall",
+   "source": "polyhaven",
+   "assetId": "mossy_stone_wall",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "mossy stone"
+  },
+  {
+   "id": "old_wooden_floor_01",
+   "source": "polyhaven",
+   "assetId": "old_wooden_floor_01",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "old floor boards"
+  },
+  {
+   "id": "dark_wooden_planks",
+   "source": "polyhaven",
+   "assetId": "dark_wooden_planks",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "old wood planks"
+  },
+  {
+   "id": "herringbone_parquet",
+   "source": "polyhaven",
+   "assetId": "herringbone_parquet",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "parquet"
+  },
+  {
+   "id": "marble_tiles",
+   "source": "polyhaven",
+   "assetId": "marble_tiles",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "checker/polished marble tiles"
+  },
+  {
+   "id": "marble_01",
+   "source": "polyhaven",
+   "assetId": "marble_01",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "polished marble"
+  },
+  {
+   "id": "metal_plate",
+   "source": "polyhaven",
+   "assetId": "metal_plate",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "metal plate"
+  },
+  {
+   "id": "rusty_metal_02",
+   "source": "polyhaven",
+   "assetId": "rusty_metal_02",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "rusted steel"
+  },
+  {
+   "id": "metal_grate_rusty",
+   "source": "polyhaven",
+   "assetId": "metal_grate_rusty",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "grating"
+  },
+  {
+   "id": "concrete_floor_01",
+   "source": "polyhaven",
+   "assetId": "concrete_floor_01",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "concrete"
+  },
+  {
+   "id": "painted_plaster_wall",
+   "source": "polyhaven",
+   "assetId": "painted_plaster_wall",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "plaster, paint wear"
+  },
+  {
+   "id": "damaged_plaster",
+   "source": "polyhaven",
+   "assetId": "damaged_plaster",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "plaster, damaged"
+  },
+  {
+   "id": "denim_fabric",
+   "source": "polyhaven",
+   "assetId": "denim_fabric",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "cloth/canvas uniform"
+  },
+  {
+   "id": "fabric_wool",
+   "source": "ambientcg",
+   "assetId": "Fabric019",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "wool/cloth uniform"
+  },
+  {
+   "id": "brown_leather",
+   "source": "polyhaven",
+   "assetId": "brown_leather",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "leather"
+  },
+  {
+   "id": "rug_fabric",
+   "source": "ambientcg",
+   "assetId": "Carpet016",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "fabric rug"
+  },
+  {
+   "id": "checkered_pavement_tiles",
+   "source": "polyhaven",
+   "assetId": "checkered_pavement_tiles",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "tile, checker"
+  },
+  {
+   "id": "floor_tiles_02",
+   "source": "polyhaven",
+   "assetId": "floor_tiles_02",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "tile"
+  },
+  {
+   "id": "cobblestone_floor_01",
+   "source": "polyhaven",
+   "assetId": "cobblestone_floor_01",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "wet cobble/sewer"
+  },
+  {
+   "id": "mossy_cobblestone",
+   "source": "polyhaven",
+   "assetId": "mossy_cobblestone",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "mossy cobble/sewer"
+  },
+  {
+   "id": "dirt_floor",
+   "source": "polyhaven",
+   "assetId": "dirt_floor",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "dirt"
+  },
+  {
+   "id": "gold",
+   "source": "ambientcg",
+   "assetId": "Metal048A",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "gold/brass"
+  },
+  {
+   "id": "brass",
+   "source": "ambientcg",
+   "assetId": "Metal042A",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "brass/gold alt"
+  },
+  {
+   "id": "leather_white",
+   "source": "polyhaven",
+   "assetId": "leather_white",
+   "kind": "texture",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "waxy rind-like reference for cheese"
+  },
+  {
+   "id": "bloem_hill_01",
+   "source": "polyhaven",
+   "assetId": "bloem_hill_01",
+   "kind": "hdri",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "overcast sky"
+  },
+  {
+   "id": "dikhololo_night",
+   "source": "polyhaven",
+   "assetId": "dikhololo_night",
+   "kind": "hdri",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "night/moon"
+  },
+  {
+   "id": "comfy_cafe",
+   "source": "polyhaven",
+   "assetId": "comfy_cafe",
+   "kind": "hdri",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "warm interior"
+  },
+  {
+   "id": "aarfontein_dusk",
+   "source": "polyhaven",
+   "assetId": "aarfontein_dusk",
+   "kind": "hdri",
+   "license": "CC0-1.0",
+   "maxRes": "2k",
+   "use": "dusk"
+  }
+ ]
+}

@@ -1,0 +1,33 @@
+#!/bin/sh
+# game-factory CLI.  usage:
+#   bin/factory new <dir> "<Game Title>"   scaffold a new Godot game repo with tooling, swarm tracker and templates
+#   bin/factory sync <dir>                 refresh tools/ and swarm/ in an existing game repo from this factory
+set -eu
+FACT="$(cd "$(dirname "$0")/.." && pwd)"
+cmd="${1:-}"
+sync_tools() { # $1 = target dir
+  mkdir -p "$1/tools" "$1/tools/swarm-tracker"
+  cp "$FACT"/tools/*.sh "$FACT"/tools/*.mjs "$1/tools/"
+  cp -r "$FACT"/swarm/bin "$FACT"/swarm/dashboard "$1/tools/swarm-tracker/"
+}
+case "$cmd" in
+  new)
+    D="${2:?usage: factory new <dir> \"<Title>\"}"; NAME="${3:-My Game}"
+    [ -e "$D" ] && { echo "$D exists" >&2; exit 1; }
+    mkdir -p "$D/game/autoload" "$D/game/tests" "$D/docs/swarm" "$D/assets-src"
+    sync_tools "$D"
+    cp "$FACT"/templates/godot-project/autoload/*.gd "$D/game/autoload/"
+    cp "$FACT"/templates/godot-project/tests/* "$D/game/tests/"
+    sed "s#__NAME__#$NAME#" "$FACT/templates/godot-project/project.godot.tmpl" > "$D/game/project.godot"
+    cp "$FACT/swarm/templates/SWARM.md" "$D/docs/swarm/SWARM.md"
+    cp "$FACT/swarm/templates/CHECKPOINT.md" "$D/docs/CHECKPOINT.md"
+    cp "$FACT/swarm/templates/LEARNINGS.md" "$D/docs/LEARNINGS.md"
+    cp "$FACT/swarm/PLAYBOOK.md" "$D/docs/PLAYBOOK.md"
+    printf '.tools/\n.tracker/\n.godot/\nbuild/\ndist/\nout/\nassets-cache/\n*.log\nnode_modules/\ndocs/CHECKPOINT.md\ndocs/swarm/prompts/\ndocs/swarm/progress/\n' > "$D/.gitignore"
+    printf '# %s\n\nScaffolded by game-factory. Next: tools/install_godot.sh, write ARCHITECTURE.md (the contract), edit docs/swarm/SWARM.md, then\n`TRACKER_ROOT=$PWD node tools/swarm-tracker/bin/swarm-plan.mjs` and `TRACKER_ROOT=$PWD TRACKER_PORT=4790 node tools/swarm-tracker/dashboard/server.mjs`.\n' "$NAME" > "$D/README.md"
+    (cd "$D" && git init -q -b main)
+    echo "created $D  (run: cd $D && tools/install_godot.sh)";;
+  sync)
+    D="${2:?usage: factory sync <dir>}"; sync_tools "$D"; echo "synced tools into $D";;
+  *) sed -n '2,5p' "$0"; exit 2;;
+esac

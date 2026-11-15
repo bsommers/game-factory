@@ -1,0 +1,210 @@
+; Engine configuration file. Owner: godot-core (see ARCHITECTURE.md sections 2-5).
+config_version=5
+
+[application]
+
+config/name="__NAME__"
+config/description="Third-person tactical shooter. Cats vs. Das Rattenreich."
+config/version="0.1.0"
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.7", "Forward Plus")
+run/max_fps=0
+
+[autoload]
+
+Defs="*res://autoload/defs.gd"
+Events="*res://autoload/events.gd"
+Settings="*res://autoload/settings.gd"
+Game="*res://autoload/game.gd"
+
+[debug]
+
+gdscript/warnings/untyped_declaration=1
+gdscript/warnings/inferred_declaration=0
+
+[display]
+
+window/size/viewport_width=1920
+window/size/viewport_height=1080
+window/size/resizable=true
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/vsync/vsync_mode=1
+
+[gui]
+
+common/snap_controls_to_pixels=true
+
+[input]
+
+move_forward={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"device":-1,"physical_keycode":87,"keycode":0,"unicode":0,"pressed":false,"echo":false),
+Object(InputEventKey,"device":-1,"physical_keycode":4194320,"keycode":0,"unicode":0,"pressed":false,"echo":false),
+Object(InputEventJoypadMotion,"device":-1,"axis":1,"axis_value":-1)]
+}
+move_back={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"device":-1,"physical_keycode":83,"keycode":0,"unicode":0,"pressed":false,"echo":false),
+Object(InputEventKey,"device":-1,"physical_keycode":4194322,"keycode":0,"unicode":0,"pressed":false,"echo":false),
+Object(InputEventJoypadMotion,"device":-1,"axis":1,"axis_value":1)]
+}
+move_left={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"device":-1,"physical_keycode":65,"keycode":0,"unicode":0,"pressed":false,"echo":false),
+Object(InputEventKey,"device":-1,"physical_keycode":4194319,"keycode":0,"unicode":0,"pressed":false,"echo":false),
+Object(InputEventJoypadMotion,"device":-1,"axis":0,"axis_value":-1)]
+}
+move_right={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"device":-1,"physical_keycode":68,"keycode":0,"unicode":0,"pressed":false,"echo":false),
+Object(InputEventKey,"device":-1,"physical_keycode":4194321,"keycode":0,"unicode":0,"pressed":false,"echo":false),
+Object(InputEventJoypadMotion,"device":-1,"axis":0,"axis_value":1)]
+}
+look_up={
+"deadzone": 0.2,
+"events": [Object(InputEventJoypadMotion,"device":-1,"axis":3,"axis_value":-1)]
+}
+look_down={
+"deadzone": 0.2,
+"events": [Object(InputEventJoypadMotion,"device":-1,"axis":3,"axis_value":1)]
+}
+look_left={
+"deadzone": 0.2,
+"events": [Object(InputEventJoypadMotion,"device":-1,"axis":2,"axis_value":-1)]
+}
+look_right={
+"deadzone": 0.2,
+"events": [Object(InputEventJoypadMotion,"device":-1,"axis":2,"axis_value":1)]
+}
+jump={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"device":-1,"physical_keycode":32,"keycode":0,"unicode":0,"pressed":false,"echo":false),
+Object(InputEventJoypadButton,"device":-1,"button_index":0,"pressed":false)]
+}
+crouch={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"device":-1,"physical_keycode":4194326,"keycode":0,"unicode":0,"pressed":false,"echo":false),
+Object(InputEventKey,"device":-1,"physical_keycode":67,"keycode":0,"unicode":0,"pressed":false,"echo":false),
+Object(InputEventJoypadButton,"device":-1,"button_index":8,"pressed":false)]
+}
+sprint={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"device":-1,"physical_keycode":4194325,"keycode":0,"unicode":0,"pressed":false,"echo":false),
+Object(InputEventJoypadButton,"device":-1,"button_index":7,"pressed":false)]
+}
+fire={
+"deadzone": 0.2,
+"events": [Object(InputEventMouseButton,"device":-1,"button_index":1,"pressed":false,"double_click":false),
+Object(InputEventJoypadMotion,"device":-1,"axis":5,"axis_value":1)]
+}
+aim={
+"deadzone": 0.2,
+"events": [Object(InputEventMouseButton,"device":-1,"button_index":2,"pressed":false,"double_click":false),
+Object(InputEventJoypadMotion,"device":-1,"axis":4,"axis_value":1)]
+}
+reload={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"device":-1,"physical_keycode":82,"keycode":0,"unicode":0,"pressed":false,"echo":false),
+Object(InputEventJoypadButton,"device":-1,"button_index":2,"pressed":false)]
+}
+use={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"device":-1,"physical_keycode":69,"keycode":0,"unicode":0,"pressed":false,"echo":false),
+Object(InputEventJoypadButton,"device":-1,"button_index":1,"pressed":false)]
+}
+weapon_1={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"device":-1,"physical_keycode":49,"keycode":0,"unicode":0,"pressed":false,"echo":false)]
+}
+weapon_2={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"device":-1,"physical_keycode":50,"keycode":0,"unicode":0,"pressed":false,"echo":false)]
+}
+weapon_3={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"device":-1,"physical_keycode":51,"keycode":0,"unicode":0,"pressed":false,"echo":false)]
+}
+weapon_4={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"device":-1,"physical_keycode":52,"keycode":0,"unicode":0,"pressed":false,"echo":false)]
+}
+weapon_5={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"device":-1,"physical_keycode":53,"keycode":0,"unicode":0,"pressed":false,"echo":false)]
+}
+next_weapon={
+"deadzone": 0.2,
+"events": [Object(InputEventMouseButton,"device":-1,"button_index":4,"pressed":false,"double_click":false),
+Object(InputEventJoypadButton,"device":-1,"button_index":10,"pressed":false),
+Object(InputEventJoypadButton,"device":-1,"button_index":3,"pressed":false)]
+}
+prev_weapon={
+"deadzone": 0.2,
+"events": [Object(InputEventMouseButton,"device":-1,"button_index":5,"pressed":false,"double_click":false),
+Object(InputEventJoypadButton,"device":-1,"button_index":9,"pressed":false)]
+}
+shoulder_swap={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"device":-1,"physical_keycode":81,"keycode":0,"unicode":0,"pressed":false,"echo":false),
+Object(InputEventJoypadButton,"device":-1,"button_index":11,"pressed":false)]
+}
+pause={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"device":-1,"physical_keycode":4194305,"keycode":0,"unicode":0,"pressed":false,"echo":false),
+Object(InputEventKey,"device":-1,"physical_keycode":80,"keycode":0,"unicode":0,"pressed":false,"echo":false),
+Object(InputEventJoypadButton,"device":-1,"button_index":6,"pressed":false)]
+}
+map={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"device":-1,"physical_keycode":4194306,"keycode":0,"unicode":0,"pressed":false,"echo":false),
+Object(InputEventKey,"device":-1,"physical_keycode":77,"keycode":0,"unicode":0,"pressed":false,"echo":false),
+Object(InputEventJoypadButton,"device":-1,"button_index":4,"pressed":false)]
+}
+
+[layer_names]
+
+3d_physics/layer_1="world"
+3d_physics/layer_2="player"
+3d_physics/layer_3="enemy"
+3d_physics/layer_4="projectile"
+3d_physics/layer_5="pickup"
+3d_physics/layer_6="trigger"
+3d_physics/layer_7="door"
+
+[physics]
+
+common/physics_ticks_per_second=60
+3d/physics_engine="Jolt Physics"
+
+[rendering]
+
+renderer/rendering_method="forward_plus"
+renderer/rendering_method.mobile="forward_plus"
+textures/canvas_textures/default_texture_filter=1
+textures/vram_compression/import_etc2_astc=true
+anti_aliasing/quality/msaa_3d=0
+anti_aliasing/quality/use_taa=true
+anti_aliasing/quality/use_debanding=true
+scaling_3d/mode=0
+scaling_3d/scale=1.0
+lights_and_shadows/directional_shadow/size=4096
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality=3
+lights_and_shadows/positional_shadow/soft_shadow_filter_quality=3
+lights_and_shadows/positional_shadow/atlas_size=4096
+lights_and_shadows/use_physical_light_units=false
+environment/ssao/quality=2
+environment/ssil/quality=2
+environment/ssr/roughness_quality=2
+environment/glow/upscale_mode=1
+environment/volumetric_fog/volume_size=128
+environment/volumetric_fog/volume_depth=128
+environment/volumetric_fog/use_filter=1
+global_illumination/sdfgi/probe_ray_count=2
+global_illumination/sdfgi/frames_to_converge=2
+global_illumination/sdfgi/frames_to_update_lights=2
+global_illumination/gi/use_half_resolution=false
+reflections/sky_reflections/roughness_layers=8
+reflections/reflection_atlas/reflection_size=512
+reflections/reflection_atlas/reflection_count=64
+mesh_lod/lod_change/threshold_pixels=1.0
