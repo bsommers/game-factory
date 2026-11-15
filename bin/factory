@@ -17,7 +17,7 @@ case "$cmd" in
     [ -e "$D" ] && { echo "$D exists" >&2; exit 1; }
     if [ "${4:-}" = "--web" ]; then
       mkdir -p "$D/src" "$D/test" "$D/docs/swarm" "$D/tools"
-      sync_tools "$D"; (cd "$D/tools" && rm -f *.sh fetch_assets.mjs); cp "$FACT"/tools/web/*.mjs "$D/tools/"
+      sync_tools "$D"; (cd "$D/tools" && rm -f *.sh fetch_assets.mjs); cp "$FACT"/tools/web/*.sh "$D/tools/"; cp "$FACT"/tools/web/*.mjs "$D/tools/"
       for f in index.html style.css src/main.js; do sed "s#__NAME__#$NAME#g" "$FACT/templates/web-project/$f" > "$D/$f"; done
       cp "$FACT/templates/web-project/package.json" "$D/package.json"; cp "$FACT"/templates/web-project/test/* "$D/test/"
       cp "$FACT/swarm/templates/SWARM.md" "$D/docs/swarm/SWARM.md"; cp "$FACT/swarm/templates/CHECKPOINT.md" "$D/docs/CHECKPOINT.md"

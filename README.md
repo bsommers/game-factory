@@ -21,6 +21,7 @@ Extracted from **KÄSEKRIEG: RAT OPS** (Godot 4.7 third-person shooter): https:/
 | `tools/serve.mjs`, `tools/shot.mjs` | zero-dep static server; headless-Chrome screenshots/frames/key-driving via CDP |
 | `tools/sheet.mjs <artModule>` | validates a PixBuf art module against `defs.artManifest()` and renders a contact-sheet PNG |
 | `tools/check-imports.mjs [src]` | integration lint: every relative import resolves and every named import is really exported (catches contract drift between parallel agents) |
+| `tools/contact_sheet.sh`, `tools/smoke_web.sh` | labelled contact sheet of screenshots (ImageMagick); smoke test of the shipped single-file build |
 | `tools/swarm-tracker/bin/swarm-next.mjs` | scheduler: shows running/done, enforces concurrency + model-tier caps (`--cap 5 --fable 1 --opus 2`), prints the next spawn prompts |
 
 ## Quick start

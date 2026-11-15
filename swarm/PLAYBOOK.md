@@ -68,3 +68,6 @@ all-in-one render exceeded its timeout, and a too-short cap read as a broken lev
 2. `node <tracker>/bin/swarm-plan.mjs`, then `node <tracker>/dashboard/server.mjs` and open `http://127.0.0.1:4780/`.
 3. Spawn agents in waves of at most 4; each runs `track.mjs <id> start/progress/done`.
 4. Append to `docs/CHECKPOINT.md` after every completion; collect `docs/swarm/reports/<id>.md`; record mistakes in `docs/LEARNINGS.md`.
+
+## 12. Trust, then verify (from cheesefantasy)
+Re-run the whole test suite yourself before committing; an agent's "tests pass" is a claim, not evidence. Mutation-check new guard tests (reintroduce the bug, see the test fail). Smoke-test the SHIPPED artifact (`smoke_web.sh`, `smoke_linux.sh`, `smoke_windows.sh`), never the build dir. Shot harnesses take absolute output paths. Pin cross-agent conventions (orientation, axes, units) in the contract AND in a test.
