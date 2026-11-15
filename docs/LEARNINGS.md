@@ -34,3 +34,9 @@ Real mistakes and fixes from the first game built with this factory. Generic swa
 
 ## Checks agents can't do
 - Agents can't listen to audio or judge feel. They validate peaks/RMS/LUFS and spectrograms; a human must review sound and gameplay feel.
+
+## Packaging and printing (from RAT OPS)
+- Trim export packs (drop unused texture sets, compress) — 649→196 MB Linux; Windows/macOS packages ~190–220 MB.
+- Windows VM: headless boot test only unless autologon is approved; installer's uninstall may leave the folder behind.
+- Print export: re-import OBJs headless to check manifold + volume; thin rest-pose limbs (boss) fail wall thickness — export a clean rest pose.
+- Don't rebuild a model while verify runs (files vanish briefly).
