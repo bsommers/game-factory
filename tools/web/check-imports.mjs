@@ -12,6 +12,13 @@ function exp(file) {
   if (exportsOf.has(file)) return exportsOf.get(file);
   const set = new Set(), src = strip(fs.readFileSync(file, 'utf8')); exportsOf.set(file, set);
   for (const m of src.matchAll(/export\s+(?:async\s+)?(?:function\*?|class|const|let|var)\s+([A-Za-z_$][\w$]*)/g)) set.add(m[1]);
+  // multi-declarator: export const A = 1, B = f(x, y), C;  (split on depth-0 commas up to the statement end)
+  for (const m of src.matchAll(/export\s+(?:const|let|var)\s+([^;]*?)(?:;|\n(?=\S))/g)) {
+    let depth = 0, cur = ''; const parts = [];
+    for (const ch of m[1]) { if ('([{'.includes(ch)) depth++; else if (')]}'.includes(ch)) depth--; if (ch === ',' && depth === 0) { parts.push(cur); cur = ''; } else cur += ch; }
+    parts.push(cur);
+    for (const part of parts) { const id = part.trim().match(/^([A-Za-z_$][\w$]*)\s*(?:=|$)/); if (id) set.add(id[1]); }
+  }
   for (const m of src.matchAll(/export\s*\{([^}]*)\}(?:\s*from\s*['"]([^'"]+)['"])?/g)) for (const part of m[1].split(',')) { const n = part.trim().split(/\s+as\s+/).pop(); if (n) set.add(n); }
   if (/export\s+default\b/.test(src)) set.add('default');
   for (const m of src.matchAll(/export\s*\*\s*from\s*['"]([^'"]+)['"]/g)) { const t = resolve(file, m[1]); if (t) for (const n of exp(t)) set.add(n); }
