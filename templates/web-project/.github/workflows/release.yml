@@ -1,0 +1,47 @@
+name: release
+# On a v* tag: build the web bundle + all desktop targets, smoke the SHIPPED artifacts, attach to a GitHub Release.
+# Only first-party actions (checkout, setup-node, upload-artifact) + the preinstalled gh CLI. Windows/macOS binaries
+# are cross-packaged here from Neutralino's prebuilt release (verified by pinned SHA-256); the Windows exe smoke
+# runs locally via desktop/smoke_windows.sh (VM), not on GitHub-hosted runners.
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install smoke dependencies (Xvfb, webkit2gtk, zip)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends xvfb libwebkit2gtk-4.1-0 zip unzip curl
+      - name: Unit tests
+        run: npm test
+      - name: Build web (bundle + single file)
+        run: node tools/build-web.mjs
+      - name: Smoke single-file build (file:// in headless Chrome)
+        run: tools/smoke_web.sh "$PWD/dist/catxzzon.html"
+      - name: Package desktop (linux, windows, macOS x64 + arm64)
+        run: node tools/package-desktop.mjs --platform all --version "${GITHUB_REF_NAME#v}" --skip-web
+      - name: Smoke linux package (unpacked archive, embedded server + Xvfb window)
+        run: desktop/smoke_linux.sh
+      - name: Collect release files
+        run: |
+          mkdir -p release
+          cp dist/catxzzon.html "release/catxzzon-${GITHUB_REF_NAME#v}.html"
+          cp dist/desktop/catxzzon-* dist/desktop/SHA256SUMS release/
+          (cd release && sha256sum catxzzon-*.html >> SHA256SUMS && cat SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: catxzzon-${{ github.ref_name }}
+          path: release/*
+          if-no-files-found: error
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" release/* --title "CATXZZON $GITHUB_REF_NAME" --generate-notes
