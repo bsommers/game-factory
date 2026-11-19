@@ -40,3 +40,9 @@ Real mistakes and fixes from the first game built with this factory. Generic swa
 - Windows VM: headless boot test only unless autologon is approved; installer's uninstall may leave the folder behind.
 - Print export: re-import OBJs headless to check manifold + volume; thin rest-pose limbs (boss) fail wall thickness — export a clean rest pose.
 - Don't rebuild a model while verify runs (files vanish briefly).
+
+## Interactive Blender 5.0+ GUI & Print QA (from Operation Dumb Bunny)
+- **macOS Seatbelt sandbox crashes Blender** (`blender.crash.txt` on Metal/WindowServer). Launch Blender once outside the sandbox with `tools/blender_ipc/live_bridge.py`, then let sandboxed agents drive it via atomic file IPC (`tools/blender_ipc/ipc_client.py`).
+- **Blender 5.0 API breaks 3.x/4.x scripts:** use `bpy.ops.wm.obj_export` and `bpy.ops.wm.stl_export(..., global_scale=1000.0)` (meters → mm); `Principled BSDF` sockets are `'Specular IOR Level'`, `'Sheen Weight'`, `'Coat Weight'`; `mesh.use_auto_smooth` was removed (set `poly.use_smooth = True`).
+- **Mirror + Bisect before Voxel Remesh:** running Mirror+Bisect *after* Voxel Remesh leaves non-manifold / open edges along `X=0`. Apply Mirror+Bisect *before* Voxel Remesh and strip tiny detached specks by keeping only the largest connected shell; verify with `tools/print/stl_verify.py`.
+- **Keep turntable orbit off by default:** continuous `bpy.app.timers` camera orbiting fights the user's mouse when parked — enable orbit only on explicit request.

@@ -98,8 +98,19 @@ header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-item
 @media (max-width:1250px){.g-main{grid-template-columns:minmax(0,1fr) 320px}.g-3{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:1020px){.g-main,.g-2{grid-template-columns:minmax(0,1fr)}header{grid-template-columns:1fr}.hstats{justify-content:flex-start}}
 
-/* timeline */
+/* timeline (collapsible live gantt) */
 #tl{position:relative}
+#tl.collapsed>.hd{margin-bottom:0}
+.tl-kpis{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap;margin-left:6px}
+.tl-kpi{font:700 10px/1 var(--mono);padding:4px 8px;border-radius:999px;background:var(--bg2);border:1px solid var(--line2);color:var(--ink2);font-variant-numeric:tabular-nums}
+.tl-kpi b{color:var(--accent)}
+.tl-kpi.ok b{color:var(--done)}
+.tl-toggle{display:inline-flex;align-items:center;gap:5px}
+.tl-chev{width:12px;height:12px;transition:transform .24s cubic-bezier(.22,1,.36,1)}
+#tl.collapsed .tl-chev{transform:rotate(-90deg)}
+.tl-body{display:grid;grid-template-rows:1fr;transition:grid-template-rows .26s cubic-bezier(.22,1,.36,1),opacity .2s ease;opacity:1}
+#tl.collapsed .tl-body{grid-template-rows:0fr;opacity:0}
+.tl-inner{overflow:hidden}
 #tlsvg{display:block;width:100%;user-select:none}
 #tlsvg text{font-family:var(--mono)}
 .tl-legend{display:flex;gap:12px;font:600 10px/1 var(--mono);color:var(--ink3);flex-wrap:wrap}
@@ -262,16 +273,27 @@ footer{margin-top:20px;color:var(--ink3);font:500 10.5px/1 var(--mono);text-alig
     </div>
   </header>
 
-  <div class="strip" id="stats"></div>
-  <div class="phases" id="phases"></div>
-
-  <section class="panel mb" id="tl">
-    <div class="hd"><h2>Swarm timeline<span class="sub" id="tlsub"></span></h2><span class="sp"></span>
+  <section class="panel mb" id="tl" aria-label="Live Mission Gantt Chart">
+    <div class="hd">
+      <h2>Live Gantt timeline<span class="sub" id="tlsub"></span></h2>
+      <div class="tl-kpis">
+        <span class="tl-kpi">ELAPSED <b id="tlElapsed">--:--</b></span>
+        <span class="tl-kpi" id="tlLanesKpi"><b id="tlLanes">0/0</b> ACTIVE</span>
+        <span class="tl-kpi" id="tlPhasesKpi">PHASES <b id="tlPhases">0/0</b></span>
+      </div>
+      <span class="sp"></span>
       <div class="tl-legend"><span><i style="background:var(--run)"></i>running</span><span><i style="background:var(--done)"></i>done</span><span><i style="background:var(--blocked)"></i>blocked</span><span><i style="background:var(--failed)"></i>failed</span><span><i style="background:transparent;border:1px dashed var(--queued)"></i>queued</span></div>
       <div class="tl-zoom" id="tlzoom"><button class="btn on" data-z="all">ALL</button><button class="btn" data-z="3600">1H</button><button class="btn" data-z="900">15M</button></div>
+      <button type="button" class="btn tl-toggle" id="tlToggle" aria-expanded="true" aria-controls="tlBody">
+        <span id="tlToggleLbl">Collapse</span>
+        <svg class="tl-chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="5 8 10 13 15 8"/></svg>
+      </button>
     </div>
-    <svg id="tlsvg" height="80"></svg>
+    <div class="tl-body" id="tlBody"><div class="tl-inner"><svg id="tlsvg" height="80"></svg></div></div>
   </section>
+
+  <div class="strip" id="stats"></div>
+  <div class="phases" id="phases"></div>
 
   <div class="grid g-main mb">
     <section class="panel"><div class="hd"><h2>Agent swarm<span class="sub" id="swsub"></span></h2><span class="sp"></span><div class="tabs" id="sortTabs"><button class="btn on" data-s="role">BY ROLE</button><button class="btn" data-s="state">BY STATE</button></div></div><div id="swarm"></div></section>
@@ -407,9 +429,28 @@ function renderHeader() {
 }
 function tickHeader() {
   const s = t0();
-  txt($('elapsed'), clock(now() - s));
+  const elStr = clock(now() - s);
+  txt($('elapsed'), elStr);
+  txt($('tlElapsed'), elStr);
   txt($('startedl'), s ? 'SINCE ' + hhmm(s) : '');
 }
+// collapsible live gantt state (expanded by default, persisted in localStorage)
+(() => {
+  const KEY = 'swarm_tracker_gantt_collapsed';
+  const sec = $('tl'), btn = $('tlToggle'), lbl = $('tlToggleLbl');
+  if (!sec || !btn) return;
+  function setCollapsed(c) {
+    sec.classList.toggle('collapsed', c);
+    btn.setAttribute('aria-expanded', c ? 'false' : 'true');
+    txt(lbl, c ? 'Expand' : 'Collapse');
+    if (c) hideTip();
+    try { localStorage.setItem(KEY, c ? '1' : '0'); } catch {}
+  }
+  let init = false;
+  try { init = localStorage.getItem(KEY) === '1'; } catch {}
+  setCollapsed(init);
+  btn.addEventListener('click', () => setCollapsed(!sec.classList.contains('collapsed')));
+})();
 
 // ---------- agents ----------
 function agentElapsed(a) { const s = ms(a.startedAt); if (!s) return null; const e = ms(a.endedAt) || now(); return e - s; }
@@ -673,6 +714,13 @@ function renderTimeline(fromTick) {
   attr(tl.svg, 'height', H); attr(tl.svg, 'viewBox', '0 0 ' + G.W + ' ' + H);
   const cr = $('lanesclipr'); attr(cr, 'x', X0); attr(cr, 'y', 0); attr(cr, 'width', X1 - X0 + G.PR); attr(cr, 'height', H);
   txt($('tlsub'), agents.length ? started.length + ' deployed · window ' + dur(tB - tA) : '');
+  const runningN = agents.filter(a => a.state === 'running').length;
+  const donePhases = (S && S.phases ? S.phases.filter(p => p.status === 'done').length : 0);
+  const totalPhases = (S && S.phases ? S.phases.length : 0);
+  txt($('tlLanes'), runningN + '/' + agents.length);
+  txt($('tlPhases'), donePhases + '/' + totalPhases);
+  $('tlLanesKpi').classList.toggle('ok', agents.length > 0 && runningN === 0 && agents.every(a => a.state === 'done'));
+  $('tlPhasesKpi').classList.toggle('ok', totalPhases > 0 && donePhases === totalPhases);
   // axis
   const step = timeStep(span / Math.max(3, Math.floor((X1 - X0) / 110)));
   let ax = '<rect x="' + X0 + '" y="' + (G.TOP - 6) + '" width="' + (X1 - X0) + '" height="' + (H - G.TOP) + '" fill="#0f1527" rx="4"/>';

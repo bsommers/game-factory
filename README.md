@@ -9,7 +9,7 @@ Extracted from **KÄSEKRIEG: RAT OPS** (Godot 4.7 third-person shooter): https:/
 |---|---|
 | `bin/factory` | `factory new <dir> "<Title>"` scaffolds a game repo; `factory sync <dir>` refreshes its tooling |
 | `swarm/` | Agent swarm tracker: `bin/swarm-plan.mjs` (manifest → per-agent prompts), `bin/track.mjs` (progress events), `dashboard/server.mjs` (live dashboard, serves `out/` and `dist/` images, follows symlinks), `PLAYBOOK.md`, `PROTOCOL.md`, templates |
-| `tools/` | `godot.sh`, `install_godot.sh`, `run_tests.sh` (headless Godot tests), `shot.sh` (GPU screenshots in a private Xvfb, no desktop window), `build.sh` (export linux/windows/macos), `qa.sh`, `fetch_assets.mjs` (CC0 Poly Haven/ambientCG fetcher) |
+| `tools/` | `godot.sh`, `install_godot.sh`, `run_tests.sh` (headless Godot tests), `shot.sh` (GPU screenshots in a private Xvfb, no desktop window), `build.sh` (export linux/windows/macos), `qa.sh`, `fetch_assets.mjs` (CC0 Poly Haven/ambientCG fetcher), `blender_ipc/` (interactive Blender 5.0+ live GUI IPC bridge + sandbox-safe client), `print/stl_verify.py` (binary STL watertightness, 2-manifold & bilateral symmetry QA) |
 | `templates/godot-project/` | Autoloads (events/settings/game/defs), test runner and screenshot harness, `project.godot` |
 | `examples/ratops/` | Real specimens: SWARM.md manifest, procedural Blender character/prop builders, audio synth, level converter |
 | `docs/LEARNINGS.md` | Mistakes and fixes from the first build |
