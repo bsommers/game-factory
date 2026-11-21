@@ -15,6 +15,7 @@ Extracted from **KÄSEKRIEG: RAT OPS** (Godot 4.7 third-person shooter): https:/
 | `factory-core/languages/` | Language axis: `languages.list/show`, `project.new --lang gdscript\|js\|go\|rust\|python` (see `docs/LANGUAGES.md`) |
 | `templates/godot-project/` | Autoloads (events/settings/game/defs), test runner and screenshot harness, `project.godot` |
 | `examples/ratops/` | Real specimens: SWARM.md manifest, procedural Blender character/prop builders, audio synth, level converter |
+| `docs/MODELS.md` | Generate/export 3D models (obj, stl, ply, glb/gltf, 3mf) for printing, Blender, engines: `models.*` capabilities, mesh library |
 | `docs/LEARNINGS.md` | Mistakes and fixes from the first build |
 | `docs/LEARNINGS-PAWFALL.md` | Mistakes and fixes from the PawFall web-game swarm |
 | `docs/NEXT-GAME.md` | Plan for an outdoor/open-world follow-up |

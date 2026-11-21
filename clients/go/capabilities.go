@@ -257,6 +257,120 @@ func (c *Client) LibraryVerify(ctx context.Context, in LibraryVerifyInput) (*Env
 	return c.Call(ctx, "library.verify", in)
 }
 
+// ModelsBlenderCheckInput is the input of models.blender-check.
+type ModelsBlenderCheckInput struct {
+	Files     []string `json:"files"`
+	Blender   *string  `json:"blender,omitempty"` // blender executable (default $BLENDER, PATH, /snap/bin/blender)
+	Project   *string  `json:"project,omitempty"`
+	TimeoutMs *int64   `json:"timeoutMs,omitempty"`
+}
+
+// ModelsBlenderCheck calls models.blender-check: Import model files headless in Blender and report triangles, bounds, volume and manifold per file (3MF uses a fallback parser: Blender has no built-in 3MF importer). Fails with NOT_FOUND when Blender is not installed.
+func (c *Client) ModelsBlenderCheck(ctx context.Context, in ModelsBlenderCheckInput) (*Envelope, error) {
+	return c.Call(ctx, "models.blender-check", in)
+}
+
+// ModelsConvertInput is the input of models.convert.
+type ModelsConvertInput struct {
+	Input     string  `json:"input"`
+	Output    string  `json:"output"`            // output file path inside the project (extension picks the format)
+	From      *string `json:"from,omitempty"`    // one of: obj, stl, stl-ascii, ply, glb, gltf, 3mf
+	InUnits   *string `json:"inUnits,omitempty"` // file unit (library is mm). Defaults: mm, except glb/gltf m
+	InUp      *string `json:"inUp,omitempty"`    // file up axis. Defaults: Z, except glb/gltf Y
+	Overwrite *bool   `json:"overwrite,omitempty"`
+	Project   *string `json:"project,omitempty"`
+	To        *string `json:"to,omitempty"`    // one of: obj, stl, stl-ascii, ply, glb, gltf, 3mf
+	Units     *string `json:"units,omitempty"` // file unit (library is mm). Defaults: mm, except glb/gltf m
+	Up        *string `json:"up,omitempty"`    // file up axis. Defaults: Z, except glb/gltf Y
+}
+
+// ModelsConvert calls models.convert: Convert a model between formats (obj, stl, ply, glb/gltf, 3mf readable and writable). Output format comes from the output extension or "to".
+func (c *Client) ModelsConvert(ctx context.Context, in ModelsConvertInput) (*Envelope, error) {
+	return c.Call(ctx, "models.convert", in)
+}
+
+// ModelsFormatsInput is the input of models.formats.
+type ModelsFormatsInput struct {
+}
+
+// ModelsFormats calls models.formats: List supported 3D model formats (obj, stl, stl-ascii, ply, glb, gltf, 3mf) with units, up axis, colour support and when to use each; plus recipe primitives.
+func (c *Client) ModelsFormats(ctx context.Context, in ModelsFormatsInput) (*Envelope, error) {
+	return c.Call(ctx, "models.formats", in)
+}
+
+// ModelsGenerateInput is the input of models.generate.
+type ModelsGenerateInput struct {
+	Out        string         `json:"out"`               // output directory inside the project
+	Formats    []string       `json:"formats,omitempty"` // default stl, obj, glb, 3mf
+	Name       *string        `json:"name,omitempty"`    // file base name (default recipe.name or "model")
+	Overwrite  *bool          `json:"overwrite,omitempty"`
+	Project    *string        `json:"project,omitempty"`
+	Recipe     map[string]any `json:"recipe,omitempty"`     // {name?, weld?, parts:[{prim, args?, translate?[x,y,z], rotate?[deg x,y,z], scale?, mirror?, material?:"#rrggbb"|{name,color}, parts?}]}
+	RecipeFile *string        `json:"recipeFile,omitempty"` // path to a recipe JSON file (alternative to recipe)
+	Units      *string        `json:"units,omitempty"`      // file unit (library is mm). Defaults: mm, except glb/gltf m
+	Up         *string        `json:"up,omitempty"`         // file up axis. Defaults: Z, except glb/gltf Y
+}
+
+// ModelsGenerate calls models.generate: Build a mesh from a JSON recipe of primitives (box, sphere, icosphere, cylinder, cone, capsule, torus, plane, grid, lathe, extrude, heightmap, groups) with translate/rotate/scale/mirror/material, and write it in the requested formats.
+func (c *Client) ModelsGenerate(ctx context.Context, in ModelsGenerateInput) (*Envelope, error) {
+	return c.Call(ctx, "models.generate", in)
+}
+
+// ModelsInspectInput is the input of models.inspect.
+type ModelsInspectInput struct {
+	Input   string  `json:"input"`
+	From    *string `json:"from,omitempty"`    // one of: obj, stl, stl-ascii, ply, glb, gltf, 3mf
+	InUnits *string `json:"inUnits,omitempty"` // file unit (library is mm). Defaults: mm, except glb/gltf m
+	InUp    *string `json:"inUp,omitempty"`    // file up axis. Defaults: Z, except glb/gltf Y
+	Project *string `json:"project,omitempty"`
+}
+
+// ModelsInspect calls models.inspect: Inspect a model file: bounds, triangle/vertex counts, volume, surface area, manifold report, shell count and the size it would have in each format.
+func (c *Client) ModelsInspect(ctx context.Context, in ModelsInspectInput) (*Envelope, error) {
+	return c.Call(ctx, "models.inspect", in)
+}
+
+// ModelsPrintPrepInput is the input of models.print-prep.
+type ModelsPrintPrepInput struct {
+	Input     string         `json:"input"`
+	Out       string         `json:"out"`               // output directory inside the project
+	AllowUp   *bool          `json:"allowUp,omitempty"` // fitToBed may enlarge (default shrink only)
+	Bed       map[string]any `json:"bed,omitempty"`
+	Formats   []string       `json:"formats,omitempty"` // default stl, 3mf
+	From      *string        `json:"from,omitempty"`    // one of: obj, stl, stl-ascii, ply, glb, gltf, 3mf
+	Height    *float64       `json:"height,omitempty"`  // scale uniformly so the model is this tall (mm)
+	InUnits   *string        `json:"inUnits,omitempty"` // file unit (library is mm). Defaults: mm, except glb/gltf m
+	InUp      *string        `json:"inUp,omitempty"`    // file up axis. Defaults: Z, except glb/gltf Y
+	Margin    *float64       `json:"margin,omitempty"`
+	Name      *string        `json:"name,omitempty"`
+	Overwrite *bool          `json:"overwrite,omitempty"`
+	Plinth    map[string]any `json:"plinth,omitempty"`
+	Project   *string        `json:"project,omitempty"`
+	WeldEps   *float64       `json:"weldEps,omitempty"`
+}
+
+// ModelsPrintPrep calls models.print-prep: Make a model printable: weld, flip inside-out shells, optional scale to height / fit to bed, optional plinth, drop to z=0 centred, then write STL and/or 3MF (millimetres, Z up).
+func (c *Client) ModelsPrintPrep(ctx context.Context, in ModelsPrintPrepInput) (*Envelope, error) {
+	return c.Call(ctx, "models.print-prep", in)
+}
+
+// ModelsVerifyInput is the input of models.verify.
+type ModelsVerifyInput struct {
+	Input       string         `json:"input"`
+	Bed         map[string]any `json:"bed,omitempty"`
+	From        *string        `json:"from,omitempty"`    // one of: obj, stl, stl-ascii, ply, glb, gltf, 3mf
+	InUnits     *string        `json:"inUnits,omitempty"` // file unit (library is mm). Defaults: mm, except glb/gltf m
+	InUp        *string        `json:"inUp,omitempty"`    // file up axis. Defaults: Z, except glb/gltf Y
+	MinWall     *float64       `json:"minWall,omitempty"` // mm; checked by sampling when > 0
+	Project     *string        `json:"project,omitempty"`
+	SingleShell *bool          `json:"singleShell,omitempty"` // require exactly one shell (default false: warning only)
+}
+
+// ModelsVerify calls models.verify: Print-readiness gate: watertight 2-manifold, positive volume (not inside-out), no degenerate faces, fits bed {x,y,z}, optional minimum wall (ray-sampled estimate). Fails with TASK_FAILED and a per-check list.
+func (c *Client) ModelsVerify(ctx context.Context, in ModelsVerifyInput) (*Envelope, error) {
+	return c.Call(ctx, "models.verify", in)
+}
+
 // PackageShellsInput is the input of package.shells.
 type PackageShellsInput struct {
 	Project *string `json:"project,omitempty"` // optional project dir: marks shells applicable to its kind and picks the default

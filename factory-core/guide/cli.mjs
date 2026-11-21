@@ -4,6 +4,8 @@
 //   cli.mjs plan "<goal>" [--out docs/swarm/SWARM.md] [--yes]     cli.mjs check [dir]     cli.mjs explain <capability>
 //   cli.mjs skills [tag]   cli.mjs show <skill>   cli.mjs install <dir|~> [--yes]   cli.mjs index [--check]
 import { capabilities } from './capabilities.mjs';
+import { buildRegistry } from '../index.mjs';
+buildRegistry(); // registers guide with the live registry so route/explain see every capability area, not just the static ones
 const [sub, ...rest] = process.argv.slice(2);
 const json = rest.includes('--json'), flags = {}, pos = [];
 for (let k = 0; k < rest.length; k++) { const a = rest[k]; if (a === '--json') continue; if (a.startsWith('--')) { const [key, v] = a.slice(2).split(/=(.*)/s); const boolean = ['yes', 'check', 'dry-run'].includes(key); flags[key.replace(/-([a-z])/g, (_, c) => c.toUpperCase())] = v !== undefined ? v : boolean ? true : rest[++k]; } else pos.push(a); }

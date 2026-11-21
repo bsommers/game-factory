@@ -7,7 +7,8 @@ import { loadSkills, buildIndex, indexJson, parseSkill, validateSkill, route, pl
 import { capabilities, registerGuide, catalog, setReranker } from '../../factory-core/guide/capabilities.mjs';
 
 const tmp = (p) => mkdtempSync(join(process.env.CLAUDE_CODE_TMPDIR || tmpdir(), p));
-const cat = () => catalog();
+import { buildRegistry } from '../../factory-core/index.mjs';
+const cat = () => { buildRegistry(); return catalog(); }; // the real registry, so skills may reference any capability area
 
 // ---- skills + frontmatter ----
 test('all skills load and validate', () => {

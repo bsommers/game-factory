@@ -578,6 +578,271 @@ impl Client {
     }
 }
 
+/// Input of `models.blender-check`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct ModelsBlenderCheckInput {
+    pub files: Vec<String>,
+    /// blender executable (default $BLENDER, PATH, /snap/bin/blender)
+    pub blender: Option<String>,
+    pub project: Option<String>,
+    pub timeout_ms: Option<i64>,
+}
+
+impl ModelsBlenderCheckInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("files".to_string(), serde_json::to_value(&self.files).unwrap_or(Value::Null));
+        if let Some(v) = &self.blender { m.insert("blender".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.timeout_ms { m.insert("timeoutMs".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// models.blender-check: Import model files headless in Blender and report triangles, bounds, volume and manifold per file (3MF uses a fallback parser: Blender has no built-in 3MF importer). Fails with NOT_FOUND when Blender is not installed.
+    pub fn models_blender_check(&self, input: &ModelsBlenderCheckInput) -> Result<Envelope, Error> {
+        self.call("models.blender-check", &input.to_json())
+    }
+}
+
+/// Input of `models.convert`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct ModelsConvertInput {
+    pub input: String,
+    /// output file path inside the project (extension picks the format)
+    pub output: String,
+    /// one of: obj, stl, stl-ascii, ply, glb, gltf, 3mf
+    pub from: Option<String>,
+    /// file unit (library is mm). Defaults: mm, except glb/gltf m
+    pub in_units: Option<String>,
+    /// file up axis. Defaults: Z, except glb/gltf Y
+    pub in_up: Option<String>,
+    pub overwrite: Option<bool>,
+    pub project: Option<String>,
+    /// one of: obj, stl, stl-ascii, ply, glb, gltf, 3mf
+    pub to: Option<String>,
+    /// file unit (library is mm). Defaults: mm, except glb/gltf m
+    pub units: Option<String>,
+    /// file up axis. Defaults: Z, except glb/gltf Y
+    pub up: Option<String>,
+}
+
+impl ModelsConvertInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("input".to_string(), serde_json::to_value(&self.input).unwrap_or(Value::Null));
+        m.insert("output".to_string(), serde_json::to_value(&self.output).unwrap_or(Value::Null));
+        if let Some(v) = &self.from { m.insert("from".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.in_units { m.insert("inUnits".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.in_up { m.insert("inUp".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.overwrite { m.insert("overwrite".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.to { m.insert("to".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.units { m.insert("units".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.up { m.insert("up".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// models.convert: Convert a model between formats (obj, stl, ply, glb/gltf, 3mf readable and writable). Output format comes from the output extension or "to".
+    pub fn models_convert(&self, input: &ModelsConvertInput) -> Result<Envelope, Error> {
+        self.call("models.convert", &input.to_json())
+    }
+}
+
+/// Input of `models.formats`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct ModelsFormatsInput {
+}
+
+impl ModelsFormatsInput {
+    pub fn to_json(&self) -> Value {
+        let m = Map::new();
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// models.formats: List supported 3D model formats (obj, stl, stl-ascii, ply, glb, gltf, 3mf) with units, up axis, colour support and when to use each; plus recipe primitives.
+    pub fn models_formats(&self, input: &ModelsFormatsInput) -> Result<Envelope, Error> {
+        self.call("models.formats", &input.to_json())
+    }
+}
+
+/// Input of `models.generate`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct ModelsGenerateInput {
+    /// output directory inside the project
+    pub out: String,
+    /// default stl, obj, glb, 3mf
+    pub formats: Option<Vec<String>>,
+    /// file base name (default recipe.name or "model")
+    pub name: Option<String>,
+    pub overwrite: Option<bool>,
+    pub project: Option<String>,
+    /// {name?, weld?, parts:[{prim, args?, translate?[x,y,z], rotate?[deg x,y,z], scale?, mirror?, material?:"#rrggbb"|{name,color}, parts?}]}
+    pub recipe: Option<serde_json::Value>,
+    /// path to a recipe JSON file (alternative to recipe)
+    pub recipe_file: Option<String>,
+    /// file unit (library is mm). Defaults: mm, except glb/gltf m
+    pub units: Option<String>,
+    /// file up axis. Defaults: Z, except glb/gltf Y
+    pub up: Option<String>,
+}
+
+impl ModelsGenerateInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("out".to_string(), serde_json::to_value(&self.out).unwrap_or(Value::Null));
+        if let Some(v) = &self.formats { m.insert("formats".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.name { m.insert("name".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.overwrite { m.insert("overwrite".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.recipe { m.insert("recipe".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.recipe_file { m.insert("recipeFile".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.units { m.insert("units".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.up { m.insert("up".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// models.generate: Build a mesh from a JSON recipe of primitives (box, sphere, icosphere, cylinder, cone, capsule, torus, plane, grid, lathe, extrude, heightmap, groups) with translate/rotate/scale/mirror/material, and write it in the requested formats.
+    pub fn models_generate(&self, input: &ModelsGenerateInput) -> Result<Envelope, Error> {
+        self.call("models.generate", &input.to_json())
+    }
+}
+
+/// Input of `models.inspect`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct ModelsInspectInput {
+    pub input: String,
+    /// one of: obj, stl, stl-ascii, ply, glb, gltf, 3mf
+    pub from: Option<String>,
+    /// file unit (library is mm). Defaults: mm, except glb/gltf m
+    pub in_units: Option<String>,
+    /// file up axis. Defaults: Z, except glb/gltf Y
+    pub in_up: Option<String>,
+    pub project: Option<String>,
+}
+
+impl ModelsInspectInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("input".to_string(), serde_json::to_value(&self.input).unwrap_or(Value::Null));
+        if let Some(v) = &self.from { m.insert("from".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.in_units { m.insert("inUnits".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.in_up { m.insert("inUp".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// models.inspect: Inspect a model file: bounds, triangle/vertex counts, volume, surface area, manifold report, shell count and the size it would have in each format.
+    pub fn models_inspect(&self, input: &ModelsInspectInput) -> Result<Envelope, Error> {
+        self.call("models.inspect", &input.to_json())
+    }
+}
+
+/// Input of `models.print-prep`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct ModelsPrintPrepInput {
+    pub input: String,
+    /// output directory inside the project
+    pub out: String,
+    /// fitToBed may enlarge (default shrink only)
+    pub allow_up: Option<bool>,
+    pub bed: Option<serde_json::Value>,
+    /// default stl, 3mf
+    pub formats: Option<Vec<String>>,
+    /// one of: obj, stl, stl-ascii, ply, glb, gltf, 3mf
+    pub from: Option<String>,
+    /// scale uniformly so the model is this tall (mm)
+    pub height: Option<f64>,
+    /// file unit (library is mm). Defaults: mm, except glb/gltf m
+    pub in_units: Option<String>,
+    /// file up axis. Defaults: Z, except glb/gltf Y
+    pub in_up: Option<String>,
+    pub margin: Option<f64>,
+    pub name: Option<String>,
+    pub overwrite: Option<bool>,
+    pub plinth: Option<serde_json::Value>,
+    pub project: Option<String>,
+    pub weld_eps: Option<f64>,
+}
+
+impl ModelsPrintPrepInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("input".to_string(), serde_json::to_value(&self.input).unwrap_or(Value::Null));
+        m.insert("out".to_string(), serde_json::to_value(&self.out).unwrap_or(Value::Null));
+        if let Some(v) = &self.allow_up { m.insert("allowUp".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.bed { m.insert("bed".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.formats { m.insert("formats".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.from { m.insert("from".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.height { m.insert("height".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.in_units { m.insert("inUnits".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.in_up { m.insert("inUp".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.margin { m.insert("margin".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.name { m.insert("name".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.overwrite { m.insert("overwrite".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.plinth { m.insert("plinth".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.weld_eps { m.insert("weldEps".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// models.print-prep: Make a model printable: weld, flip inside-out shells, optional scale to height / fit to bed, optional plinth, drop to z=0 centred, then write STL and/or 3MF (millimetres, Z up).
+    pub fn models_print_prep(&self, input: &ModelsPrintPrepInput) -> Result<Envelope, Error> {
+        self.call("models.print-prep", &input.to_json())
+    }
+}
+
+/// Input of `models.verify`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct ModelsVerifyInput {
+    pub input: String,
+    pub bed: Option<serde_json::Value>,
+    /// one of: obj, stl, stl-ascii, ply, glb, gltf, 3mf
+    pub from: Option<String>,
+    /// file unit (library is mm). Defaults: mm, except glb/gltf m
+    pub in_units: Option<String>,
+    /// file up axis. Defaults: Z, except glb/gltf Y
+    pub in_up: Option<String>,
+    /// mm; checked by sampling when > 0
+    pub min_wall: Option<f64>,
+    pub project: Option<String>,
+    /// require exactly one shell (default false: warning only)
+    pub single_shell: Option<bool>,
+}
+
+impl ModelsVerifyInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("input".to_string(), serde_json::to_value(&self.input).unwrap_or(Value::Null));
+        if let Some(v) = &self.bed { m.insert("bed".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.from { m.insert("from".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.in_units { m.insert("inUnits".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.in_up { m.insert("inUp".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.min_wall { m.insert("minWall".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.single_shell { m.insert("singleShell".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// models.verify: Print-readiness gate: watertight 2-manifold, positive volume (not inside-out), no degenerate faces, fits bed {x,y,z}, optional minimum wall (ray-sampled estimate). Fails with TASK_FAILED and a per-check list.
+    pub fn models_verify(&self, input: &ModelsVerifyInput) -> Result<Envelope, Error> {
+        self.call("models.verify", &input.to_json())
+    }
+}
+
 /// Input of `package.shells`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PackageShellsInput {

@@ -94,6 +94,34 @@ class Capabilities:
         """library.verify: Check installed assets against assets.lock.json: reports modified, missing or tampered files."""
         return self.call("library.verify", {"project": project})
 
+    def models_blender_check(self, *, files: list[str], blender: str | None = None, project: str | None = None, timeoutMs: int | None = None):
+        """models.blender-check: Import model files headless in Blender and report triangles, bounds, volume and manifold per file (3MF uses a fallback parser: Blender has no built-in 3MF importer). Fails with NOT_FOUND when Blender is not installed."""
+        return self.call("models.blender-check", {"files": files, "blender": blender, "project": project, "timeoutMs": timeoutMs})
+
+    def models_convert(self, *, input: str, output: str, from_: str | None = None, inUnits: str | None = None, inUp: str | None = None, overwrite: bool | None = None, project: str | None = None, to: str | None = None, units: str | None = None, up: str | None = None):
+        """models.convert: Convert a model between formats (obj, stl, ply, glb/gltf, 3mf readable and writable). Output format comes from the output extension or "to"."""
+        return self.call("models.convert", {"input": input, "output": output, "from": from_, "inUnits": inUnits, "inUp": inUp, "overwrite": overwrite, "project": project, "to": to, "units": units, "up": up})
+
+    def models_formats(self):
+        """models.formats: List supported 3D model formats (obj, stl, stl-ascii, ply, glb, gltf, 3mf) with units, up axis, colour support and when to use each; plus recipe primitives."""
+        return self.call("models.formats", {})
+
+    def models_generate(self, *, out: str, formats: list[str] | None = None, name: str | None = None, overwrite: bool | None = None, project: str | None = None, recipe: dict | None = None, recipeFile: str | None = None, units: str | None = None, up: str | None = None):
+        """models.generate: Build a mesh from a JSON recipe of primitives (box, sphere, icosphere, cylinder, cone, capsule, torus, plane, grid, lathe, extrude, heightmap, groups) with translate/rotate/scale/mirror/material, and write it in the requested formats."""
+        return self.call("models.generate", {"out": out, "formats": formats, "name": name, "overwrite": overwrite, "project": project, "recipe": recipe, "recipeFile": recipeFile, "units": units, "up": up})
+
+    def models_inspect(self, *, input: str, from_: str | None = None, inUnits: str | None = None, inUp: str | None = None, project: str | None = None):
+        """models.inspect: Inspect a model file: bounds, triangle/vertex counts, volume, surface area, manifold report, shell count and the size it would have in each format."""
+        return self.call("models.inspect", {"input": input, "from": from_, "inUnits": inUnits, "inUp": inUp, "project": project})
+
+    def models_print_prep(self, *, input: str, out: str, allowUp: bool | None = None, bed: dict | None = None, formats: list[str] | None = None, from_: str | None = None, height: float | None = None, inUnits: str | None = None, inUp: str | None = None, margin: float | None = None, name: str | None = None, overwrite: bool | None = None, plinth: dict | None = None, project: str | None = None, weldEps: float | None = None):
+        """models.print-prep: Make a model printable: weld, flip inside-out shells, optional scale to height / fit to bed, optional plinth, drop to z=0 centred, then write STL and/or 3MF (millimetres, Z up)."""
+        return self.call("models.print-prep", {"input": input, "out": out, "allowUp": allowUp, "bed": bed, "formats": formats, "from": from_, "height": height, "inUnits": inUnits, "inUp": inUp, "margin": margin, "name": name, "overwrite": overwrite, "plinth": plinth, "project": project, "weldEps": weldEps})
+
+    def models_verify(self, *, input: str, bed: dict | None = None, from_: str | None = None, inUnits: str | None = None, inUp: str | None = None, minWall: float | None = None, project: str | None = None, singleShell: bool | None = None):
+        """models.verify: Print-readiness gate: watertight 2-manifold, positive volume (not inside-out), no degenerate faces, fits bed {x,y,z}, optional minimum wall (ray-sampled estimate). Fails with TASK_FAILED and a per-check list."""
+        return self.call("models.verify", {"input": input, "bed": bed, "from": from_, "inUnits": inUnits, "inUp": inUp, "minWall": minWall, "project": project, "singleShell": singleShell})
+
     def package_shells(self, *, project: str | None = None):
         """package.shells: List standalone-app shells (neutralino, tauri, electron, wails, rust, go, godot, python) with project kinds, availability probes on this machine, and honest size/tradeoff notes."""
         return self.call("package.shells", {"project": project})

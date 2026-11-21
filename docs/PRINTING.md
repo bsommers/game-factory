@@ -5,6 +5,8 @@ All files live in `dist/print/{characters,weapons,props,levels}/` as `.obj` (+ `
 `_1to35` = 1:35). Every file is ONE watertight manifold shell (no loose parts, positive volume), on a small plinth for
 characters/props. Beds: everything fits 220x220x250 mm.
 
+General-purpose generation, conversion, validation and print prep for any model (STL, 3MF, OBJ, GLB, PLY): see `docs/MODELS.md` (`models.verify`, `models.print-prep`).
+
 ## Scales
 - Characters: hero 75 mm; rats in proportion to in-game height (mouse 1.4 m ... boss 3.2 m, boss scaled to its 3.2 m spec and
   capped to the bed). Squad plate: hero + 6 rats on 200x200 mm base.

@@ -46,3 +46,7 @@ Real mistakes and fixes from the first game built with this factory. Generic swa
 - **Blender 5.0 API breaks 3.x/4.x scripts:** use `bpy.ops.wm.obj_export` and `bpy.ops.wm.stl_export(..., global_scale=1000.0)` (meters → mm); `Principled BSDF` sockets are `'Specular IOR Level'`, `'Sheen Weight'`, `'Coat Weight'`; `mesh.use_auto_smooth` was removed (set `poly.use_smooth = True`).
 - **Mirror + Bisect before Voxel Remesh:** running Mirror+Bisect *after* Voxel Remesh leaves non-manifold / open edges along `X=0`. Apply Mirror+Bisect *before* Voxel Remesh and strip tiny detached specks by keeping only the largest connected shell; verify with `tools/print/stl_verify.py`.
 - **Keep turntable orbit off by default:** continuous `bpy.app.timers` camera orbiting fights the user's mouse when parked — enable orbit only on explicit request.
+
+## 3D export (models.*)
+- Blender 5.x has no built-in 3MF importer (`models.blender-check` falls back to a zip+XML parser) and its OBJ importer defaults to Y-up/-Z-forward, so a Z-up (print) OBJ looks rotated unless you pass `up:"Y"` on export or set axes on import.
+- Capability names cannot contain underscores (registry test regex); MCP tool names keep the hyphen (`models_print-prep`).
