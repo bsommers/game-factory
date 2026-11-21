@@ -13,7 +13,7 @@ import * as B from '../../templates/web-project/src/lib/bvh.js';
 export const VERSION = 1, TOLERANCE = 1e-9;
 const here = dirname(fileURLToPath(import.meta.url)), DIR = join(here, 'vectors');
 const rnd = (v) => { if (Array.isArray(v)) return v.map(rnd); if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).sort().map((k) => [k, rnd(v[k])]));
-  if (typeof v === 'number') { if (!Number.isFinite(v)) throw new Error('non-finite'); const r = Math.round(v * 1e12) / 1e12; return Object.is(r, -0) ? 0 : r; } return v; };
+  if (typeof v === 'number') { if (!Number.isFinite(v)) throw new Error('non-finite'); if (Number.isInteger(v)) return Object.is(v, -0) ? 0 : v; const r = Math.round(v * 1e12) / 1e12; return Object.is(r, -0) ? 0 : r; } return v; };
 function lcg(seed) { let s = seed >>> 0; return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; }
 const fnv1a32 = (buf) => { const u = new Uint8Array(buf); let h = 0x811c9dc5; for (let i = 0; i < u.length; i++) { h ^= u[i]; h = Math.imul(h, 0x01000193) >>> 0; } return h; };
 const hit = (h) => h ? { t: h.t, normal: h.normal, point: h.point } : null;
@@ -67,19 +67,21 @@ function bvhCases() {
   const c = [];
   for (let i = 0; i < 24; i++) {
     const r = lcg(100 + i), n = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89][i % 10] + (i >= 10 ? i : 0), kind = i % 6 === 5 ? 'aabb' : 'tri', size = 1 + (i % 3);
-    const prims = [];
+    let prims = [];
     for (let k = 0; k < n; k++) {
       const p = [r() * 10, r() * 10, r() * 10];
       if (kind === 'tri') for (let q = 0; q < 3; q++) prims.push(p[0] + (r() - .2) * size, p[1] + (r() - .2) * size, p[2] + (r() - .2) * size);
       else prims.push(p[0], p[1], p[2], p[0] + r() * size, p[1] + r() * size, p[2] + r() * size);
     }
+    prims = rnd(prims); // inputs are stored rounded, so expectations must be computed from the rounded values
     const build = kind === 'tri' ? B.buildTriangles : B.buildAABBs, bv = build(prims), buf = B.serialize(bv);
     const rays = [], res = [];
     for (let k = 0; k < 6; k++) {
-      const o = [r() * 10, r() * 10, -2], d = [(r() - .5) * .6, (r() - .5) * .6, 1]; rays.push({ o, d });
-      const h = B.raycast(bv, o, d); res.push(h ? { t: h.t, index: h.index } : null);
+      const o = [r() * 10, r() * 10, -2], d = [(r() - .5) * .6, (r() - .5) * .6, 1]; rays.push(rnd({ o, d }));
+      const h = B.raycast(bv, rays[k].o, rays[k].d); res.push(h ? { t: h.t, index: h.index } : null);
     }
     const box = { min: [r() * 5, r() * 5, r() * 5], max: [5 + r() * 5, 5 + r() * 5, 5 + r() * 5] }, sp = { c: [r() * 10, r() * 10, r() * 10], r: 2 };
+    box.min = rnd(box.min); box.max = rnd(box.max); sp.c = rnd(sp.c);
     c.push({ name: `${kind} n=${n} #${i}`, kind, prims, options: { maxLeafSize: 4 },
       expected: { nodeCount: bv.nodeCount, bytes: buf.byteLength, fnv1a32: fnv1a32(buf), rays, hits: res, queryAABB: { box, indices: B.queryAABB(bv, box) }, querySphere: { sphere: sp, indices: B.querySphere(bv, sp.c, sp.r) } } });
   }
