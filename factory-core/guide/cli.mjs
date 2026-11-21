@@ -11,6 +11,8 @@ const map = { route: ['guide.route', { goal: pos.join(' ') }], plan: ['guide.pla
 if (!map[sub]) { console.error('usage: factory guide <route|plan|check|explain|skills|show|install|index> [args] [--json]'); process.exit(2); }
 const [name, base] = map[sub]; const input = { ...base };
 if (sub === 'route') { const ctx = {}; if (flags.budget) ctx.budget = flags.budget; if (flags.assets) ctx.assetNeeds = flags.assets.split(','); if (flags.style) ctx.style = flags.style; if (Object.keys(ctx).length) input.context = ctx; if (flags.limit) input.limit = +flags.limit; }
+for (const k of ['lang', 'dir']) if (flags[k] && (sub === 'route' || sub === 'plan')) input[k === 'lang' ? 'language' : 'dir'] = flags[k];
+if (sub === 'route' && flags.includeWebOnly) input.includeWebOnly = true;
 else { for (const k of ['out', 'project', 'budget', 'tagline']) if (flags[k]) input[k] = flags[k]; if (flags.yes) input.yes = true; if (flags.check) input.check = true; if (flags.dryRun) input.dryRun = true; if (flags.concurrency) input.concurrency = +flags.concurrency; }
 const res = await capabilities.find((c) => c.name === name).handler(input);
 if (json) console.log(JSON.stringify(res, null, 2));

@@ -34,13 +34,13 @@ class Capabilities:
         """guide.install: Install the skills as Claude Code skill files (<target>/.claude/skills/<name>/SKILL.md). target "~" installs user-level. Never overwrites differing files without yes."""
         return self.call("guide.install", {"target": target, "dryRun": dryRun, "yes": yes})
 
-    def guide_plan(self, *, goal: str, agents: list | None = None, budget: str | None = None, concurrency: int | None = None, dryRun: bool | None = None, out: str | None = None, project: str | None = None, tagline: str | None = None, yes: bool | None = None):
+    def guide_plan(self, *, goal: str, agents: list | None = None, budget: str | None = None, concurrency: int | None = None, dir: str | None = None, dryRun: bool | None = None, language: str | None = None, out: str | None = None, project: str | None = None, tagline: str | None = None, yes: bool | None = None):
         """guide.plan: Turn a goal into a draft swarm manifest skeleton (agents, owners, phases, model tiers, waves) in the SWARM.md format; validates unique ids and disjoint ownership. Optionally writes it."""
-        return self.call("guide.plan", {"goal": goal, "agents": agents, "budget": budget, "concurrency": concurrency, "dryRun": dryRun, "out": out, "project": project, "tagline": tagline, "yes": yes})
+        return self.call("guide.plan", {"goal": goal, "agents": agents, "budget": budget, "concurrency": concurrency, "dir": dir, "dryRun": dryRun, "language": language, "out": out, "project": project, "tagline": tagline, "yes": yes})
 
-    def guide_route(self, *, goal: str, context: dict | None = None, limit: int | None = None):
+    def guide_route(self, *, goal: str, context: dict | None = None, dir: str | None = None, includeWebOnly: bool | None = None, language: str | None = None, limit: int | None = None):
         """guide.route: Route a free-text goal to ranked skills, capabilities, kits, style presets and existing assets, with the next commands and a model tier per step. Deterministic keyword scoring, no network or LLM."""
-        return self.call("guide.route", {"goal": goal, "context": context, "limit": limit})
+        return self.call("guide.route", {"goal": goal, "context": context, "dir": dir, "includeWebOnly": includeWebOnly, "language": language, "limit": limit})
 
     def guide_show(self, *, name: str):
         """guide.show: Show one skill in full (steps, commands, gotchas, verification)."""

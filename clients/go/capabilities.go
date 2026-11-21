@@ -75,10 +75,12 @@ type GuidePlanInput struct {
 	Agents      []any   `json:"agents,omitempty"` // explicit agents [{id,name,model,phase,owns[],task}] instead of the generated set
 	Budget      *string `json:"budget,omitempty"` // one of: low, medium, high
 	Concurrency *int64  `json:"concurrency,omitempty"`
+	Dir         *string `json:"dir,omitempty"` // project directory used to detect the language (Cargo.toml, go.mod, pyproject.toml, package.json)
 	DryRun      *bool   `json:"dryRun,omitempty"`
-	Out         *string `json:"out,omitempty"`     // write the manifest to this file
-	Project     *string `json:"project,omitempty"` // project name
-	Tagline     *string `json:"tagline,omitempty"` // one line
+	Language    *string `json:"language,omitempty"` // tailor commands, kits and file ownership to this language template (templates/<lang>-project); omitted: detected from dir, else unchanged
+	Out         *string `json:"out,omitempty"`      // write the manifest to this file
+	Project     *string `json:"project,omitempty"`  // project name
+	Tagline     *string `json:"tagline,omitempty"`  // one line
 	Yes         *bool   `json:"yes,omitempty"`
 }
 
@@ -89,9 +91,12 @@ func (c *Client) GuidePlan(ctx context.Context, in GuidePlanInput) (*Envelope, e
 
 // GuideRouteInput is the input of guide.route.
 type GuideRouteInput struct {
-	Goal    string         `json:"goal"` // what you want to do, in plain words
-	Context map[string]any `json:"context,omitempty"`
-	Limit   *int64         `json:"limit,omitempty"`
+	Goal           string         `json:"goal"` // what you want to do, in plain words
+	Context        map[string]any `json:"context,omitempty"`
+	Dir            *string        `json:"dir,omitempty"`            // project directory used to detect the language (Cargo.toml, go.mod, pyproject.toml, package.json)
+	IncludeWebOnly *bool          `json:"includeWebOnly,omitempty"` // keep JS-only kits in the result for a non-web language
+	Language       *string        `json:"language,omitempty"`       // tailor commands, kits and file ownership to this language template (templates/<lang>-project); omitted: detected from dir, else unchanged
+	Limit          *int64         `json:"limit,omitempty"`
 }
 
 // GuideRoute calls guide.route: Route a free-text goal to ranked skills, capabilities, kits, style presets and existing assets, with the next commands and a model tier per step. Deterministic keyword scoring, no network or LLM.

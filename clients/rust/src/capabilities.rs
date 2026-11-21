@@ -156,7 +156,11 @@ pub struct GuidePlanInput {
     /// one of: low, medium, high
     pub budget: Option<String>,
     pub concurrency: Option<i64>,
+    /// project directory used to detect the language (Cargo.toml, go.mod, pyproject.toml, package.json)
+    pub dir: Option<String>,
     pub dry_run: Option<bool>,
+    /// tailor commands, kits and file ownership to this language template (templates/<lang>-project); omitted: detected from dir, else unchanged
+    pub language: Option<String>,
     /// write the manifest to this file
     pub out: Option<String>,
     /// project name
@@ -173,7 +177,9 @@ impl GuidePlanInput {
         if let Some(v) = &self.agents { m.insert("agents".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
         if let Some(v) = &self.budget { m.insert("budget".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
         if let Some(v) = &self.concurrency { m.insert("concurrency".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.dir { m.insert("dir".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
         if let Some(v) = &self.dry_run { m.insert("dryRun".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.language { m.insert("language".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
         if let Some(v) = &self.out { m.insert("out".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
         if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
         if let Some(v) = &self.tagline { m.insert("tagline".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
@@ -195,6 +201,12 @@ pub struct GuideRouteInput {
     /// what you want to do, in plain words
     pub goal: String,
     pub context: Option<serde_json::Value>,
+    /// project directory used to detect the language (Cargo.toml, go.mod, pyproject.toml, package.json)
+    pub dir: Option<String>,
+    /// keep JS-only kits in the result for a non-web language
+    pub include_web_only: Option<bool>,
+    /// tailor commands, kits and file ownership to this language template (templates/<lang>-project); omitted: detected from dir, else unchanged
+    pub language: Option<String>,
     pub limit: Option<i64>,
 }
 
@@ -203,6 +215,9 @@ impl GuideRouteInput {
         let mut m = Map::new();
         m.insert("goal".to_string(), serde_json::to_value(&self.goal).unwrap_or(Value::Null));
         if let Some(v) = &self.context { m.insert("context".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.dir { m.insert("dir".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.include_web_only { m.insert("includeWebOnly".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.language { m.insert("language".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
         if let Some(v) = &self.limit { m.insert("limit".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
         Value::Object(m)
     }

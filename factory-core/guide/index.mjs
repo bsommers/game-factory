@@ -3,6 +3,7 @@
 import { readFileSync, readdirSync, existsSync, writeFileSync, mkdirSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveLanguage, languageContext, adaptText, adaptKits, adaptRole, webOnlyCommand, isNonWeb, VERIFY } from './language.mjs';
 
 export const FACTORY_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 export const SKILLS_DIR = join(FACTORY_ROOT, 'skills');
@@ -200,6 +201,9 @@ export function route(input = {}, opts = {}) {
   if (!goal) return fail('BAD_INPUT', 'goal is required (free text)');
   const ctx = input.context || {}, limit = Math.max(1, Math.min(10, input.limit || 5));
   if (ctx.budget && !COSTS.includes(ctx.budget)) return fail('BAD_INPUT', 'context.budget must be low|medium|high');
+  const lr = resolveLanguage({ language: input.language, dir: input.dir });
+  if (lr.error) return fail('BAD_INPUT', lr.error);
+  const lang = lr.language;
   const index = opts.index || loadIndex(), catalog = toCatalog(opts.capabilities);
   const gTokens = tokens(goal + ' ' + (ctx.assetNeeds || []).join(' '));
   let ranked = index.skills.map((s) => ({ s, ...scoreSkill(s, goal, gTokens, ctx) })).filter((x) => x.score > 0)
@@ -218,7 +222,7 @@ export function route(input = {}, opts = {}) {
   const byName = new Map(catalog.map((c) => [c.name, c]));
   const caps = [...capScore.entries()].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, 8)
     .map(([name, sc]) => ({ kind: 'capability', name, score: Math.round(sc * 100) / 100, summary: byName.get(name)?.summary || '', example: byName.get(name) ? fmtInput(byName.get(name)) : name, registered: byName.has(name) }));
-  const kits = uniq(ranked.flatMap(({ s }) => s.kits)).map((k) => ({ kind: 'kit', name: k, doc: 'docs/KITS.md' }));
+  const kits = adaptKits(uniq(ranked.flatMap(({ s }) => s.kits)).map((k) => ({ kind: 'kit', name: k, doc: 'docs/KITS.md' })), lang, !!input.includeWebOnly);
   // styles + assets via the registry (offline, optional)
   const styles = [], assets = [];
   const call = (n, i) => { const c = byName.get(n); if (!c) return null; try { return c.handler(i); } catch { return null; } };
@@ -239,10 +243,15 @@ export function route(input = {}, opts = {}) {
   }
   // steps + commands
   const top = ranked[0]?.s;
-  const steps = ranked.slice(0, 3).flatMap(({ s }, k) => s.steps.slice(0, k === 0 ? 6 : 3).map((t) => ({ skill: s.name, model: tierFor(s, ctx.budget), text: t })));
+  const steps = ranked.slice(0, 3).flatMap(({ s }, k) => s.steps.slice(0, k === 0 ? 6 : 3).map((t) => ({ skill: s.name, model: tierFor(s, ctx.budget), text: adaptText(t, lang) })));
   steps.forEach((s, i) => { s.n = i + 1; });
-  const commands = uniq([...(top ? top.commands : []), ...caps.slice(0, 3).map((c) => c.example)]);
+  let commands = uniq([...(top ? top.commands : []), ...caps.slice(0, 3).map((c) => c.example)]);
   const data = { goal, context: ctx, ranked: skills, capabilities: caps, kits, styles, assets, steps, commands };
+  if (lang) {
+    data.language = languageContext(lang, lr.source);
+    if (isNonWeb(lang)) { const v = VERIFY[lang]; commands = uniq([...commands.filter((c) => !webOnlyCommand(c)).map((c) => adaptText(c, lang)), v.test, v.build, v.run]); skills.forEach((x) => { x.commands = x.commands.filter((c) => !webOnlyCommand(c)); }); }
+    data.commands = commands;
+  }
   data.text = renderRoute(data);
   const next = skills.length ? [`guide.show {name: "${skills[0].name}"}`, 'guide.plan {goal}', 'guide.check {project}'] : ['guide.skills {}'];
   if (!skills.length) data.hint = 'no skill matched; try guide.skills {} to list them or rephrase the goal with a task word (sprite, swarm, music, ship...)';
@@ -254,6 +263,7 @@ export function renderRoute(d) {
   L.push('Skills (best first):');
   d.ranked.forEach((s, i) => L.push(`  ${i + 1}. ${s.name}  [model ${s.model}, cost ${s.cost}, score ${s.score}]`, `     ${s.summary}`, `     why: ${s.reasons.join('; ')}`));
   if (d.capabilities.length) { L.push('', 'Capabilities:'); for (const c of d.capabilities) L.push(`  - ${c.example}${c.summary ? '  ' + c.summary.slice(0, 80) : ''}`); }
+  if (d.language) L.push('', `Language: ${d.language.id} (${d.language.source}, ${d.language.template}); test: ${d.language.verify.test}`);
   if (d.kits.length) L.push('', `Kits: ${d.kits.map((k) => k.name).join(', ')} (docs/KITS.md)`);
   if (d.styles.length) L.push('', 'Style presets:', ...d.styles.map((s) => `  - ${s.id} (score ${s.score})  ${s.next}`));
   if (d.assets.length) L.push('', 'Existing assets:', ...d.assets.map((a) => `  - ${a.id} (${a.type})  library.install {assets: ["${a.id.split(':').pop()}"]}`));
@@ -300,15 +310,18 @@ export function manifestText(project, tagline, agents, preamble = defaultPreambl
 export function plan(input = {}, opts = {}) {
   const goal = typeof input.goal === 'string' ? input.goal.trim() : '';
   if (!goal) return fail('BAD_INPUT', 'goal is required');
+  const lr = resolveLanguage({ language: input.language, dir: input.dir });
+  if (lr.error) return fail('BAD_INPUT', lr.error);
+  const lang = lr.language;
   const project = input.project || goal.split(/[.:,;]/)[0].slice(0, 40).trim() || 'My Game';
   const gT = new Set(tokens(goal));
   let agents;
   if (Array.isArray(input.agents) && input.agents.length) agents = input.agents.map((a) => ({ role: 'worker', phase: 'p1', model: 'sonnet', task: 'TODO: describe the task against the contract.', ...a }));
   else {
     const picked = ROLE_BANK.filter((r) => r.words.some((w) => gT.has(stem(w))));
-    const base = ['core', 'art', 'audio', 'ui'];
+    const base = isNonWeb(lang) ? ['core', 'levels', 'ui'] : ['core', 'art', 'audio', 'ui'];
     const set = new Set([...base, ...picked.map((r) => r.id), 'bot', 'docs']);
-    agents = ROLE_BANK.filter((r) => set.has(r.id)).map((r) => ({ id: r.id, name: r.name, model: r.model, phase: r.phase, role: 'worker', owns: [...r.owns], task: r.task }));
+    agents = ROLE_BANK.filter((r) => set.has(r.id)).map(r => adaptRole(r, lang)).map((r) => ({ id: r.id, name: r.name, model: r.model, phase: r.phase, role: 'worker', owns: [...r.owns], task: r.task }));
     if (input.budget === 'low') agents = agents.map((a) => ({ ...a, model: a.model === 'sonnet' && ['fx', 'docs'].includes(a.id) ? 'haiku' : a.model }));
   }
   const errors = validatePlan(agents);
@@ -316,14 +329,14 @@ export function plan(input = {}, opts = {}) {
   const phases = {}; for (const a of agents) (phases[a.phase] ||= []).push(a.id);
   const waves = []; for (const p of Object.keys(phases).sort()) for (let i = 0; i < phases[p].length; i += concurrency) waves.push({ phase: p, agents: phases[p].slice(i, i + concurrency) });
   const manifest = manifestText(project, input.tagline || goal.slice(0, 120), agents, opts.preamble);
-  const data = { project, agents, waves, concurrency, errors, manifest, notes: ['Write the contract (ARCHITECTURE.md + defs) BEFORE launching wave 1.', 'Spawn with: "Read <root>/docs/swarm/prompts/<id>.md and execute it exactly."', `Max ${concurrency} agents at once; critical path first.`] };
+  const data = { project, ...(lang ? { language: languageContext(lang, lr.source) } : {}), agents, waves, concurrency, errors, manifest, notes: ['Write the contract (ARCHITECTURE.md + defs) BEFORE launching wave 1.', 'Spawn with: "Read <root>/docs/swarm/prompts/<id>.md and execute it exactly."', `Max ${concurrency} agents at once; critical path first.`] };
   if (input.out) {
     const f = resolve(input.out);
     if (existsSync(f) && !input.yes) return { ok: false, data, error: { code: 'EXISTS', message: `${input.out} exists; pass yes:true to overwrite` }, next: [] };
     if (!errors.length && !input.dryRun) { mkdirSync(dirname(f), { recursive: true }); writeFileSync(f, manifest); data.written = f; }
   }
   data.text = [`Plan for ${project}: ${agents.length} agents in ${waves.length} wave(s)`, ...waves.map((w, i) => `  wave ${i + 1} (${w.phase}): ${w.agents.map((id) => `${id}[${agents.find((a) => a.id === id).model}]`).join(', ')}`), ...(errors.length ? ['Problems:', ...errors.map((x) => '  ! ' + x)] : ['Plan is valid.'])].join('\n');
-  return errors.length ? { ok: false, data, error: { code: 'INVALID_PLAN', message: `${errors.length} problem(s)` }, next: [] } : ok(data, ['npm run plan', 'node tools/swarm-tracker/bin/track.mjs <id> start "<plan>"']);
+  return errors.length ? { ok: false, data, error: { code: 'INVALID_PLAN', message: `${errors.length} problem(s)` }, next: [] } : ok(data, ['npm run plan', 'node tools/swarm-tracker/bin/track.mjs <id> start "<plan>"', ...(isNonWeb(lang) ? [VERIFY[lang].test] : [])]);
 }
 
 // ---------- check ----------
