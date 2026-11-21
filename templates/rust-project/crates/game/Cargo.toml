@@ -1,0 +1,15 @@
+[package]
+name = "game"
+description = "__NAME__ (macroquad 2D starter using the deterministic engine crate)"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+# Native:  cargo run -p game --release
+# Browser: rustup target add wasm32-unknown-unknown
+#          cargo build -p game --release --target wasm32-unknown-unknown
+#          then serve index.html next to the .wasm (see README "Web build").
+[dependencies]
+engine = { path = "../engine" }
+# macroquad needs system libs on Linux (alsa, X11/wayland dev headers) only for the native build; wasm needs none.
+macroquad = { version = "0.4", default-features = false }

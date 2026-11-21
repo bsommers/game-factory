@@ -1,0 +1,24 @@
+{
+  "_comment": "Drives tools/shots.mjs. Each shot is captured once per style (style is appended to the url as ?style=<id>). Edit urls/keys for your game.",
+  "size": "1280x720",
+  "outDir": "docs/screenshots",
+  "styles": [
+    { "id": "classic", "query": "style=classic" },
+    { "id": "alt", "query": "style=alt" }
+  ],
+  "shots": [
+    { "id": "title", "url": "/index.html", "wait": 1500 },
+    { "id": "play", "url": "/index.html?autostart=1", "wait": 1500, "keys": "ArrowUp:300,ArrowUp:300" },
+    { "id": "action", "url": "/index.html?autostart=1", "wait": 1000, "keys": "ArrowUp:250,ArrowLeft:250,ArrowUp:250" }
+  ],
+  "hero": {
+    "url": "/index.html?autostart=1",
+    "style": "classic",
+    "frames": 40,
+    "interval": 100,
+    "crop": "1280:720:0:0",
+    "width": 640,
+    "fps": 10,
+    "out": "docs/hero.gif"
+  }
+}

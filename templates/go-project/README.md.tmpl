@@ -1,0 +1,77 @@
+# __NAME__
+
+Go game scaffolded by game-factory: a stdlib-only deterministic engine (`internal/engine`)
+plus an [Ebitengine](https://ebitengine.org) 2D starter (`cmd/game`).
+
+## Layout
+
+| Path | What |
+|---|---|
+| `internal/engine` | PCG32 + legacy streams, platformer physics, hazard kit, world-gen + fairness validator, autopilot kit. Standard library only. |
+| `internal/engine/vectors_test.go` (+ `vectors_*_test.go`) | Conformance tests against `spec/vectors/*.json` |
+| `cmd/game` | Ebitengine window, fixed 60 Hz update, one-screen platformer demo |
+| `spec/` | Language-neutral engine spec and golden vectors (copied in by the scaffolder; never edit the vectors by hand) |
+
+Ebitengine is the only external dependency and is imported only under `cmd/game`.
+
+## Verify (no network needed)
+
+```sh
+gofmt -l .                      # must print nothing
+go vet ./internal/...
+go test -race ./internal/...    # runs every spec vector
+```
+
+The vector tests find `spec/vectors/rng.json` by searching upward from the package
+directory; set `FACTORY_SPEC_DIR` (the `vectors` directory, or the `spec` directory above it)
+to point elsewhere. If the vectors cannot be found the tests are reported as SKIP with the
+reason, never as a silent pass.
+
+Keep `GOCACHE` and `GOPATH` off `/tmp` (for example under `/datanapps`).
+
+## Run and build
+
+```sh
+go run ./cmd/game               # controls: arrows, Space/Z jump, R restart
+go build -o dist/game ./cmd/game
+```
+
+`go.sum` is pre-populated for Ebitengine v2.8.8; run `go mod tidy` after adding imports.
+
+### Native cross-compiles
+
+Windows and macOS do not need cgo with Ebitengine, so `CGO_ENABLED=0` cross builds work:
+
+```sh
+GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o dist/game.exe ./cmd/game
+GOOS=darwin  GOARCH=arm64 CGO_ENABLED=0 go build -o dist/game-mac ./cmd/game
+```
+
+Linux builds need cgo plus the X11/GL development packages (Debian/Ubuntu:
+`libc6-dev libgl1-mesa-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxxf86vm-dev libasound2-dev pkg-config`).
+Build macOS binaries on a Mac or in CI if you rely on anything beyond the plain build; verify each platform before shipping.
+
+### WebAssembly (`GOOS=js GOARCH=wasm`)
+
+```sh
+mkdir -p dist/web
+GOOS=js GOARCH=wasm go build -o dist/web/game.wasm ./cmd/game
+cp "$(go env GOROOT)/lib/wasm/wasm_exec.js" dist/web/        # Go >= 1.24; older: $GOROOT/misc/wasm/
+```
+
+Serve `dist/web/` with an `index.html` that loads `wasm_exec.js` and runs:
+
+```js
+const go = new Go();
+WebAssembly.instantiateStreaming(fetch("game.wasm"), go.importObject)
+  .then((r) => go.run(r.instance));
+```
+
+The output can go through the factory's web packaging pipeline like any other static web build.
+Use `-ldflags="-s -w"` to shrink the binary; expect roughly 10 MB uncompressed (serve it gzip or brotli compressed).
+
+## Determinism rules
+
+* All engine math is `float64`; the engine never reads the clock or `math/rand`.
+* Use `engine.PCG32` for any new randomness; `Mulberry32` and `BotRNG` exist only to match the JS reference.
+* Step the simulation at a fixed dt (the starter uses 1/60 s); render separately.

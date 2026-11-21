@@ -13,3 +13,5 @@ Apply a theme with `styles.apply` (theme.json mixin). Guidance for this style:
 Limits: about 100-150 march steps; a handful of SDF primitives and 1-2 bounces; WebGL2 required, EXT_color_buffer_float optional.
 
 Pitfalls: GPU watchdog resets on long shader loops: cap march steps; integrated GPUs miss 60 fps at full res: enforce the ladder; no headless GPU: shots need a real browser; precision artefacts far from the origin.
+
+See also: [rendering](../../../docs/RENDERING.md) for the offline CPU path tracer (hero art, sprite/AO bakes, shots) and the browser raytrace-kit.

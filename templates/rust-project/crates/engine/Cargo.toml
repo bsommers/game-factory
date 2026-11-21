@@ -1,0 +1,12 @@
+[package]
+name = "engine"
+description = "Deterministic, dependency-free game engines (PCG32, platformer physics, hazards, world-gen, autopilot)"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+# intentionally empty: zero third-party runtime dependencies
+
+[dev-dependencies]
+serde_json = "1"

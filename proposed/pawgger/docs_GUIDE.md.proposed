@@ -1,0 +1,11 @@
+--- a/docs/GUIDE.md	2026-11-21 08:44:29.508982659 -0500
++++ b/docs/GUIDE.md	2026-11-21 08:44:29.525444796 -0500
+@@ -60,7 +60,7 @@
+ ## Agent usage
+ 1. Unsure what to do: `guide.route {goal}`; follow `steps` and `commands`; spawn subagents with the suggested `model`.
+ 2. Starting a swarm: `guide.plan {goal, out}` then edit tasks, `npm run plan`.
+-3. Before a release: `guide.check {project}` and fix errors/warnings.
++3. Before a release: `guide.check {project}` and fix errors/warnings. It errors on a README without screenshots (`no-readme-shots`) and a missing Pages workflow (`no-pages-workflow`); the fix is the `ship-showcase` skill (`docs/SHIP-SHOWCASE.md`).
+ 4. Install the skills for Claude Code: `guide.install {target: "~"}`.
+ 
+ ## Adding a skill

@@ -24,3 +24,12 @@ Start HTTP with `bin/factory serve --port 4790` (127.0.0.1 only; `GET /openapi.j
 3. Swarm: `swarm plan`, then loop `swarm next` (spawn what it prints, with the stated model), watch `swarm status` or the SSE stream, agents call `swarm track`.
 4. Verify: `test`, `run check-imports`, `shot`, `guide check` until clean.
 5. Publish: `library validate` then `library publish`, `guide index --check`, release. A human or the orchestrator approves publishes and commits.
+
+## Language clients (Go, Rust, Python)
+`factory clients generate` (capability `clients.generate {lang: go|rust|python|all, out, check}`) emits typed thin clients from the same `GET /openapi.json` document into `clients/<lang>/`. They call the HTTP door (127.0.0.1), so there is still one implementation. Each has one method per capability, the `{ok,data,error,next}` envelope, stable `error.code` constants (plus client-side `TRANSPORT` and `BAD_RESPONSE`), an SSE iterator for `/events?project=`, a 30 s timeout, and a README. Go and Python use the standard library only; Rust uses `serde_json` and plain HTTP/1.0 over `std::net`. `check: true` regenerates in memory and returns `CONFLICT` on drift; `test/clients.test.mjs` runs that and a smoke test of each client against a live `bin/factory serve --port 0`. After adding or changing a capability, run `bin/factory call clients.generate '{}'` and commit `clients/`.
+
+| Surface | List kits |
+|---|---|
+| Go | `factoryclient.New("").KitsList(ctx, factoryclient.KitsListInput{})` |
+| Rust | `Client::new(None)?.kits_list(&KitsListInput::default())?` |
+| Python | `Client().kits_list()` |

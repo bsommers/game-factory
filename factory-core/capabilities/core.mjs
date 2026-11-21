@@ -4,6 +4,8 @@ import { execFile } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve, basename } from 'node:path';
 import { ok, fail } from '../registry.mjs';
+import { LANG_IDS, GENERIC, templateDir } from '../languages/index.mjs';
+import { scaffoldFromTemplate } from '../languages/scaffold.mjs';
 
 const FACT = resolve(new URL('../..', import.meta.url).pathname);
 const KITS = join(FACT, 'templates/web-project/src');
@@ -35,15 +37,25 @@ const projectOf = (i) => resolve(i.project || '.');
 
 export const capabilities = [
   { name: 'project.new', summary: 'Scaffold a new game repo (web = zero-dep browser game with kits and tracker; otherwise a Godot project). Same as `factory new`.',
-    inputSchema: obj({ dir: str('target directory (must not exist)'), title: str('game title'), web: { type: 'boolean', description: 'browser (Canvas/ES-module) game instead of Godot' } }, ['dir']),
+    inputSchema: obj({ dir: str('target directory (must not exist)'), title: str('game title'), web: { type: 'boolean', description: 'browser (Canvas/ES-module) game instead of Godot (alias for lang js)' }, lang: { type: 'string', enum: LANG_IDS, description: `language: ${LANG_IDS.join('|')} (default gdscript)` } }, ['dir']),
     outputSchema: out,
     handler: async (i) => {
       const dir = resolve(i.dir), title = i.title || 'My Game';
       if (existsSync(dir)) return fail('EXISTS', `${dir} exists`);
-      const args = ['new', dir, title]; if (i.web) args.push('--web');
+      const lang = i.lang || (i.web ? 'js' : 'gdscript');
+      if (!LANG_IDS.includes(lang)) return fail('BAD_INPUT', `unknown lang "${lang}"; valid: ${LANG_IDS.join(', ')}`, { valid: LANG_IDS });
+      if (i.web && i.lang && i.lang !== 'js') return fail('BAD_INPUT', `web:true means lang js, conflicts with lang "${i.lang}"`);
+      if (GENERIC.includes(lang)) {
+        const tdir = templateDir(lang);
+        if (!isDir(tdir)) return fail('NOT_FOUND', `template for lang "${lang}" not found at ${tdir} (not implemented yet)`);
+        try { scaffoldFromTemplate({ templateDir: tdir, dir, title }); } catch (e) { return fail('FAILED', e.message); }
+        return ok({ dir, title, kind: lang, log: `created ${lang} game ${dir}` }, [`project.run {project:"${dir}", task:"test"}`, `guide.check {project:"${dir}"}`]);
+      }
+      const web = lang === 'js';
+      const args = ['new', dir, title]; if (web) args.push('--web');
       const r = await run('sh', [join(FACT, 'bin/factory-scaffold.sh'), ...args]);
       if (r.code) return fail('FAILED', r.stderr.trim() || `scaffold exited ${r.code}`);
-      return ok({ dir, title, kind: i.web ? 'web' : 'godot', log: r.stdout.trim() }, i.web ? [`project.run {project:"${dir}", task:"test"}`, `styles.recommend {idea}`, `guide.check {project:"${dir}"}`] : [`guide.check {project:"${dir}"}`]);
+      return ok({ dir, title, kind: web ? 'web' : 'godot', log: r.stdout.trim() }, web ? [`project.run {project:"${dir}", task:"test"}`, `styles.recommend {idea}`, `guide.check {project:"${dir}"}`] : [`guide.check {project:"${dir}"}`]);
     } },
   { name: 'project.sync', summary: 'Refresh tools/ and swarm/ in an existing game repo from this factory.',
     inputSchema: obj({ dir: str('game repo directory') }, ['dir']), outputSchema: out,
@@ -57,13 +69,32 @@ export const capabilities = [
     handler: async (i) => {
       const p = projectOf(i); if (!isDir(p)) return fail('NOT_FOUND', `${p} is not a directory`);
       const has = (f) => existsSync(join(p, f)); const extra = i.args || [];
-      let cmd, args;
+      let cmd, args, env = { TRACKER_ROOT: p };
+      const kind = has('Cargo.toml') ? 'rust' : has('go.mod') ? 'go' : has('pyproject.toml') ? 'python' : null;
+      if (kind === 'rust') {
+        if (process.env.CARGO_TARGET_DIR) env.CARGO_TARGET_DIR = process.env.CARGO_TARGET_DIR;
+        else if (isDir('/datanapps')) env.CARGO_TARGET_DIR = join('/datanapps/cargo-target', basename(p));
+      }
+      const steps = kind && ({ test: { rust: [['cargo', ['test']]], go: [['go', ['vet', './...']], ['go', ['test', './...']]], python: [['python3', ['-m', 'pytest', '-q']]] },
+        build: { rust: [['cargo', ['build', '--release', ...extra]]], go: [['go', ['build', './...', ...extra]]], python: [['python3', ['-m', 'compileall', '-q', '.']]] },
+        'check-imports': { rust: [['cargo', ['check']]], go: [['go', ['vet', './...']]], python: [['python3', ['-m', 'compileall', '-q', '.']]] } })[i.task]?.[kind];
+      if (steps) {
+        const runs = [];
+        for (const [c, a] of steps) {
+          const r = await run(c, a, { cwd: p, env });
+          if (r.spawnError) return fail('NOT_FOUND', `cannot run ${c}: ${r.spawnError}`);
+          runs.push(r); if (r.code) break;
+        }
+        const last = runs[runs.length - 1];
+        const data = { task: i.task, kind, exitCode: last.code, stdout: tail(runs.map((r) => r.stdout).join('')), stderr: tail(runs.map((r) => r.stderr).join(''), 2000) };
+        return last.code ? { ok: false, data, error: { code: 'TASK_FAILED', message: `${i.task} exited ${last.code}` }, next: [] } : ok(data);
+      }
       if (i.task === 'test') [cmd, args] = has('package.json') ? ['npm', ['test', '--silent']] : ['sh', ['tools/run_tests.sh']];
       else if (i.task === 'plan') [cmd, args] = ['node', ['tools/swarm-tracker/bin/swarm-plan.mjs']];
       else if (i.task === 'check-imports') [cmd, args] = ['node', ['tools/check-imports.mjs']];
       else if (i.task === 'shot') [cmd, args] = has('tools/shot.mjs') ? ['node', ['tools/shot.mjs', ...extra]] : ['sh', ['tools/shot.sh', ...extra]];
       else [cmd, args] = ['sh', ['tools/build.sh', ...extra]];
-      const r = await run(cmd, args, { cwd: p, env: { TRACKER_ROOT: p } });
+      const r = await run(cmd, args, { cwd: p, env });
       if (r.spawnError) return fail('NOT_FOUND', `cannot run ${cmd}: ${r.spawnError}`);
       const data = { task: i.task, exitCode: r.code, stdout: tail(r.stdout), stderr: tail(r.stderr, 2000) };
       return r.code ? { ok: false, data, error: { code: 'TASK_FAILED', message: `${i.task} exited ${r.code}` }, next: [] } : ok(data);

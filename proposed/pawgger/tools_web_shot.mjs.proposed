@@ -1,0 +1,11 @@
+--- a/tools/web/shot.mjs
++++ b/tools/web/shot.mjs
+@@ -9,7 +9,7 @@
+ import { spawn } from 'node:child_process';
+ import { startStatic, REPO_ROOT } from './serve.mjs';
+ 
+-const SCRATCH = process.env.SCRATCH || path.join(os.tmpdir(), 'game-shot');
++const SCRATCH = process.env.SCRATCH || path.join(REPO_ROOT, 'out', 'shot-tmp');
+ const sleep = ms => new Promise(r => setTimeout(r, ms));
+ 
+ function parseArgs(argv) {

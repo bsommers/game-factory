@@ -12,6 +12,7 @@ Extracted from **KÄSEKRIEG: RAT OPS** (Godot 4.7 third-person shooter): https:/
 | `api/`, `mcp/` | `factory serve --port N` (127.0.0.1 REST + OpenAPI + SSE) and `factory mcp` (stdio MCP tools + resources) generated from the registry; see `docs/SURFACES.md`, `AGENTS.md` |
 | `swarm/` | Agent swarm tracker: `bin/swarm-plan.mjs` (manifest → per-agent prompts), `bin/track.mjs` (progress events), `dashboard/server.mjs` (live dashboard, serves `out/` and `dist/` images, follows symlinks), `PLAYBOOK.md`, `PROTOCOL.md`, templates |
 | `tools/` | `godot.sh`, `install_godot.sh`, `run_tests.sh` (headless Godot tests), `shot.sh` (GPU screenshots in a private Xvfb, no desktop window), `build.sh` (export linux/windows/macos), `qa.sh`, `fetch_assets.mjs` (CC0 Poly Haven/ambientCG fetcher), `blender_ipc/` (interactive Blender 5.0+ live GUI IPC bridge + sandbox-safe client), `print/stl_verify.py` (binary STL watertightness, 2-manifold & bilateral symmetry QA) |
+| `factory-core/languages/` | Language axis: `languages.list/show`, `project.new --lang gdscript\|js\|go\|rust\|python` (see `docs/LANGUAGES.md`) |
 | `templates/godot-project/` | Autoloads (events/settings/game/defs), test runner and screenshot harness, `project.godot` |
 | `examples/ratops/` | Real specimens: SWARM.md manifest, procedural Blender character/prop builders, audio synth, level converter |
 | `docs/LEARNINGS.md` | Mistakes and fixes from the first build |

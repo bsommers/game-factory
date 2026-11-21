@@ -43,3 +43,6 @@ Publish `docs/index.html` with GitHub Pages (Settings, Pages, branch main, folde
 
 ## Using the kits in a swarm
 Hand each content agent the kit name in its prompt so it reuses the helpers instead of re-inventing PixBuf, the synth or the particle code. Kit code is a starting point: copy and specialise inside your game (do not edit the factory copy in a game repo expecting it to flow back).
+
+## raytrace-kit
+`createRaytracer(canvas, scene, { prefer })` never throws: WebGPU compute path tracer (flat BVH buffers), else WebGL2 SDF ray-marcher, else Canvas2D painter; `.tier`/`.errors` say what happened. Pure helpers `sceneToBuffers`, `cameraBasis`, `primaryRay`, `intersectBuffers`, `detectCapabilities`, `sdfUniforms` are unit-tested in Node. Buffer layout in `kits/raytrace-kit/README.md`; offline renders via `tools/render/pathtrace.mjs` (docs/RENDERING.md).

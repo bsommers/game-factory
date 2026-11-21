@@ -1,0 +1,2227 @@
+{
+ "engine": "collision2d",
+ "version": 2,
+ "cases": [
+  {
+   "name": "collide aabb overlap x",
+   "input": {
+    "a": {
+     "hh": 10,
+     "hw": 10,
+     "type": "aabb",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "hh": 10,
+     "hw": 10,
+     "type": "aabb",
+     "x": 15,
+     "y": 2
+    },
+    "op": "collide"
+   },
+   "expect": {
+    "depth": 5,
+    "normal": {
+     "x": 1,
+     "y": 0
+    },
+    "points": [
+     {
+      "depth": 5,
+      "x": 7.5,
+      "y": -8
+     },
+     {
+      "depth": 5,
+      "x": 7.5,
+      "y": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "collide aabb overlap y",
+   "input": {
+    "a": {
+     "hh": 10,
+     "hw": 10,
+     "type": "aabb",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "hh": 10,
+     "hw": 10,
+     "type": "aabb",
+     "x": 3,
+     "y": -17
+    },
+    "op": "collide"
+   },
+   "expect": {
+    "depth": 3,
+    "normal": {
+     "x": 0,
+     "y": -1
+    },
+    "points": [
+     {
+      "depth": 3,
+      "x": -7,
+      "y": -8.5
+     },
+     {
+      "depth": 3,
+      "x": 10,
+      "y": -8.5
+     }
+    ]
+   }
+  },
+  {
+   "name": "collide aabb touching is none",
+   "input": {
+    "a": {
+     "hh": 10,
+     "hw": 10,
+     "type": "aabb",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "hh": 10,
+     "hw": 10,
+     "type": "aabb",
+     "x": 20,
+     "y": 0
+    },
+    "op": "collide"
+   },
+   "expect": null
+  },
+  {
+   "name": "collide aabb separated",
+   "input": {
+    "a": {
+     "hh": 10,
+     "hw": 10,
+     "type": "aabb",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "hh": 10,
+     "hw": 10,
+     "type": "aabb",
+     "x": 40,
+     "y": 0
+    },
+    "op": "collide"
+   },
+   "expect": null
+  },
+  {
+   "name": "collide aabb tie prefers y",
+   "input": {
+    "a": {
+     "hh": 5,
+     "hw": 5,
+     "type": "aabb",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "hh": 5,
+     "hw": 5,
+     "type": "aabb",
+     "x": 8,
+     "y": 8
+    },
+    "op": "collide"
+   },
+   "expect": {
+    "depth": 2,
+    "normal": {
+     "x": 0,
+     "y": 1
+    },
+    "points": [
+     {
+      "depth": 2,
+      "x": 3,
+      "y": 4
+     },
+     {
+      "depth": 2,
+      "x": 5,
+      "y": 4
+     }
+    ]
+   }
+  },
+  {
+   "name": "collide circle circle",
+   "input": {
+    "a": {
+     "r": 5,
+     "type": "circle",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "r": 5,
+     "type": "circle",
+     "x": 8,
+     "y": 0
+    },
+    "op": "collide"
+   },
+   "expect": {
+    "depth": 2,
+    "normal": {
+     "x": 1,
+     "y": 0
+    },
+    "points": [
+     {
+      "depth": 2,
+      "x": 4,
+      "y": 0
+     }
+    ]
+   }
+  },
+  {
+   "name": "collide circle circle diagonal",
+   "input": {
+    "a": {
+     "r": 5,
+     "type": "circle",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "r": 5,
+     "type": "circle",
+     "x": 6,
+     "y": 8
+    },
+    "op": "collide"
+   },
+   "expect": null
+  },
+  {
+   "name": "collide circle vs aabb side",
+   "input": {
+    "a": {
+     "hh": 10,
+     "hw": 10,
+     "type": "aabb",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "r": 5,
+     "type": "circle",
+     "x": 12,
+     "y": 0
+    },
+    "op": "collide"
+   },
+   "expect": {
+    "depth": 3,
+    "normal": {
+     "x": 1,
+     "y": 0
+    },
+    "points": [
+     {
+      "depth": 3,
+      "x": 8.5,
+      "y": 0
+     }
+    ]
+   }
+  },
+  {
+   "name": "collide circle vs aabb corner",
+   "input": {
+    "a": {
+     "hh": 10,
+     "hw": 10,
+     "type": "aabb",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "r": 5,
+     "type": "circle",
+     "x": 13,
+     "y": 13
+    },
+    "op": "collide"
+   },
+   "expect": {
+    "depth": 0.7573593128807152,
+    "normal": {
+     "x": 0.7071067811865476,
+     "y": 0.7071067811865476
+    },
+    "points": [
+     {
+      "depth": 0.7573593128807152,
+      "x": 9.732233047033631,
+      "y": 9.732233047033631
+     }
+    ]
+   }
+  },
+  {
+   "name": "collide circle centre inside aabb",
+   "input": {
+    "a": {
+     "hh": 10,
+     "hw": 10,
+     "type": "aabb",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "r": 3,
+     "type": "circle",
+     "x": 2,
+     "y": 1
+    },
+    "op": "collide"
+   },
+   "expect": {
+    "depth": 11,
+    "normal": {
+     "x": 1,
+     "y": 0
+    },
+    "points": [
+     {
+      "depth": 11,
+      "x": 4.5,
+      "y": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "collide obb vs obb",
+   "input": {
+    "a": {
+     "angle": 0.3,
+     "hh": 10,
+     "hw": 10,
+     "type": "obb",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "angle": -0.2,
+     "hh": 10,
+     "hw": 10,
+     "type": "obb",
+     "x": 15,
+     "y": 3
+    },
+    "op": "collide"
+   },
+   "expect": {
+    "depth": 8.353473048077648,
+    "normal": {
+     "x": 0.955336489125606,
+     "y": 0.29552020666133955
+    },
+    "points": [
+     {
+      "depth": 8.353473048077648,
+      "x": 7.202829720514909,
+      "y": -3.579662429707885
+     }
+    ]
+   }
+  },
+  {
+   "name": "collide obb vs obb apart",
+   "input": {
+    "a": {
+     "angle": 0.3,
+     "hh": 10,
+     "hw": 10,
+     "type": "obb",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "angle": -0.2,
+     "hh": 10,
+     "hw": 10,
+     "type": "obb",
+     "x": 30,
+     "y": 3
+    },
+    "op": "collide"
+   },
+   "expect": null
+  },
+  {
+   "name": "collide obb face contact two points",
+   "input": {
+    "a": {
+     "angle": 0,
+     "hh": 5,
+     "hw": 10,
+     "type": "obb",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "angle": 0.1,
+     "hh": 5,
+     "hw": 8,
+     "type": "obb",
+     "x": 0,
+     "y": 9
+    },
+    "op": "collide"
+   },
+   "expect": {
+    "depth": 1.7736881595647542,
+    "normal": {
+     "x": 0,
+     "y": 1
+    },
+    "points": [
+     {
+      "depth": 1.7736881595647542,
+      "x": -7.460866238990065,
+      "y": 4.113155920217623
+     },
+     {
+      "depth": 0.17635349321550287,
+      "x": 8.459200405458347,
+      "y": 4.911823253392249
+     }
+    ]
+   }
+  },
+  {
+   "name": "collide polygon triangle vs aabb",
+   "input": {
+    "a": {
+     "angle": 0,
+     "points": [
+      {
+       "x": -10,
+       "y": 8
+      },
+      {
+       "x": 12,
+       "y": 8
+      },
+      {
+       "x": 0,
+       "y": -12
+      }
+     ],
+     "type": "polygon",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "hh": 10,
+     "hw": 10,
+     "type": "aabb",
+     "x": 0,
+     "y": 14
+    },
+    "op": "collide"
+   },
+   "expect": {
+    "depth": 4,
+    "normal": {
+     "x": 0,
+     "y": 1
+    },
+    "points": [
+     {
+      "depth": 4,
+      "x": -10,
+      "y": 6
+     },
+     {
+      "depth": 4,
+      "x": 10,
+      "y": 6
+     }
+    ]
+   }
+  },
+  {
+   "name": "collide hexagon vs hexagon",
+   "input": {
+    "a": {
+     "angle": 0,
+     "points": [
+      {
+       "x": 10,
+       "y": 0
+      },
+      {
+       "x": 5,
+       "y": 8.66
+      },
+      {
+       "x": -5,
+       "y": 8.66
+      },
+      {
+       "x": -10,
+       "y": 0
+      },
+      {
+       "x": -5,
+       "y": -8.66
+      },
+      {
+       "x": 5,
+       "y": -8.66
+      }
+     ],
+     "type": "polygon",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "angle": 0.5,
+     "points": [
+      {
+       "x": 10,
+       "y": 0
+      },
+      {
+       "x": 5,
+       "y": 8.66
+      },
+      {
+       "x": -5,
+       "y": 8.66
+      },
+      {
+       "x": -10,
+       "y": 0
+      },
+      {
+       "x": -5,
+       "y": -8.66
+      },
+      {
+       "x": 5,
+       "y": -8.66
+      }
+     ],
+     "type": "polygon",
+     "x": 15,
+     "y": 2
+    },
+    "op": "collide"
+   },
+   "expect": {
+    "depth": 3.708802784090872,
+    "normal": {
+     "x": 0.9997212620088664,
+     "y": -0.023609283923906477
+    },
+    "points": [
+     {
+      "depth": 3.708802784090872,
+      "x": 8.146115500073337,
+      "y": 0.043781088973688105
+     },
+     {
+      "depth": 2.134019721740622,
+      "x": 7.2908868257814445,
+      "y": -2.8194467247969253
+     }
+    ]
+   }
+  },
+  {
+   "name": "collide polygon winding reversed",
+   "input": {
+    "a": {
+     "angle": 0,
+     "points": [
+      {
+       "x": 0,
+       "y": -12
+      },
+      {
+       "x": 12,
+       "y": 8
+      },
+      {
+       "x": -10,
+       "y": 8
+      }
+     ],
+     "type": "polygon",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "hh": 10,
+     "hw": 10,
+     "type": "aabb",
+     "x": 0,
+     "y": 14
+    },
+    "op": "collide"
+   },
+   "expect": {
+    "depth": 4,
+    "normal": {
+     "x": 0,
+     "y": 1
+    },
+    "points": [
+     {
+      "depth": 4,
+      "x": -10,
+      "y": 6
+     },
+     {
+      "depth": 4,
+      "x": 10,
+      "y": 6
+     }
+    ]
+   }
+  },
+  {
+   "name": "collide capsule vs capsule parallel",
+   "input": {
+    "a": {
+     "angle": 0,
+     "hl": 10,
+     "r": 4,
+     "type": "capsule",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "angle": 0,
+     "hl": 10,
+     "r": 4,
+     "type": "capsule",
+     "x": 0,
+     "y": 6
+    },
+    "op": "collide"
+   },
+   "expect": {
+    "depth": 2,
+    "normal": {
+     "x": 0,
+     "y": 1
+    },
+    "points": [
+     {
+      "depth": 2,
+      "x": -10,
+      "y": 3
+     },
+     {
+      "depth": 2,
+      "x": 10,
+      "y": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "collide capsule vs capsule crossing",
+   "input": {
+    "a": {
+     "angle": 0,
+     "hl": 10,
+     "r": 3,
+     "type": "capsule",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "angle": 1.5707963267948966,
+     "hl": 10,
+     "r": 3,
+     "type": "capsule",
+     "x": 2,
+     "y": 0
+    },
+    "op": "collide"
+   },
+   "expect": {
+    "depth": 14,
+    "normal": {
+     "x": 1,
+     "y": 0
+    },
+    "points": [
+     {
+      "depth": 14,
+      "x": 5.999999999999999,
+      "y": -10
+     },
+     {
+      "depth": 14,
+      "x": 6,
+      "y": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "collide capsule vs circle at end",
+   "input": {
+    "a": {
+     "angle": 0,
+     "hl": 10,
+     "r": 4,
+     "type": "capsule",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "r": 3,
+     "type": "circle",
+     "x": 16,
+     "y": 0
+    },
+    "op": "collide"
+   },
+   "expect": {
+    "depth": 1,
+    "normal": {
+     "x": 1,
+     "y": 0
+    },
+    "points": [
+     {
+      "depth": 1,
+      "x": 13.5,
+      "y": 0
+     }
+    ]
+   }
+  },
+  {
+   "name": "collide capsule vs aabb",
+   "input": {
+    "a": {
+     "hh": 10,
+     "hw": 10,
+     "type": "aabb",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "angle": 1,
+     "hl": 6,
+     "r": 4,
+     "type": "capsule",
+     "x": 0,
+     "y": -12
+    },
+    "op": "collide"
+   },
+   "expect": {
+    "depth": 7.048825908847379,
+    "normal": {
+     "x": 0,
+     "y": -1
+    },
+    "points": [
+     {
+      "depth": 7.048825908847379,
+      "x": 3.2418138352088386,
+      "y": -6.475587045576311
+     }
+    ]
+   }
+  },
+  {
+   "name": "collide capsule vs polygon",
+   "input": {
+    "a": {
+     "angle": 0,
+     "points": [
+      {
+       "x": -10,
+       "y": 8
+      },
+      {
+       "x": 12,
+       "y": 8
+      },
+      {
+       "x": 0,
+       "y": -12
+      }
+     ],
+     "type": "polygon",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "angle": 0.4,
+     "hl": 5,
+     "r": 3,
+     "type": "capsule",
+     "x": 4,
+     "y": -14
+    },
+    "op": "collide"
+   },
+   "expect": null
+  },
+  {
+   "name": "distance circle aabb",
+   "input": {
+    "a": {
+     "r": 5,
+     "type": "circle",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "hh": 10,
+     "hw": 10,
+     "type": "aabb",
+     "x": 30,
+     "y": 0
+    },
+    "op": "distance"
+   },
+   "expect": {
+    "distance": 15,
+    "normal": {
+     "x": 1,
+     "y": 0
+    },
+    "overlap": false,
+    "pointA": {
+     "x": 5,
+     "y": 0
+    },
+    "pointB": {
+     "x": 20,
+     "y": 0
+    }
+   }
+  },
+  {
+   "name": "distance obb obb",
+   "input": {
+    "a": {
+     "angle": 0.5,
+     "hh": 5,
+     "hw": 5,
+     "type": "obb",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "angle": -0.4,
+     "hh": 5,
+     "hw": 5,
+     "type": "obb",
+     "x": 30,
+     "y": 10
+    },
+    "op": "distance"
+   },
+   "expect": {
+    "distance": 19.09704785326247,
+    "normal": {
+     "x": 0.8775825618903728,
+     "y": 0.4794255386042031
+    },
+    "overlap": false,
+    "pointA": {
+     "x": 6.6883671388331996,
+     "y": -1.8138257112717728
+    },
+    "pointB": {
+     "x": 23.447603318442322,
+     "y": 7.341786741528828
+    }
+   }
+  },
+  {
+   "name": "distance overlap is zero",
+   "input": {
+    "a": {
+     "hh": 5,
+     "hw": 5,
+     "type": "aabb",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "hh": 5,
+     "hw": 5,
+     "type": "aabb",
+     "x": 4,
+     "y": 0
+    },
+    "op": "distance"
+   },
+   "expect": {
+    "distance": 0,
+    "normal": {
+     "x": 1,
+     "y": 0
+    },
+    "overlap": true,
+    "pointA": null,
+    "pointB": null
+   }
+  },
+  {
+   "name": "contains aabb in",
+   "input": {
+    "op": "contains",
+    "shape": {
+     "hh": 10,
+     "hw": 10,
+     "type": "aabb",
+     "x": 0,
+     "y": 0
+    },
+    "x": 5,
+    "y": -5
+   },
+   "expect": true
+  },
+  {
+   "name": "contains triangle in",
+   "input": {
+    "op": "contains",
+    "shape": {
+     "angle": 0,
+     "points": [
+      {
+       "x": -10,
+       "y": 8
+      },
+      {
+       "x": 12,
+       "y": 8
+      },
+      {
+       "x": 0,
+       "y": -12
+      }
+     ],
+     "type": "polygon",
+     "x": 0,
+     "y": 0
+    },
+    "x": 0,
+    "y": 0
+   },
+   "expect": true
+  },
+  {
+   "name": "bounds obb",
+   "input": {
+    "op": "bounds",
+    "shape": {
+     "angle": 0.5,
+     "hh": 4,
+     "hw": 10,
+     "type": "obb",
+     "x": 5,
+     "y": 5
+    }
+   },
+   "expect": {
+    "maxX": 15.69352777332054,
+    "maxY": 13.304585633603521,
+    "minX": -5.69352777332054,
+    "minY": -3.304585633603521
+   }
+  },
+  {
+   "name": "raycast aabb hit",
+   "input": {
+    "dx": 1,
+    "dy": 0,
+    "maxT": 100,
+    "op": "raycast",
+    "ox": -30,
+    "oy": 0,
+    "shape": {
+     "hh": 10,
+     "hw": 10,
+     "type": "aabb",
+     "x": 0,
+     "y": 0
+    }
+   },
+   "expect": {
+    "inside": false,
+    "normal": {
+     "x": -1,
+     "y": 0
+    },
+    "t": 20,
+    "x": -10,
+    "y": 0
+   }
+  },
+  {
+   "name": "raycast aabb miss",
+   "input": {
+    "dx": 1,
+    "dy": 0,
+    "maxT": 100,
+    "op": "raycast",
+    "ox": -30,
+    "oy": 20,
+    "shape": {
+     "hh": 10,
+     "hw": 10,
+     "type": "aabb",
+     "x": 0,
+     "y": 0
+    }
+   },
+   "expect": null
+  },
+  {
+   "name": "raycast aabb inside",
+   "input": {
+    "dx": 2,
+    "dy": 0,
+    "maxT": 1,
+    "op": "raycast",
+    "ox": 1,
+    "oy": 1,
+    "shape": {
+     "hh": 10,
+     "hw": 10,
+     "type": "aabb",
+     "x": 0,
+     "y": 0
+    }
+   },
+   "expect": {
+    "inside": true,
+    "normal": {
+     "x": -1,
+     "y": 0
+    },
+    "t": 0,
+    "x": 1,
+    "y": 1
+   }
+  },
+  {
+   "name": "raycast circle hit",
+   "input": {
+    "dx": 1,
+    "dy": 0,
+    "maxT": 100,
+    "op": "raycast",
+    "ox": -20,
+    "oy": 3,
+    "shape": {
+     "r": 5,
+     "type": "circle",
+     "x": 0,
+     "y": 0
+    }
+   },
+   "expect": {
+    "inside": false,
+    "normal": {
+     "x": -0.8,
+     "y": 0.6
+    },
+    "t": 16,
+    "x": -4,
+    "y": 3
+   }
+  },
+  {
+   "name": "raycast obb diagonal",
+   "input": {
+    "dx": 1,
+    "dy": 1,
+    "maxT": 100,
+    "op": "raycast",
+    "ox": -30,
+    "oy": -30,
+    "shape": {
+     "angle": 0.5,
+     "hh": 4,
+     "hw": 10,
+     "type": "obb",
+     "x": 0,
+     "y": 0
+    }
+   },
+   "expect": {
+    "inside": false,
+    "normal": {
+     "x": -0.8775825618903728,
+     "y": -0.479425538604203
+    },
+    "t": 22.630847231969067,
+    "x": -7.369152768030933,
+    "y": -7.369152768030933
+   }
+  },
+  {
+   "name": "raycast capsule side",
+   "input": {
+    "dx": 0,
+    "dy": 1,
+    "maxT": 100,
+    "op": "raycast",
+    "ox": 0,
+    "oy": -30,
+    "shape": {
+     "angle": 0,
+     "hl": 10,
+     "r": 4,
+     "type": "capsule",
+     "x": 0,
+     "y": 0
+    }
+   },
+   "expect": {
+    "inside": false,
+    "normal": {
+     "x": 0,
+     "y": -1
+    },
+    "t": 26,
+    "x": 0,
+    "y": -4
+   }
+  },
+  {
+   "name": "raycast polygon segment",
+   "input": {
+    "dx": 60,
+    "dy": 0,
+    "maxT": 1,
+    "op": "raycast",
+    "ox": -30,
+    "oy": 0,
+    "shape": {
+     "angle": 0,
+     "points": [
+      {
+       "x": -10,
+       "y": 8
+      },
+      {
+       "x": 12,
+       "y": 8
+      },
+      {
+       "x": 0,
+       "y": -12
+      }
+     ],
+     "type": "polygon",
+     "x": 0,
+     "y": 0
+    }
+   },
+   "expect": {
+    "inside": false,
+    "normal": {
+     "x": -0.8944271909999159,
+     "y": -0.4472135954999579
+    },
+    "t": 0.4,
+    "x": -6,
+    "y": 0
+   }
+  },
+  {
+   "name": "sweptAABB head on",
+   "input": {
+    "a": {
+     "hh": 5,
+     "hw": 5,
+     "type": "aabb",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "hh": 5,
+     "hw": 5,
+     "type": "aabb",
+     "x": 50,
+     "y": 0
+    },
+    "dx": 100,
+    "dy": 0,
+    "op": "sweptAABB"
+   },
+   "expect": {
+    "normal": {
+     "x": -1,
+     "y": 0
+    },
+    "overlap": false,
+    "t": 0.4,
+    "x": 40,
+    "y": 0
+   }
+  },
+  {
+   "name": "sweptAABB tunnelling speed",
+   "input": {
+    "a": {
+     "hh": 2,
+     "hw": 2,
+     "type": "aabb",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "hh": 20,
+     "hw": 1,
+     "type": "aabb",
+     "x": 500,
+     "y": 0
+    },
+    "dx": 10000,
+    "dy": 0,
+    "op": "sweptAABB"
+   },
+   "expect": {
+    "normal": {
+     "x": -1,
+     "y": 0
+    },
+    "overlap": false,
+    "t": 0.0497,
+    "x": 497,
+    "y": 0
+   }
+  },
+  {
+   "name": "sweptAABB falling onto floor",
+   "input": {
+    "a": {
+     "hh": 5,
+     "hw": 5,
+     "type": "aabb",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "hh": 5,
+     "hw": 20,
+     "type": "aabb",
+     "x": 2,
+     "y": 60
+    },
+    "dx": 0,
+    "dy": 100,
+    "op": "sweptAABB"
+   },
+   "expect": {
+    "normal": {
+     "x": 0,
+     "y": -1
+    },
+    "overlap": false,
+    "t": 0.5,
+    "x": 0,
+    "y": 50
+   }
+  },
+  {
+   "name": "sweptAABB parallel touching misses",
+   "input": {
+    "a": {
+     "hh": 5,
+     "hw": 5,
+     "type": "aabb",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "hh": 5,
+     "hw": 5,
+     "type": "aabb",
+     "x": 0,
+     "y": 10
+    },
+    "dx": 100,
+    "dy": 0,
+    "op": "sweptAABB"
+   },
+   "expect": null
+  },
+  {
+   "name": "sweptAABB already overlapping",
+   "input": {
+    "a": {
+     "hh": 5,
+     "hw": 5,
+     "type": "aabb",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "hh": 5,
+     "hw": 5,
+     "type": "aabb",
+     "x": 6,
+     "y": 0
+    },
+    "dx": 10,
+    "dy": 0,
+    "op": "sweptAABB"
+   },
+   "expect": {
+    "normal": {
+     "x": -1,
+     "y": 0
+    },
+    "overlap": true,
+    "t": 0,
+    "x": 0,
+    "y": 0
+   }
+  },
+  {
+   "name": "shapeCast circle vs obb",
+   "input": {
+    "a": {
+     "r": 5,
+     "type": "circle",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "angle": 0.5,
+     "hh": 10,
+     "hw": 10,
+     "type": "obb",
+     "x": 50,
+     "y": 0
+    },
+    "dx": 100,
+    "dy": 0,
+    "op": "shapeCast"
+   },
+   "expect": {
+    "normal": {
+     "x": -0.8775825618903728,
+     "y": -0.47942553860420306
+    },
+    "overlap": false,
+    "t": 0.32907591090131766,
+    "x": 37.29550389958363,
+    "y": 2.397127693021015
+   }
+  },
+  {
+   "name": "shapeCast obb vs capsule",
+   "input": {
+    "a": {
+     "angle": 0.2,
+     "hh": 4,
+     "hw": 4,
+     "type": "obb",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "angle": 1.2,
+     "hl": 8,
+     "r": 4,
+     "type": "capsule",
+     "x": 60,
+     "y": 20
+    },
+    "dx": 80,
+    "dy": 30,
+    "op": "shapeCast"
+   },
+   "expect": {
+    "normal": {
+     "x": -0.9320390859672264,
+     "y": 0.3623577544766738
+    },
+    "overlap": false,
+    "t": 0.6146431983132834,
+    "x": 53.88639949960789,
+    "y": 15.313706961213782
+   }
+  },
+  {
+   "name": "shapeCast miss",
+   "input": {
+    "a": {
+     "r": 3,
+     "type": "circle",
+     "x": 0,
+     "y": 0
+    },
+    "b": {
+     "hh": 5,
+     "hw": 5,
+     "type": "aabb",
+     "x": 50,
+     "y": 40
+    },
+    "dx": 100,
+    "dy": 0,
+    "op": "shapeCast"
+   },
+   "expect": null
+  },
+  {
+   "name": "moveAABB slide on wall",
+   "input": {
+    "a": {
+     "hh": 4,
+     "hw": 4,
+     "type": "aabb",
+     "x": 0,
+     "y": 0
+    },
+    "boxes": [
+     {
+      "hh": 100,
+      "hw": 5,
+      "type": "aabb",
+      "x": 30,
+      "y": 0
+     }
+    ],
+    "dx": 100,
+    "dy": 40,
+    "op": "moveAABB"
+   },
+   "expect": {
+    "hits": [
+     {
+      "index": 0,
+      "normal": {
+       "x": -1,
+       "y": 0
+      },
+      "t": 0.21
+     }
+    ],
+    "x": 21,
+    "y": 40
+   }
+  },
+  {
+   "name": "moveAABB corner",
+   "input": {
+    "a": {
+     "hh": 4,
+     "hw": 4,
+     "type": "aabb",
+     "x": 0,
+     "y": 0
+    },
+    "boxes": [
+     {
+      "hh": 200,
+      "hw": 5,
+      "type": "aabb",
+      "x": 40,
+      "y": 0
+     },
+     {
+      "hh": 5,
+      "hw": 200,
+      "type": "aabb",
+      "x": 0,
+      "y": 40
+     }
+    ],
+    "dx": 100,
+    "dy": 100,
+    "op": "moveAABB"
+   },
+   "expect": {
+    "hits": [
+     {
+      "index": 0,
+      "normal": {
+       "x": -1,
+       "y": 0
+      },
+      "t": 0.31
+     },
+     {
+      "index": 1,
+      "normal": {
+       "x": 0,
+       "y": -1
+      },
+      "t": 0
+     }
+    ],
+    "x": 31,
+    "y": 31
+   }
+  },
+  {
+   "name": "moveAABB fast no tunnel",
+   "input": {
+    "a": {
+     "hh": 2,
+     "hw": 2,
+     "type": "aabb",
+     "x": 0,
+     "y": 0
+    },
+    "boxes": [
+     {
+      "hh": 30,
+      "hw": 1,
+      "type": "aabb",
+      "x": 900,
+      "y": 0
+     },
+     {
+      "hh": 30,
+      "hw": 1,
+      "type": "aabb",
+      "x": 300,
+      "y": 0
+     }
+    ],
+    "dx": 50000,
+    "dy": 0,
+    "op": "moveAABB"
+   },
+   "expect": {
+    "hits": [
+     {
+      "index": 1,
+      "normal": {
+       "x": -1,
+       "y": 0
+      },
+      "t": 0.00594
+     }
+    ],
+    "x": 297,
+    "y": 0
+   }
+  },
+  {
+   "name": "hash pairs sorted",
+   "input": {
+    "cellSize": 16,
+    "items": [
+     {
+      "bounds": {
+       "maxX": 14,
+       "maxY": 10,
+       "minX": 0,
+       "minY": 0
+      },
+      "id": 0
+     },
+     {
+      "bounds": {
+       "maxX": 24,
+       "maxY": 10,
+       "minX": 10,
+       "minY": 0
+      },
+      "id": 1
+     },
+     {
+      "bounds": {
+       "maxX": 34,
+       "maxY": 10,
+       "minX": 20,
+       "minY": 0
+      },
+      "id": 2
+     },
+     {
+      "bounds": {
+       "maxX": 44,
+       "maxY": 10,
+       "minX": 30,
+       "minY": 0
+      },
+      "id": 3
+     },
+     {
+      "bounds": {
+       "maxX": 54,
+       "maxY": 10,
+       "minX": 40,
+       "minY": 0
+      },
+      "id": 4
+     },
+     {
+      "bounds": {
+       "maxX": 64,
+       "maxY": 10,
+       "minX": 50,
+       "minY": 0
+      },
+      "id": 5
+     }
+    ],
+    "op": "hash",
+    "queries": [
+     {
+      "maxX": 5,
+      "maxY": 5,
+      "minX": 0,
+      "minY": 0
+     },
+     {
+      "maxX": 45,
+      "maxY": 5,
+      "minX": 25,
+      "minY": 0
+     }
+    ]
+   },
+   "expect": {
+    "pairs": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      2
+     ],
+     [
+      2,
+      3
+     ],
+     [
+      3,
+      4
+     ],
+     [
+      4,
+      5
+     ]
+    ],
+    "queries": [
+     [
+      0
+     ],
+     [
+      2,
+      3,
+      4
+     ]
+    ]
+   }
+  },
+  {
+   "name": "hash string ids and layers",
+   "input": {
+    "cellSize": 32,
+    "items": [
+     {
+      "bounds": {
+       "maxX": 20,
+       "maxY": 20,
+       "minX": 0,
+       "minY": 0
+      },
+      "id": "b",
+      "layer": 1,
+      "mask": 2
+     },
+     {
+      "bounds": {
+       "maxX": 30,
+       "maxY": 30,
+       "minX": 10,
+       "minY": 10
+      },
+      "id": "a",
+      "layer": 2,
+      "mask": 1
+     },
+     {
+      "bounds": {
+       "maxX": 18,
+       "maxY": 18,
+       "minX": 12,
+       "minY": 12
+      },
+      "id": 7,
+      "layer": 4,
+      "mask": 4
+     },
+     {
+      "bounds": {
+       "maxX": 16,
+       "maxY": 16,
+       "minX": 14,
+       "minY": 14
+      },
+      "id": 3
+     }
+    ],
+    "op": "hash"
+   },
+   "expect": {
+    "pairs": [
+     [
+      3,
+      "a"
+     ],
+     [
+      "a",
+      "b"
+     ]
+    ],
+    "queries": []
+   }
+  },
+  {
+   "name": "tilemap query kinds and slopes",
+   "input": {
+    "map": {
+     "cols": 6,
+     "outside": 0,
+     "rows": 4,
+     "tileSize": 16,
+     "tiles": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      2,
+      0,
+      0,
+      0,
+      0,
+      3,
+      1,
+      4,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     "x": 8,
+     "y": -4
+    },
+    "op": "tilemap",
+    "queries": [
+     {
+      "maxX": 104,
+      "maxY": 60,
+      "minX": 8,
+      "minY": -4
+     },
+     {
+      "maxX": 50,
+      "maxY": 30,
+      "minX": 40,
+      "minY": 20
+     }
+    ]
+   },
+   "expect": {
+    "queries": [
+     [
+      {
+       "col": 2,
+       "kind": "oneway",
+       "maxX": 56,
+       "maxY": 16,
+       "minX": 40,
+       "minY": 12,
+       "row": 1,
+       "tile": 2
+      },
+      {
+       "col": 1,
+       "kind": "slope",
+       "maxX": 40,
+       "maxY": 44,
+       "minX": 24,
+       "minY": 28,
+       "row": 2,
+       "slope": {
+        "x0": 24,
+        "x1": 40,
+        "y0": 44,
+        "y1": 28
+       },
+       "tile": 3
+      },
+      {
+       "col": 2,
+       "kind": "solid",
+       "maxX": 56,
+       "maxY": 44,
+       "minX": 40,
+       "minY": 28,
+       "row": 2,
+       "tile": 1
+      },
+      {
+       "col": 3,
+       "kind": "slope",
+       "maxX": 72,
+       "maxY": 44,
+       "minX": 56,
+       "minY": 28,
+       "row": 2,
+       "slope": {
+        "x0": 56,
+        "x1": 72,
+        "y0": 28,
+        "y1": 44
+       },
+       "tile": 4
+      },
+      {
+       "col": 0,
+       "kind": "solid",
+       "maxX": 24,
+       "maxY": 60,
+       "minX": 8,
+       "minY": 44,
+       "row": 3,
+       "tile": 1
+      },
+      {
+       "col": 1,
+       "kind": "solid",
+       "maxX": 40,
+       "maxY": 60,
+       "minX": 24,
+       "minY": 44,
+       "row": 3,
+       "tile": 1
+      },
+      {
+       "col": 2,
+       "kind": "solid",
+       "maxX": 56,
+       "maxY": 60,
+       "minX": 40,
+       "minY": 44,
+       "row": 3,
+       "tile": 1
+      },
+      {
+       "col": 3,
+       "kind": "solid",
+       "maxX": 72,
+       "maxY": 60,
+       "minX": 56,
+       "minY": 44,
+       "row": 3,
+       "tile": 1
+      },
+      {
+       "col": 4,
+       "kind": "solid",
+       "maxX": 88,
+       "maxY": 60,
+       "minX": 72,
+       "minY": 44,
+       "row": 3,
+       "tile": 1
+      },
+      {
+       "col": 5,
+       "kind": "solid",
+       "maxX": 104,
+       "maxY": 60,
+       "minX": 88,
+       "minY": 44,
+       "row": 3,
+       "tile": 1
+      }
+     ],
+     [
+      {
+       "col": 2,
+       "kind": "oneway",
+       "maxX": 56,
+       "maxY": 16,
+       "minX": 40,
+       "minY": 12,
+       "row": 1,
+       "tile": 2
+      },
+      {
+       "col": 2,
+       "kind": "solid",
+       "maxX": 56,
+       "maxY": 44,
+       "minX": 40,
+       "minY": 28,
+       "row": 2,
+       "tile": 1
+      }
+     ]
+    ],
+    "shapes": []
+   }
+  },
+  {
+   "name": "tilemap collideSource solids and oneway",
+   "input": {
+    "map": {
+     "cols": 6,
+     "outside": 0,
+     "rows": 4,
+     "tileSize": 16,
+     "tiles": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      2,
+      0,
+      0,
+      0,
+      0,
+      3,
+      1,
+      4,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     "x": 8,
+     "y": -4
+    },
+    "op": "tilemap",
+    "shapes": [
+     {
+      "shape": {
+       "hh": 6,
+       "hw": 6,
+       "type": "aabb",
+       "x": 30,
+       "y": 40
+      }
+     },
+     {
+      "opts": {
+       "prevMaxY": 16
+      },
+      "shape": {
+       "hh": 4,
+       "hw": 4,
+       "type": "aabb",
+       "x": 40,
+       "y": 14
+      }
+     },
+     {
+      "opts": {
+       "prevMaxY": 30
+      },
+      "shape": {
+       "hh": 4,
+       "hw": 4,
+       "type": "aabb",
+       "x": 40,
+       "y": 18
+      }
+     },
+     {
+      "shape": {
+       "r": 4,
+       "type": "circle",
+       "x": 62,
+       "y": 40
+      }
+     },
+     {
+      "opts": {
+       "layer": 1,
+       "mask": 1
+      },
+      "shape": {
+       "hh": 6,
+       "hw": 6,
+       "type": "aabb",
+       "x": 30,
+       "y": 40
+      }
+     }
+    ]
+   },
+   "expect": {
+    "queries": [],
+    "shapes": [
+     [
+      {
+       "col": 1,
+       "manifold": {
+        "depth": 9.899494936611664,
+        "normal": {
+         "x": -0.7071067811865475,
+         "y": -0.7071067811865475
+        },
+        "points": [
+         {
+          "depth": 1.414213562373095,
+          "x": 35.5,
+          "y": 33.5
+         },
+         {
+          "depth": 9.899494936611664,
+          "x": 32.5,
+          "y": 42.5
+         }
+        ]
+       },
+       "row": 2
+      },
+      {
+       "col": 1,
+       "manifold": {
+        "depth": 2,
+        "normal": {
+         "x": 0,
+         "y": -1
+        },
+        "points": [
+         {
+          "depth": 2,
+          "x": 24,
+          "y": 45
+         },
+         {
+          "depth": 2,
+          "x": 36,
+          "y": 45
+         }
+        ]
+       },
+       "row": 3
+      }
+     ],
+     [],
+     [],
+     [
+      {
+       "col": 3,
+       "manifold": {
+        "depth": 8,
+        "normal": {
+         "x": 0,
+         "y": 1
+        },
+        "points": [
+         {
+          "depth": 8,
+          "x": 62,
+          "y": 40
+         }
+        ]
+       },
+       "row": 2
+      }
+     ],
+     [
+      {
+       "col": 1,
+       "manifold": {
+        "depth": 9.899494936611664,
+        "normal": {
+         "x": -0.7071067811865475,
+         "y": -0.7071067811865475
+        },
+        "points": [
+         {
+          "depth": 1.414213562373095,
+          "x": 35.5,
+          "y": 33.5
+         },
+         {
+          "depth": 9.899494936611664,
+          "x": 32.5,
+          "y": 42.5
+         }
+        ]
+       },
+       "row": 2
+      },
+      {
+       "col": 1,
+       "manifold": {
+        "depth": 2,
+        "normal": {
+         "x": 0,
+         "y": -1
+        },
+        "points": [
+         {
+          "depth": 2,
+          "x": 24,
+          "y": 45
+         },
+         {
+          "depth": 2,
+          "x": 36,
+          "y": 45
+         }
+        ]
+       },
+       "row": 3
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "name": "tilemap outside solid",
+   "input": {
+    "map": {
+     "cols": 2,
+     "outside": 1,
+     "rows": 2,
+     "tileSize": 10,
+     "tiles": [
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    "op": "tilemap",
+    "queries": [
+     {
+      "maxX": 5,
+      "maxY": 5,
+      "minX": -5,
+      "minY": -5
+     }
+    ],
+    "shapes": [
+     {
+      "shape": {
+       "hh": 3,
+       "hw": 3,
+       "type": "aabb",
+       "x": -2,
+       "y": 5
+      }
+     }
+    ]
+   },
+   "expect": {
+    "queries": [
+     [
+      {
+       "col": -1,
+       "kind": "solid",
+       "maxX": 0,
+       "maxY": 0,
+       "minX": -10,
+       "minY": -10,
+       "row": -1,
+       "tile": 1
+      },
+      {
+       "col": 0,
+       "kind": "solid",
+       "maxX": 10,
+       "maxY": 0,
+       "minX": 0,
+       "minY": -10,
+       "row": -1,
+       "tile": 1
+      },
+      {
+       "col": -1,
+       "kind": "solid",
+       "maxX": 0,
+       "maxY": 10,
+       "minX": -10,
+       "minY": 0,
+       "row": 0,
+       "tile": 1
+      }
+     ]
+    ],
+    "shapes": [
+     [
+      {
+       "col": -1,
+       "manifold": {
+        "depth": 5,
+        "normal": {
+         "x": 1,
+         "y": 0
+        },
+        "points": [
+         {
+          "depth": 5,
+          "x": -2.5,
+          "y": 2
+         },
+         {
+          "depth": 5,
+          "x": -2.5,
+          "y": 8
+         }
+        ]
+       },
+       "row": 0
+      }
+     ]
+    ]
+   }
+  }
+ ]
+}

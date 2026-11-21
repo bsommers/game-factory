@@ -1,0 +1,6 @@
+# Stable toolchain with the gate tools. For the browser build also run once:
+#   rustup target add wasm32-unknown-unknown
+# (kept out of this file so offline `cargo test` never tries to download a target).
+[toolchain]
+channel = "stable"
+components = ["rustfmt", "clippy"]

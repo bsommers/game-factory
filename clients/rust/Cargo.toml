@@ -1,0 +1,11 @@
+[package]
+name = "factory-client"
+version = "0.1.0"
+edition = "2021"
+description = "Typed thin client for the game-factory HTTP API (generated)"
+publish = false
+
+# serde_json is the only dependency. HTTP is plain HTTP/1.0 over std::net::TcpStream: the server binds
+# 127.0.0.1 only, so TLS, redirects, pooling and async runtimes (ureq/reqwest and their trees) buy nothing.
+[dependencies]
+serde_json = "1"

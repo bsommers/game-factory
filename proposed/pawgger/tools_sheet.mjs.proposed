@@ -1,0 +1,54 @@
+--- a/tools/sheet.mjs
++++ b/tools/sheet.mjs
+@@ -22,11 +22,50 @@
+   return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
+ }
+ 
++/** --style ghibli: build src/art/ghibli/<file>.js in headless Chrome (needs a real canvas), validate vs defs.ART (sizes x GHIBLI_SCALE), save a sheet. */
++async function ghibliMode(mod, args, opt) {
++  const { artManifest, GHIBLI_SCALE } = await import(pathToFileURL(join(root, 'src/core/defs.js')));
++  const MAP = { colby: 'characters', characters: 'characters', vehicles: 'vehicles', river: 'river', world: 'world', fx: 'fx' };
++  const file = MAP[mod]; if (!file) { console.error('unknown module ' + mod); process.exit(2); }
++  const manName = file === 'characters' ? 'colby' : file, want = artManifest().filter((a) => a.module === manName).map((a) => ({ ...a, w: a.w * GHIBLI_SCALE, h: a.h * GHIBLI_SCALE }));
++  const outDir = join(root, opt('out', 'out/previews')), sc = Number(opt('scale', 1)), rel = (join(outDir, 'ghibli-' + file)).slice(root.length);
++  mkdirSync(outDir, { recursive: true });
++  writeFileSync(join(outDir, 'ghibli-' + file + '.html'), `<!doctype html><meta charset=utf-8><body style="margin:0;background:#6aa55a"><canvas id=c></canvas>
++<script type=module>
++import * as kit from '/src/kits/painter-kit/index.js';
++const want = ${JSON.stringify(want)}, sc = ${sc}, gap = 8, res = { problems: [], names: 0 };
++try {
++  const b = (await import('/src/art/ghibli/${file}.js')).build(kit), rows = [];
++  for (const a of want) { const v = b[a.name]; if (!v) { res.problems.push('MISSING ' + a.name); continue; }
++    const fr = v.frames || (Array.isArray(v) ? v : [v]);
++    if (fr.length !== a.frames) res.problems.push('FRAMES ' + a.name + ': have ' + fr.length + ', want ' + a.frames);
++    if (fr.some((f) => f.w !== a.w || f.h !== a.h)) res.problems.push('SIZE ' + a.name + ': have ' + fr[0].w + 'x' + fr[0].h + ', want ' + a.w + 'x' + a.h);
++    rows.push([a.name, fr]); }
++  for (const k of Object.keys(b)) if (!want.some((a) => a.name === k)) res.problems.push('EXTRA ' + k);
++  res.names = rows.length;
++  const W = 1400; let px = gap, py = gap, rh = 0; const place = [];
++  for (const [n, fr] of rows) { const w = fr.reduce((t, f) => t + f.w * sc + gap, 0); if (px + w > W) { px = gap; py += rh + 14; rh = 0; } place.push([n, fr, px, py]); px += w + 12; rh = Math.max(rh, fr[0].h * sc + 12); }
++  const c = document.getElementById('c'); c.width = W; c.height = py + rh + 20; const x = c.getContext('2d'); x.fillStyle = '#6aa55a'; x.fillRect(0, 0, c.width, c.height); x.font = '10px sans-serif';
++  for (const [n, fr, ox, oy] of place) { x.fillStyle = '#fff'; x.fillText(n, ox, oy + 8); let cx = ox; for (const f of fr) { x.fillStyle = 'rgba(0,0,0,.12)'; x.fillRect(cx, oy + 10, f.w * sc, f.h * sc); x.drawImage(f.canvas, cx, oy + 10, f.w * sc, f.h * sc); cx += f.w * sc + gap; } }
++} catch (e) { res.problems.push('EXCEPTION ' + e.message); }
++window.__res = res; document.title = 'done';
++</script>`);
++  const { spawnSync } = await import('node:child_process');
++  const r = spawnSync(process.execPath, [join(root, 'tools/shot.mjs'), '--url', rel + '.html', '--out', join(outDir, 'ghibli-' + file + '.png'), '--size', '1400x900', '--wait-for', "document.title==='done'", '--eval', 'JSON.stringify(window.__res)'], { encoding: 'utf8', cwd: root });
++  const m = /"eval":\s*("(?:[^"\\]|\\.)*")/.exec(r.stdout || '');
++  if (!m) { console.error('headless Chrome run failed:\n' + (r.stdout || '') + (r.stderr || '')); process.exit(1); }
++  const res = JSON.parse(JSON.parse(m[1]));
++  console.log(`wrote ${join(outDir, 'ghibli-' + file + '.png')} (+ .html)`);
++  if (res.problems.length) { console.log('\nPROBLEMS:\n  ' + res.problems.join('\n  ')); process.exit(1); }
++  console.log(`OK: all ${want.length} manifest names present with correct sizes/frames (x${GHIBLI_SCALE}).`); process.exit(0);
++}
++
+ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+   const args = process.argv.slice(2);
+   const mod = args.find((a) => !a.startsWith('--'));
+   const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
+-  if (!mod) { console.error('usage: sheet.mjs <artModule> [--scale N] [--only substr] [--out dir]'); process.exit(2); }
++  if (!mod) { console.error('usage: sheet.mjs <artModule> [--style retro|ghibli] [--scale N] [--only substr] [--out dir]'); process.exit(2); }
++  if (opt('style', 'retro') === 'ghibli') await ghibliMode(mod, args, opt);
+   const only = opt('only', null), outDir = join(root, opt('out', 'out/previews'));
+   const { artManifest } = await import(pathToFileURL(join(root, 'src/core/defs.js')));
+   const t0 = performance.now();

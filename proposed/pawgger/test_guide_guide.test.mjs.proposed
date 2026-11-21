@@ -1,0 +1,22 @@
+--- a/test/guide/guide.test.mjs	2026-11-21 08:44:49.118245373 -0500
++++ b/test/guide/guide.test.mjs	2026-11-21 08:44:49.119068194 -0500
+@@ -190,11 +190,18 @@
+   assert.ok(r.data.score < 50); assert.equal(r.data.findings[0].severity, 'error');
+ });
+ test('check: healthy project has no errors or warnings', () => {
+-  const d = fx({ 'package.json': '{"scripts":{"test":"node --test"}}', 'test/a.test.mjs': '', 'tools/swarm-tracker/x': '', 'ARCHITECTURE.md': '#', 'docs/swarm/SWARM.md': '#', 'config/style.json': JSON.stringify({ id: 'retro-8bit-sidescroller', palette: { policy: 'locked' }, render: { tech: 'canvas2d-pixel' } }), 'src/kits/a.js': '', 'src/art.js': 'lockPalette()', 'README.md': '#', 'docs/index.html': '', '.gitignore': '.tracker/\nout/\nnode_modules/\n' });
++  const d = fx({ 'package.json': '{"scripts":{"test":"node --test"}}', 'test/a.test.mjs': '', 'tools/swarm-tracker/x': '', 'ARCHITECTURE.md': '#', 'docs/swarm/SWARM.md': '#', 'config/style.json': JSON.stringify({ id: 'retro-8bit-sidescroller', palette: { policy: 'locked' }, render: { tech: 'canvas2d-pixel' } }), 'src/kits/a.js': '', 'src/art.js': 'lockPalette()', 'README.md': '![shot](docs/screenshots/a.png)', 'docs/hero.gif': '', '.github/workflows/pages.yml': '', 'docs/index.html': '', '.gitignore': '.tracker/\nout/\nnode_modules/\n' });
+   const r = check({ project: d });
+   assert.deepEqual(r.data.findings.filter((f) => f.severity !== 'info'), []);
+   assert.equal(r.data.score, 100);
+ });
++test('check: showcase rules (README screenshots, hero, Pages workflow)', () => {
++  const bare = check({ project: fx({ 'README.md': '# x' }) });
++  for (const id of ['no-readme-shots', 'no-pages-workflow', 'no-hero']) assert.ok(ids(bare).includes(id), id);
++  assert.equal(bare.data.findings.find((f) => f.id === 'no-readme-shots').severity, 'error');
++  const ok2 = check({ project: fx({ 'README.md': '<img src="docs/a.gif">', '.github/workflows/pages.yml': '', 'docs/hero.gif': '' }) });
++  for (const id of ['no-readme-shots', 'no-pages-workflow', 'no-hero']) assert.ok(!ids(ok2).includes(id), id);
++});
+ test('check: unlocked pixel palette and missing test script', () => {
+   const d = fx({ 'package.json': '{}', 'config/style.json': JSON.stringify({ id: 'p', palette: { policy: 'free' }, render: { tech: 'canvas2d-pixel' } }) });
+   const r = check({ project: d });
