@@ -22,7 +22,7 @@ from runners import RUNNERS  # noqa: E402
 ENGINES = ["rng", "platformer-physics", "hazard-kit", "world-gen", "autopilot"]
 # v2 / v3 engines live in spec/v2/vectors and spec/v3/vectors (same tolerance rules; see spec/v2/*.md, spec/v3/*.md).
 V2_ENGINES = ["collision2d", "physics2d"]
-V3_ENGINES = ["collision3d", "bvh"]
+V3_ENGINES = ["collision3d", "bvh", "character"]
 
 
 def find_vectors_dir():
@@ -91,6 +91,10 @@ class VectorsTest(unittest.TestCase):
     def test_vectors_dir_found(self):
         self.assertIsNotNone(VDIR, "spec/vectors not found: set FACTORY_SPEC_DIR or scaffold with the factory spec/ copy")
 
+    def test_character_case_count(self):
+        self.assertIsNotNone(VDIR)
+        self.assertEqual(len(json.loads((VDIR.parent / "v3" / "vectors" / "character.json").read_text(encoding="utf-8"))["cases"]), 12)
+
     def test_v2_v3_vectors_present(self):
         self.assertIsNotNone(VDIR)
         for sub, names in (("v2", V2_ENGINES), ("v3", V3_ENGINES)):
@@ -100,10 +104,10 @@ class VectorsTest(unittest.TestCase):
 
 
 def _norm_case(engine, case):
-    """-> (runner input, expected). v1/v2: {input, expect}; collision3d: {op, args, expected}; bvh: whole case."""
+    """-> (runner input, expected). v1/v2: {input, expect}; collision3d: {op, args, expected}; bvh/character: whole case."""
     if engine == "collision3d":
         return {"op": case["op"], "args": case["args"]}, case["expected"]
-    if engine == "bvh":
+    if engine in ("bvh", "character"):
         return case, case["expected"]
     return case["input"], case["expect"]
 

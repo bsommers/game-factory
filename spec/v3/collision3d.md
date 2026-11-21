@@ -11,3 +11,10 @@ Sweeps: **sweepSphere**(c, r, d, world), sweepCapsule(a, b, r, d, world): `d` is
 
 ## Character controller
 `createCharacter({pos (feet), radius .4, height 1.8, stepHeight .35, minGroundY cos50deg, skin 1e-4, snapDistance .3, maxIterations 4})`; `moveAndSlide(ch, vel, dt, world)`: depenetrate; horizontal slide (up to maxIterations, planes accumulate, crease = cross product, steep faces project horizontally); step-up when grounded and blocked by a wall (raise up to stepHeight, move, sweep down, accept only walkable faces, adopt only if further than the plain slide); vertical slide; ground snap within `snapDistance` when previously grounded and not rising. Surfaces are classified by the triangle FACE normal (`face.y >= minGroundY` walkable). Output: `pos, vel (actual), grounded, groundNormal`. The caller owns gravity/jump (supply vel.y). Fully deterministic.
+
+## Character vectors (`spec/v3/vectors/character.json`)
+Case: `{name, cfg, world, script, expected}`. `cfg` = `createCharacter` options (`pos` plus any overrides; defaults above). `world` = flat triangle soup. Run with `dt = 1/60` (f64 division), `vy` starts at 0, one `moveAndSlide` per step. Script segments, in order:
+- `{vel:[x,y,z], n}`: `n` steps with that constant velocity.
+- `{jump:v, n}`: sets `vy = v` first, then falls like below.
+- `{dx?, dz?, n}` (gravity mode): each step `vy = (grounded && vy <= 0) ? 0 : vy - 20*dt`, call with `vel=[dx||0, vy, dz||0]`, then after the call `if (grounded && vy <= 0) vy = 0`. (`jump` segments use this mode, and `vy` carries across segments.)
+`expected = {trace, final}`: `trace` = one `[x, y, z, grounded(0|1)]` per step (after the call); `final` = `{pos, vel, grounded, groundNormal}`. Compare floats at 1e-9 abs, `grounded` exactly. Reference: `runCharacter` in `spec/v3/gen-vectors.mjs`. Because the controller depends on `sweepCapsule` and `capsuleContacts`, these vectors also cover them indirectly.

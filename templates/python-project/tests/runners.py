@@ -489,6 +489,31 @@ def run_collision3d(inp: Dict[str, Any]) -> Any:
     raise ValueError("unknown op " + op)
 
 
+# ---- character (spec/v3 "Character vectors") --------------------------------------------------
+def run_character(case: Dict[str, Any]) -> Dict[str, Any]:
+    """``case`` = ``{cfg, world, script, expected}``. Mirrors ``runCharacter`` in spec/v3/gen-vectors.mjs: dt = 1/60,
+    ``vy`` starts at 0, one ``move_and_slide`` per step. Gravity mode (no ``vel``) carries ``vy`` across segments."""
+    ch = C3.create_character(**snake_keys(case["cfg"]))
+    dt = 1 / 60
+    trace = []
+    vy = 0
+    for seg in case["script"]:
+        if "jump" in seg:
+            vy = seg["jump"]
+        for _ in range(seg["n"]):
+            if "vel" in seg:
+                vel = seg["vel"]
+            else:
+                vy = 0 if (ch["grounded"] and vy <= 0) else vy - 20 * dt
+                vel = [seg.get("dx", 0), vy, seg.get("dz", 0)]
+            C3.move_and_slide(ch, vel, dt, case["world"])
+            if "vel" not in seg and ch["grounded"] and vy <= 0:
+                vy = 0
+            trace.append([ch["pos"][0], ch["pos"][1], ch["pos"][2], 1 if ch["grounded"] else 0])
+    return {"trace": trace, "final": {"pos": ch["pos"], "vel": ch["vel"], "grounded": ch["grounded"],
+                                      "groundNormal": ch["groundNormal"]}}
+
+
 # ---- bvh (spec/v3) -----------------------------------------------------------------------------
 def run_bvh(case: Dict[str, Any]) -> Dict[str, Any]:
     """``case`` is the whole vector case (``kind``, ``prims``, ``options``, ``expected``). The rays / query box / query
@@ -511,4 +536,4 @@ def run_bvh(case: Dict[str, Any]) -> Dict[str, Any]:
 RUNNERS = {"rng": run_rng, "platformer-physics": run_physics, "hazard-kit": run_hazard,
            "world-gen": run_world, "autopilot": run_autopilot,
            "collision2d": run_collision2d, "physics2d": run_physics2d,
-           "collision3d": run_collision3d, "bvh": run_bvh}
+           "collision3d": run_collision3d, "bvh": run_bvh, "character": run_character}

@@ -4,7 +4,7 @@ package engine
 // Right-handed, Y up, float64 only. Triangle soups are flat []float64 (9 numbers per triangle, CCW front).
 // Ray = o + t*d. Contact {Normal, Depth}: translating A by Normal*Depth separates it from B. Products that feed
 // sums are wrapped in float64() so a compiler can never fuse them into an FMA (results match JS bit for bit).
-// The kinematic character controller (createCharacter/moveAndSlide) is not ported yet.
+// The kinematic character controller (NewCharacter/MoveAndSlide) is at the end of this file.
 
 import "math"
 
@@ -1113,4 +1113,239 @@ func CapsuleContacts(a, b V3, r float64, w TriWorld) []CapsuleContact {
 		}
 	}
 	return out
+}
+
+// ---------------- kinematic character controller (capsule move-and-slide) ----------------
+// Pos = FEET centre. Capsule core runs from Pos+r to Pos+Height-r along +Y. Y is up.
+
+// CharacterOpts are optional overrides for NewCharacter; nil pointers take the defaults.
+type CharacterOpts struct {
+	Pos           *V3
+	Radius        *float64
+	Height        *float64
+	StepHeight    *float64
+	MinGroundY    *float64
+	Skin          *float64
+	SnapDistance  *float64
+	MaxIterations *int
+}
+
+// Character is the controller state; MoveAndSlide mutates Pos, Vel, Grounded and GroundNormal.
+type Character struct {
+	Pos, Vel      V3
+	Grounded      bool
+	GroundNormal  V3
+	Radius        float64
+	Height        float64
+	StepHeight    float64
+	MinGroundY    float64 // cos(50 deg): steeper than this is not walkable
+	Skin          float64
+	SnapDistance  float64
+	MaxIterations int
+}
+
+// NewCharacter builds a controller with the JS defaults.
+func NewCharacter(o CharacterOpts) *Character {
+	c := &Character{GroundNormal: V3{0, 1, 0}, Radius: 0.4, Height: 1.8, StepHeight: 0.35,
+		MinGroundY: 0.6427876096865394, Skin: 1e-4, SnapDistance: 0.3, MaxIterations: 4}
+	if o.Pos != nil {
+		c.Pos = *o.Pos
+	}
+	if o.Radius != nil {
+		c.Radius = *o.Radius
+	}
+	if o.Height != nil {
+		c.Height = *o.Height
+	}
+	if o.StepHeight != nil {
+		c.StepHeight = *o.StepHeight
+	}
+	if o.MinGroundY != nil {
+		c.MinGroundY = *o.MinGroundY
+	}
+	if o.Skin != nil {
+		c.Skin = *o.Skin
+	}
+	if o.SnapDistance != nil {
+		c.SnapDistance = *o.SnapDistance
+	}
+	if o.MaxIterations != nil {
+		c.MaxIterations = *o.MaxIterations
+	}
+	return c
+}
+
+func (c *Character) capA(p V3) V3 { return V3{p[0], p[1] + c.Radius, p[2]} }
+func (c *Character) capB(p V3) V3 { return V3{p[0], p[1] + c.Height - c.Radius, p[2]} }
+func (c *Character) sweep(w TriWorld, p, d V3) *SweepHit {
+	return SweepCapsule(c.capA(p), c.capB(p), c.Radius, d, w)
+}
+
+// Depenetrate pushes the character out of the deepest overlapping triangle, up to iterations times.
+func (c *Character) Depenetrate(w TriWorld, iterations int) {
+	for it := 0; it < iterations; it++ {
+		all := CapsuleContacts(c.capA(c.Pos), c.capB(c.Pos), c.Radius, w)
+		cs := all[:0:0]
+		for _, k := range all {
+			if k.Depth > 1e-9 {
+				cs = append(cs, k)
+			}
+		}
+		if len(cs) == 0 {
+			return
+		}
+		best := cs[0]
+		for _, k := range cs {
+			if k.Depth > best.Depth {
+				best = k
+			}
+		}
+		c.Pos = v3madd(c.Pos, best.Normal, best.Depth+c.Skin)
+	}
+}
+
+type slideInfo struct {
+	hits  []V3
+	wall  bool
+	floor *V3
+	ceil  bool
+}
+
+func (c *Character) slide(w TriWorld, p0, d0 V3, stick bool, info *slideInfo) V3 {
+	p, d := p0, d0
+	var planes []V3
+	for it := 0; it < c.MaxIterations && v3len2(d) > eps3s; it++ {
+		hit := c.sweep(w, p, d)
+		if hit == nil {
+			p = v3add(p, d)
+			d = V3{}
+			break
+		}
+		p = v3madd(v3madd(p, d, hit.T), hit.Normal, c.Skin)
+		n := hit.Normal
+		f := hit.Face // JS: hit.face || n (Face is always set; a zero vector is truthy in JS)
+		info.hits = append(info.hits, n)
+		if f[1] >= c.MinGroundY {
+			ff := f
+			info.floor = &ff
+			if stick {
+				d = V3{}
+				break
+			}
+		} else if n[1] < -0.7 {
+			info.ceil = true
+		} else {
+			info.wall = true
+		}
+		nn := n
+		if n[1] > 0 && f[1] < c.MinGroundY {
+			l := math.Hypot(n[0], n[2])
+			if l > 1e-9 {
+				nn = V3{n[0] / l, 0, n[2] / l}
+			}
+		}
+		rem := v3mul(d, 1-hit.T)
+		into := v3dot(rem, nn)
+		if into < 0 {
+			rem = v3madd(rem, nn, -into)
+		}
+		planes = append(planes, nn)
+		for k := 0; k < len(planes)-1; k++ {
+			if v3dot(rem, planes[k]) < -1e-9 {
+				cr := v3cross(nn, planes[k])
+				l := v3len(cr)
+				if l < 1e-9 {
+					rem = V3{}
+				} else {
+					rem = v3mul(cr, v3dot(rem, cr)/float64(l*l))
+				}
+			}
+		}
+		for _, pl := range planes {
+			if v3dot(rem, pl) < -1e-9 {
+				rem = V3{}
+			}
+		}
+		d = rem
+	}
+	return p
+}
+
+func hDist3(a, b V3) float64 { return math.Hypot(a[0]-b[0], a[2]-b[2]) }
+
+func (c *Character) tryStep(w TriWorld, start, hd V3) (V3, bool) {
+	up := c.sweep(w, start, V3{0, c.StepHeight, 0})
+	rise := c.StepHeight
+	if up != nil {
+		rise = float64(up.T*c.StepHeight) - c.Skin
+	}
+	if rise <= 1e-6 {
+		return V3{}, false
+	}
+	p1 := V3{start[0], start[1] + rise, start[2]}
+	p2 := c.slide(w, p1, hd, false, &slideInfo{})
+	dn := rise + 1e-3
+	dv := V3{0, -dn, 0}
+	hit := c.sweep(w, p2, dv)
+	if hit == nil || hit.Face[1] < c.MinGroundY {
+		return V3{}, false
+	}
+	return v3madd(v3madd(p2, dv, hit.T), hit.Normal, c.Skin), true
+}
+
+// MoveAndSlide moves the character by vel*dt: horizontal slide (with step-up), vertical slide, ground snap.
+// vel y includes gravity/jump, supplied by the caller.
+func (c *Character) MoveAndSlide(vel V3, dt float64, w TriWorld) *Character {
+	wasGrounded := c.Grounded
+	start := c.Pos
+	c.Depenetrate(w, 4)
+	cur := c.Pos
+	hd := V3{float64(vel[0] * dt), 0, float64(vel[2] * dt)}
+	infoH := &slideInfo{}
+	if v3len2(hd) > 0 {
+		cur = c.slide(w, cur, hd, false, infoH)
+		if wasGrounded && infoH.wall && c.StepHeight > 0 {
+			if s, ok := c.tryStep(w, c.Pos, hd); ok && hDist3(s, c.Pos) > hDist3(cur, c.Pos)+1e-9 {
+				cur = s
+			}
+		}
+	}
+	infoV := &slideInfo{}
+	vy := float64(vel[1] * dt)
+	if vy != 0 {
+		cur = c.slide(w, cur, V3{0, vy, 0}, true, infoV)
+	}
+	grounded := false
+	gn := V3{0, 1, 0}
+	if vel[1] <= 0 {
+		if infoV.floor != nil {
+			grounded = true
+			gn = *infoV.floor
+		} else {
+			dist := c.Skin * 3
+			if wasGrounded {
+				dist = c.SnapDistance
+			}
+			dv := V3{0, -dist, 0}
+			hit := c.sweep(w, cur, dv)
+			if hit != nil && hit.Face[1] >= c.MinGroundY {
+				cur = v3madd(v3madd(cur, dv, hit.T), hit.Normal, c.Skin)
+				grounded = true
+				gn = hit.Face
+			}
+		}
+	}
+	c.Pos, c.Grounded, c.GroundNormal = cur, grounded, gn
+	inv := 0.0
+	if dt > 0 {
+		inv = 1 / dt
+	}
+	vyOut := vel[1]
+	if grounded {
+		vyOut = 0
+	} else if infoV.ceil && vyOut > 0 {
+		vyOut = 0
+	}
+	c.Vel = V3{(cur[0] - start[0]) * inv, vyOut, (cur[2] - start[2]) * inv}
+	return c
 }

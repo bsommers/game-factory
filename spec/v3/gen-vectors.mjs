@@ -87,8 +87,59 @@ function bvhCases() {
   }
   return c.map(rnd);
 }
+
+// ---- character controller (createCharacter + moveAndSlide) ----
+const boxTris = (x0, y0, z0, x1, y1, z1) => { // 12 tris, outward CCW
+  const v = (x, y, z) => [x, y, z], p = [v(x0, y0, z0), v(x1, y0, z0), v(x1, y1, z0), v(x0, y1, z0), v(x0, y0, z1), v(x1, y0, z1), v(x1, y1, z1), v(x0, y1, z1)];
+  const q = [[0, 3, 2, 1], [4, 5, 6, 7], [0, 1, 5, 4], [3, 7, 6, 2], [0, 4, 7, 3], [1, 2, 6, 5]], out = [];
+  for (const [a, b, c, d] of q) out.push(...p[a], ...p[b], ...p[c], ...p[a], ...p[c], ...p[d]);
+  return out;
+};
+const FLOOR = [-50, 0, -50, -50, 0, 50, 50, 0, 50, -50, 0, -50, 50, 0, 50, 50, 0, -50];
+const slopeWorld = (deg) => { const a = deg * Math.PI / 180, y1 = 10 * Math.tan(a);
+  return [0, 0, -10, 10, y1, -10, 0, 0, 10, 10, y1, -10, 10, y1, 10, 0, 0, 10, -20, 0, -10, 0, 0, 10, 0, 0, -10, -20, 0, -10, -20, 0, 10, 0, 0, 10]; };
+// script segments: {vel:[x,y,z] constant, n}, {fall:true,n} = vel.y accumulates gravity (-20) until grounded, {jump:vy,n} = initial vy then gravity.
+// Segment kinds keep the runner deterministic and trivially portable: every port applies the same per-step velocity rule.
+export function runCharacter(input) {
+  const ch = C.createCharacter(input.cfg), dt = 1 / 60, trace = [];
+  let vy = 0;
+  for (const seg of input.script) {
+    if (seg.jump !== undefined) vy = seg.jump;
+    for (let k = 0; k < seg.n; k++) {
+      let vel;
+      if (seg.vel) vel = seg.vel;
+      else { vy = ch.grounded && vy <= 0 ? 0 : vy - 20 * dt; vel = [seg.dx ?? 0, vy, seg.dz ?? 0]; }
+      C.moveAndSlide(ch, vel, dt, input.world);
+      if (!seg.vel && ch.grounded && vy <= 0) vy = 0;
+      trace.push([ch.pos[0], ch.pos[1], ch.pos[2], ch.grounded ? 1 : 0]);
+    }
+  }
+  return { trace, final: { pos: ch.pos, vel: ch.vel, grounded: ch.grounded, groundNormal: ch.groundNormal } };
+}
+function characterCases() {
+  const mk = (name, cfg, world, script) => {
+    const input = rnd({ cfg, world, script });
+    return { name, ...input, expected: rnd(runCharacter(input)) };
+  };
+  const settle = { vel: [0, -5, 0], n: 60 };
+  return [
+    mk('lands on floor and stays', { pos: [0, 2, 0] }, FLOOR, [{ fall: true, n: 120 }]),
+    mk('walks into wall and stops', { pos: [0, 0, 0] }, [...FLOOR, ...boxTris(5, 0, -5, 6, 3, 5)], [settle, { vel: [3, -1, 0], n: 300 }]),
+    mk('slides along wall', { pos: [0, 0, 0] }, [...FLOOR, ...boxTris(5, 0, -5, 6, 3, 5)], [settle, { vel: [3, -1, 0], n: 300 }, { vel: [3, -1, 3], n: 60 }]),
+    mk('steps up small ledge', { pos: [0, 0, 0] }, [...FLOOR, ...boxTris(2, 0, -5, 9, 0.25, 5)], [settle, { vel: [2, -1, 0], n: 120 }]),
+    mk('blocked by tall ledge', { pos: [0, 0, 0] }, [...FLOOR, ...boxTris(2, 0, -5, 9, 0.8, 5)], [settle, { vel: [2, -1, 0], n: 120 }]),
+    mk('jump arc', { pos: [0, 0, 0] }, FLOOR, [settle, { jump: 6, n: 40 }]),
+    mk('hits ceiling', { pos: [0, 0, 0] }, [...FLOOR, ...boxTris(-5, 2, -5, 5, 3, 5)], [settle, { vel: [0, 8, 0], n: 30 }]),
+    mk('30 degree slope climbs', { pos: [-1, 0, 0] }, slopeWorld(30), [settle, { vel: [2, -1, 0], n: 90 }]),
+    mk('70 degree slope blocks', { pos: [-1, 0, 0] }, slopeWorld(70), [settle, { vel: [2, -1, 0], n: 90 }]),
+    mk('small radius and tall step height config', { pos: [0, 0, 0], radius: 0.25, height: 1.2, stepHeight: 0.6 }, [...FLOOR, ...boxTris(2, 0, -5, 9, 0.5, 5)], [settle, { vel: [2, -1, 0], n: 120 }]),
+    mk('no ground snap, no step', { pos: [0, 0, 0], stepHeight: 0, snapDistance: 0 }, [...FLOOR, ...boxTris(2, 0, -5, 9, 0.2, 5)], [settle, { vel: [2, -1, 0], n: 120 }]),
+    mk('wander over mixed geometry', { pos: [0, 1, 0] }, [...FLOOR, ...boxTris(3, 0, -5, 4, 2, 5), ...boxTris(-3, 0, -5, -2, 0.2, 5)],
+      Array.from({ length: 40 }, (_, i) => ({ vel: [Math.sin(i / 4) * 4, -4, Math.cos(i * 0.18) * 2], n: 10 }))),
+  ];
+}
 export function buildAll() {
-  return { collision3d: { version: VERSION, tolerance: TOLERANCE, cases: collisionCases() }, bvh: { version: VERSION, tolerance: TOLERANCE, layout: 'spec/v3/bvh.md', cases: bvhCases() } };
+  return { collision3d: { version: VERSION, tolerance: TOLERANCE, cases: collisionCases() }, bvh: { version: VERSION, tolerance: TOLERANCE, layout: 'spec/v3/bvh.md', cases: bvhCases() }, character: { version: VERSION, tolerance: TOLERANCE, cases: characterCases() } };
 }
 const ser = (o) => JSON.stringify(o, null, 1) + '\n';
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {

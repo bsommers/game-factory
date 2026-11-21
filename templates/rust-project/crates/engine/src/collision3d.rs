@@ -1086,3 +1086,216 @@ pub fn capsule_contacts(a: V3, b: V3, r: f64, world: &World) -> Vec<CapsuleConta
     }
     out
 }
+
+// ---- kinematic character controller (capsule move-and-slide) ----------------------------------------------
+/// `pos` = FEET centre. Capsule core runs from `pos + r` to `pos + height - r` along +Y. Y is up.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Character {
+    pub pos: V3,
+    pub vel: V3,
+    pub grounded: bool,
+    pub ground_normal: V3,
+    pub radius: f64,
+    pub height: f64,
+    pub step_height: f64,
+    pub min_ground_y: f64,
+    pub skin: f64,
+    pub snap_distance: f64,
+    pub max_iterations: usize,
+}
+
+/// Optional overrides for `create_character` (`None` = default).
+#[derive(Clone, Debug, Default)]
+pub struct CharacterOpts {
+    pub pos: Option<V3>,
+    pub radius: Option<f64>,
+    pub height: Option<f64>,
+    pub step_height: Option<f64>,
+    pub min_ground_y: Option<f64>,
+    pub skin: Option<f64>,
+    pub snap_distance: Option<f64>,
+    pub max_iterations: Option<usize>,
+}
+
+pub fn create_character(o: &CharacterOpts) -> Character {
+    Character {
+        pos: o.pos.unwrap_or([0.0, 0.0, 0.0]),
+        vel: [0.0, 0.0, 0.0],
+        grounded: false,
+        ground_normal: [0.0, 1.0, 0.0],
+        radius: o.radius.unwrap_or(0.4),
+        height: o.height.unwrap_or(1.8),
+        step_height: o.step_height.unwrap_or(0.35),
+        min_ground_y: o.min_ground_y.unwrap_or(0.6427876096865394),
+        skin: o.skin.unwrap_or(1e-4),
+        snap_distance: o.snap_distance.unwrap_or(0.3),
+        max_iterations: o.max_iterations.unwrap_or(4),
+    }
+}
+
+fn cap_a(ch: &Character, p: V3) -> V3 {
+    [p[0], p[1] + ch.radius, p[2]]
+}
+fn cap_b(ch: &Character, p: V3) -> V3 {
+    [p[0], p[1] + ch.height - ch.radius, p[2]]
+}
+fn sweep_ch(ch: &Character, w: &World, p: V3, d: V3) -> Option<SweepHit> {
+    sweep_capsule(cap_a(ch, p), cap_b(ch, p), ch.radius, d, w)
+}
+
+/// Pushes the character out of penetrating geometry (deepest contact first).
+pub fn depenetrate(ch: &mut Character, world: &World, iterations: usize) {
+    for _ in 0..iterations {
+        let cs: Vec<CapsuleContact> = capsule_contacts(cap_a(ch, ch.pos), cap_b(ch, ch.pos), ch.radius, world)
+            .into_iter()
+            .filter(|c| c.depth > 1e-9)
+            .collect();
+        if cs.is_empty() {
+            return;
+        }
+        let mut best = cs[0];
+        for c in &cs {
+            if c.depth > best.depth {
+                best = *c;
+            }
+        }
+        ch.pos = madd(ch.pos, best.normal, best.depth + ch.skin);
+    }
+}
+
+#[derive(Default)]
+struct SlideInfo {
+    wall: bool,
+    floor: Option<V3>,
+    ceil: bool,
+}
+
+fn slide(ch: &Character, w: &World, p0: V3, d0: V3, stick: bool, info: &mut SlideInfo) -> V3 {
+    let mut p = p0;
+    let mut d = d0;
+    let mut planes: Vec<V3> = Vec::new();
+    let mut it = 0;
+    while it < ch.max_iterations && len2(d) > EPS2 {
+        it += 1;
+        let hit = match sweep_ch(ch, w, p, d) {
+            None => {
+                p = add(p, d);
+                break;
+            }
+            Some(h) => h,
+        };
+        p = madd(madd(p, d, hit.t), hit.normal, ch.skin);
+        let n = hit.normal;
+        let f = hit.face;
+        if f[1] >= ch.min_ground_y {
+            info.floor = Some(f);
+            if stick {
+                break;
+            }
+        } else if n[1] < -0.7 {
+            info.ceil = true;
+        } else {
+            info.wall = true;
+        }
+        let mut nn = n;
+        if n[1] > 0.0 && f[1] < ch.min_ground_y {
+            let l = f64::hypot(n[0], n[2]);
+            if l > 1e-9 {
+                nn = [n[0] / l, 0.0, n[2] / l];
+            }
+        }
+        let mut rem = mul(d, 1.0 - hit.t);
+        let into = dot(rem, nn);
+        if into < 0.0 {
+            rem = madd(rem, nn, -into);
+        }
+        planes.push(nn);
+        for k in 0..planes.len() - 1 {
+            if dot(rem, planes[k]) < -1e-9 {
+                let cr = cross(nn, planes[k]);
+                let l = len(cr);
+                rem = if l < 1e-9 { [0.0, 0.0, 0.0] } else { mul(cr, dot(rem, cr) / (l * l)) };
+            }
+        }
+        for pl in &planes {
+            if dot(rem, *pl) < -1e-9 {
+                rem = [0.0, 0.0, 0.0];
+            }
+        }
+        d = rem;
+    }
+    p
+}
+
+fn h_dist(a: V3, b: V3) -> f64 {
+    f64::hypot(a[0] - b[0], a[2] - b[2])
+}
+
+fn try_step(ch: &Character, w: &World, start: V3, hd: V3) -> Option<V3> {
+    let up = sweep_ch(ch, w, start, [0.0, ch.step_height, 0.0]);
+    let rise = up.map_or(ch.step_height, |u| u.t * ch.step_height - ch.skin);
+    if rise <= 1e-6 {
+        return None;
+    }
+    let p1 = [start[0], start[1] + rise, start[2]];
+    let p2 = slide(ch, w, p1, hd, false, &mut SlideInfo::default());
+    let dn = rise + 1e-3;
+    let hit = sweep_ch(ch, w, p2, [0.0, -dn, 0.0])?;
+    if hit.face[1] < ch.min_ground_y {
+        return None;
+    }
+    Some(madd(madd(p2, [0.0, -dn, 0.0], hit.t), hit.normal, ch.skin))
+}
+
+/// Moves the character by `vel*dt`: horizontal slide (with step-up), vertical slide, ground snap. Mutates `ch`
+/// (pos, vel, grounded, ground_normal). `vel[1]` includes gravity/jump, supplied by the caller.
+pub fn move_and_slide(ch: &mut Character, vel: V3, dt: f64, world: &World) {
+    let was_grounded = ch.grounded;
+    let start = ch.pos;
+    depenetrate(ch, world, 4);
+    let mut cur = ch.pos;
+    let hd = [vel[0] * dt, 0.0, vel[2] * dt];
+    let mut info_h = SlideInfo::default();
+    if len2(hd) > 0.0 {
+        cur = slide(ch, world, cur, hd, false, &mut info_h);
+        if was_grounded && info_h.wall && ch.step_height > 0.0 {
+            if let Some(s) = try_step(ch, world, ch.pos, hd) {
+                if h_dist(s, ch.pos) > h_dist(cur, ch.pos) + 1e-9 {
+                    cur = s;
+                }
+            }
+        }
+    }
+    let mut info_v = SlideInfo::default();
+    let vy = vel[1] * dt;
+    if vy != 0.0 {
+        cur = slide(ch, world, cur, [0.0, vy, 0.0], true, &mut info_v);
+    }
+    let mut grounded = false;
+    let mut gn = [0.0, 1.0, 0.0];
+    if vel[1] <= 0.0 {
+        if let Some(f) = info_v.floor {
+            grounded = true;
+            gn = f;
+        } else {
+            let dist = if was_grounded { ch.snap_distance } else { ch.skin * 3.0 };
+            let dv = [0.0, -dist, 0.0];
+            if let Some(hit) = sweep_ch(ch, world, cur, dv) {
+                if hit.face[1] >= ch.min_ground_y {
+                    cur = madd(madd(cur, dv, hit.t), hit.normal, ch.skin);
+                    grounded = true;
+                    gn = hit.face;
+                }
+            }
+        }
+    }
+    ch.pos = cur;
+    ch.grounded = grounded;
+    ch.ground_normal = gn;
+    let inv = if dt > 0.0 { 1.0 / dt } else { 0.0 };
+    let mut vy_out = vel[1];
+    if grounded || (info_v.ceil && vy_out > 0.0) {
+        vy_out = 0.0;
+    }
+    ch.vel = [(cur[0] - start[0]) * inv, vy_out, (cur[2] - start[2]) * inv];
+}
