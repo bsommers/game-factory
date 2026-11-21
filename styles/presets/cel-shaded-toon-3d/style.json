@@ -1,0 +1,237 @@
+{
+  "id": "cel-shaded-toon-3d",
+  "name": "Cel-shaded Toon 3D",
+  "description": "Real-time 3D with banded lighting and inverted-hull outlines in a small custom WebGL2 renderer; low-poly meshes with flat colour ramps.",
+  "genre": [
+    "adventure",
+    "platformer",
+    "action"
+  ],
+  "camera": "third-person-3d",
+  "render": {
+    "tech": "webgl2-custom",
+    "dimension": "3d",
+    "resolution": {
+      "width": 1280,
+      "height": 720,
+      "scaling": "render-scale",
+      "integerOnly": false,
+      "renderScaleTiers": [
+        1,
+        0.75,
+        0.5
+      ]
+    },
+    "notes": "Two passes: scene with 3-4 band ramp lighting, then hull back-face pass for outlines. A Canvas2D software fallback is not supported at this tier; fail gracefully with a message."
+  },
+  "palette": {
+    "policy": "ramps",
+    "maxColors": 64,
+    "rampSize": 3,
+    "notes": "3-band ramps per material (shadow, mid, light) stored as a 1D lookup texture."
+  },
+  "art": {
+    "kit": "art-kit",
+    "outline": "hull",
+    "settings": {
+      "meshes": "procedural generators",
+      "textures": "none or tiny palette atlas"
+    }
+  },
+  "character": {
+    "kit": "character-kit",
+    "rig": "skinned-3d",
+    "animFps": 30,
+    "settings": {
+      "bones": 24,
+      "note": "hand-written skinning in the vertex shader"
+    }
+  },
+  "audio": {
+    "engine": "procedural-webaudio",
+    "channels": 16,
+    "bitDepth": 16,
+    "sampleRate": 44100,
+    "mood": "adventurous, orchestral-lite"
+  },
+  "fx": [
+    {
+      "id": "cel-shading",
+      "default": true,
+      "strength": 1
+    },
+    {
+      "id": "outlines",
+      "default": true,
+      "strength": 0.9
+    },
+    {
+      "id": "bloom",
+      "default": true,
+      "strength": 0.25
+    },
+    {
+      "id": "vignette",
+      "default": true,
+      "strength": 0.2
+    },
+    {
+      "id": "particles",
+      "default": true
+    }
+  ],
+  "physics": {
+    "model": "capsule-vs-heightfield/box kinematics, no rigid-body solver",
+    "fixedStep": 0.016666666666666666
+  },
+  "worldgen": {
+    "method": "seeded heightfield plus prop scattering with Poisson-disc spacing",
+    "seeded": true
+  },
+  "input": {
+    "scheme": "WASD/left stick move, mouse/right stick camera, jump, action",
+    "devices": [
+      "keyboard",
+      "mouse",
+      "gamepad",
+      "pointer-lock"
+    ]
+  },
+  "performance": {
+    "targetFps": 60,
+    "frameBudgetMs": 12,
+    "minDevice": "mid",
+    "drawCalls": 300,
+    "triangles": 150000,
+    "memoryMB": 384,
+    "fallbackTier": "render-scale 0.5 and outlines off"
+  },
+  "swarm": {
+    "shape": "contract-first; renderer agent owns shaders and math conventions",
+    "agentCount": [
+      10,
+      16
+    ],
+    "roles": [
+      {
+        "role": "architect (contract, math conventions)",
+        "model": "opus"
+      },
+      {
+        "role": "renderer/shader agent",
+        "model": "opus"
+      },
+      {
+        "role": "mesh/asset generators",
+        "model": "sonnet"
+      },
+      {
+        "role": "sim/gameplay agents",
+        "model": "sonnet"
+      },
+      {
+        "role": "audio agents",
+        "model": "sonnet"
+      },
+      {
+        "role": "QA bot + perf gate",
+        "model": "sonnet"
+      },
+      {
+        "role": "boilerplate, docs",
+        "model": "haiku"
+      }
+    ]
+  },
+  "verification": [
+    "node --test passes (math, mesh generators, skinning on CPU)",
+    "WebGL context creates and shader compile log is empty",
+    "screenshot shows 3 distinct light bands and a continuous outline",
+    "FPS >= 55 on mid tier, >= 30 at render-scale 0.5 on low tier",
+    "draw calls and triangles under budget via debug HUD",
+    "context-loss handler restores the scene"
+  ],
+  "pitfalls": [
+    "hull outlines double on thin meshes: thicken in view space",
+    "banding shimmer with normal-map-free low-poly: smooth normals",
+    "no headless GPU in CI: test maths on CPU, shots need a real browser",
+    "shader compile differences across drivers"
+  ],
+  "examples": [
+    {
+      "game": "PawFall",
+      "role": "aspirational",
+      "note": "a 3D reboot"
+    }
+  ],
+  "tags": [
+    "3d",
+    "toon",
+    "cel",
+    "webgl2",
+    "third-person"
+  ],
+  "requires": {
+    "kits": [
+      "art-kit",
+      "character-kit",
+      "audio-kit",
+      "fx-kit"
+    ],
+    "libs": [
+      "mini-gl"
+    ],
+    "skills": [
+      "hardening-trust-boundaries"
+    ]
+  },
+  "tech": {
+    "dependencies": "none",
+    "choices": [
+      "own WebGL2 mini-renderer (mat4/quat helpers, program cache)",
+      "optional vendored three.js file copied into the repo, never CDN"
+    ],
+    "limits": [
+      "about 150k triangles",
+      "no shadow cascades: use blob shadows or a single 1024 shadow map",
+      "WebGL2 required"
+    ]
+  },
+  "recommend": {
+    "keywords": {
+      "cel-shaded": 9,
+      "cel shaded": 9,
+      "toon": 8,
+      "3d": 4,
+      "third-person": 5,
+      "third person": 5,
+      "zelda-like": 4,
+      "anime": 3,
+      "outline": 3,
+      "adventure": 2,
+      "stylized 3d": 5,
+      "stylised": 3
+    },
+    "anti": {
+      "8-bit": 6,
+      "ascii": 6,
+      "pixel art": 3,
+      "terminal": 6
+    },
+    "cost": 5,
+    "platforms": [
+      "web",
+      "desktop"
+    ],
+    "pros": [
+      "strong stylised look from small assets",
+      "procedural meshes avoid art pipelines"
+    ],
+    "cons": [
+      "highest engineering cost",
+      "needs a GPU to verify visually"
+    ]
+  },
+  "themingGuide": "THEMING.md",
+  "version": "1.0.0"
+}

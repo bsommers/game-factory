@@ -1,0 +1,237 @@
+{
+  "id": "raytraced-3d",
+  "name": "Raytraced 3D",
+  "description": "Ray-marched or path-traced scenes in a WebGL2 fragment shader: signed-distance primitives, soft shadows and global-illumination look, with an automatic performance fallback ladder.",
+  "genre": [
+    "showcase",
+    "puzzle",
+    "exploration",
+    "art-game"
+  ],
+  "camera": "first-person",
+  "render": {
+    "tech": "shader-raymarch",
+    "dimension": "3d",
+    "resolution": {
+      "width": 960,
+      "height": 540,
+      "scaling": "render-scale",
+      "integerOnly": false,
+      "renderScaleTiers": [
+        1,
+        0.5,
+        0.25
+      ]
+    },
+    "notes": "Fullscreen triangle; scene as SDFs in GLSL; progressive accumulation when the camera is still; scale tiers chosen by a frame-time governor."
+  },
+  "palette": {
+    "policy": "free",
+    "maxColors": 4096,
+    "notes": "Physically-flavoured colours; tone-map and gamma at the end; keep a small named material table."
+  },
+  "art": {
+    "kit": "art-kit",
+    "outline": "none",
+    "settings": {
+      "scene": "GLSL SDF functions plus uniforms",
+      "textures": "procedural only"
+    }
+  },
+  "character": {
+    "kit": "character-kit",
+    "rig": "glyph",
+    "animFps": 30,
+    "settings": {
+      "note": "characters are SDF blobs or sprites composited in 2D"
+    }
+  },
+  "audio": {
+    "engine": "procedural-webaudio",
+    "channels": 16,
+    "bitDepth": 16,
+    "sampleRate": 44100,
+    "mood": "ambient, shimmering"
+  },
+  "fx": [
+    {
+      "id": "bloom",
+      "default": true,
+      "strength": 0.3
+    },
+    {
+      "id": "vignette",
+      "default": true,
+      "strength": 0.25
+    },
+    {
+      "id": "motion-blur",
+      "default": false,
+      "strength": 0.3
+    },
+    {
+      "id": "dither",
+      "default": true,
+      "strength": 0.2,
+      "note": "blue-noise dither hides banding and low sample counts"
+    }
+  ],
+  "physics": {
+    "model": "CPU-side kinematics against the same SDF (mirror the GLSL in JS)",
+    "fixedStep": 0.016666666666666666,
+    "notes": "Keep a JS twin of the scene SDF for collision and tests."
+  },
+  "worldgen": {
+    "method": "seeded parameter sets for SDF scenes",
+    "seeded": true
+  },
+  "input": {
+    "scheme": "mouse look + WASD, or orbit camera",
+    "devices": [
+      "keyboard",
+      "mouse",
+      "gamepad",
+      "pointer-lock"
+    ]
+  },
+  "performance": {
+    "targetFps": 60,
+    "frameBudgetMs": 14,
+    "minDevice": "high",
+    "drawCalls": 2,
+    "memoryMB": 256,
+    "fallbackTier": "ladder: path-traced 1spp accumulate, then ray-march 1x, then 0.5x, then 0.25x with no soft shadows, then the lowpoly-3d preset"
+  },
+  "swarm": {
+    "shape": "small: one shader specialist (opus) and a few agents on gameplay/audio; shaders are hard to parallelise",
+    "agentCount": [
+      5,
+      9
+    ],
+    "roles": [
+      {
+        "role": "architect (contract, math conventions)",
+        "model": "opus"
+      },
+      {
+        "role": "renderer/shader agent",
+        "model": "opus"
+      },
+      {
+        "role": "mesh/asset generators",
+        "model": "sonnet"
+      },
+      {
+        "role": "sim/gameplay agents",
+        "model": "sonnet"
+      },
+      {
+        "role": "audio agents",
+        "model": "sonnet"
+      },
+      {
+        "role": "QA bot + perf gate",
+        "model": "sonnet"
+      },
+      {
+        "role": "boilerplate, docs",
+        "model": "haiku"
+      }
+    ]
+  },
+  "verification": [
+    "node --test passes (JS SDF twin matches expected values at sample points)",
+    "shader compiles and the info log is empty on the target GPU",
+    "frame-time governor drops tiers under a synthetic load",
+    "screenshot at each fallback tier is legible",
+    "accumulation resets on camera move",
+    "a context-loss event leaves the page usable"
+  ],
+  "pitfalls": [
+    "GPU watchdog resets on long shader loops: cap march steps",
+    "integrated GPUs miss 60 fps at full res: enforce the ladder",
+    "no headless GPU: shots need a real browser",
+    "precision artefacts far from the origin"
+  ],
+  "examples": [
+    {
+      "game": "duum",
+      "role": "aspirational",
+      "note": "a raytraced remake"
+    }
+  ],
+  "tags": [
+    "3d",
+    "raymarching",
+    "raytracing",
+    "shader",
+    "webgl2",
+    "showcase"
+  ],
+  "requires": {
+    "kits": [
+      "audio-kit",
+      "fx-kit"
+    ],
+    "libs": [
+      "mini-gl",
+      "sdf-scene"
+    ],
+    "skills": [
+      "hardening-trust-boundaries"
+    ]
+  },
+  "tech": {
+    "dependencies": "none",
+    "choices": [
+      "GLSL ES 3.00 fragment shader",
+      "frame-time governor",
+      "progressive accumulation buffer (RGBA16F with float fallback)"
+    ],
+    "limits": [
+      "about 100-150 march steps",
+      "a handful of SDF primitives and 1-2 bounces",
+      "WebGL2 required, EXT_color_buffer_float optional"
+    ]
+  },
+  "recommend": {
+    "keywords": {
+      "raytraced": 9,
+      "raytracing": 9,
+      "ray tracing": 9,
+      "path tracing": 9,
+      "path-traced": 9,
+      "ray marching": 9,
+      "raymarching": 9,
+      "shader": 5,
+      "sdf": 6,
+      "global illumination": 5,
+      "showcase": 3,
+      "reflections": 4,
+      "3d": 2
+    },
+    "anti": {
+      "8-bit": 6,
+      "ascii": 6,
+      "low-end": 6,
+      "mobile": 4,
+      "terminal": 6
+    },
+    "cost": 5,
+    "platforms": [
+      "web",
+      "desktop"
+    ],
+    "pros": [
+      "spectacular lighting for little geometry",
+      "resolution scales smoothly"
+    ],
+    "cons": [
+      "needs a strong GPU",
+      "hard to test headless",
+      "complex scenes are costly"
+    ]
+  },
+  "themingGuide": "THEMING.md",
+  "version": "1.0.0"
+}

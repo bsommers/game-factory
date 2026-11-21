@@ -1,0 +1,237 @@
+{
+  "id": "raycaster-fps",
+  "name": "Raycaster FPS",
+  "description": "Wolfenstein-style first-person view by 2D grid raycasting on Canvas2D or a software buffer: textured walls, billboard sprites, no GPU needed. The duum style.",
+  "genre": [
+    "fps",
+    "shooter",
+    "dungeon-crawler"
+  ],
+  "camera": "first-person",
+  "render": {
+    "tech": "raycaster-canvas",
+    "dimension": "2.5d",
+    "resolution": {
+      "width": 320,
+      "height": 200,
+      "scaling": "integer-nearest",
+      "integerOnly": false
+    },
+    "notes": "DDA ray per screen column into a Uint32 ImageData buffer; z-buffer for sprites; one column per ray, scaled up with nearest-neighbour."
+  },
+  "palette": {
+    "policy": "ramps",
+    "maxColors": 64,
+    "rampSize": 8,
+    "notes": "Distance shading via an 8-step ramp per base colour (colormap lookup, like the original COLORMAP lump)."
+  },
+  "art": {
+    "kit": "art-kit",
+    "tileSize": 64,
+    "spriteSize": [
+      64,
+      64
+    ],
+    "outline": "none",
+    "settings": {
+      "wallTextures": 64,
+      "billboards": true
+    }
+  },
+  "character": {
+    "kit": "character-kit",
+    "rig": "billboard",
+    "animFps": 8,
+    "settings": {
+      "angles": 8
+    }
+  },
+  "audio": {
+    "engine": "chip-pulse",
+    "channels": 8,
+    "bitDepth": 8,
+    "sampleRate": 22050,
+    "mood": "tense, grungy",
+    "settings": {
+      "positional": "pan + attenuation by distance"
+    }
+  },
+  "fx": [
+    {
+      "id": "scanlines",
+      "default": false,
+      "strength": 0.2
+    },
+    {
+      "id": "screen-shake",
+      "default": true,
+      "strength": 0.6
+    },
+    {
+      "id": "particles",
+      "default": true
+    },
+    {
+      "id": "vignette",
+      "default": true,
+      "strength": 0.3
+    },
+    {
+      "id": "fog",
+      "default": true,
+      "strength": 0.6,
+      "note": "distance darkening"
+    }
+  ],
+  "physics": {
+    "model": "grid-aware circle collision, sliding along walls, hitscan weapons",
+    "fixedStep": 0.016666666666666666
+  },
+  "worldgen": {
+    "method": "seeded room-and-corridor grid with door/key logic",
+    "seeded": true
+  },
+  "input": {
+    "scheme": "WASD + mouse look (pointer lock) or arrows; fire, use",
+    "devices": [
+      "keyboard",
+      "mouse",
+      "gamepad",
+      "pointer-lock"
+    ]
+  },
+  "performance": {
+    "targetFps": 60,
+    "frameBudgetMs": 10,
+    "minDevice": "low",
+    "drawCalls": 1,
+    "memoryMB": 96,
+    "fallbackTier": "width 240 columns"
+  },
+  "swarm": {
+    "shape": "contract-first; one agent owns the ray core; level and enemy-AI agents in parallel",
+    "agentCount": [
+      8,
+      14
+    ],
+    "roles": [
+      {
+        "role": "architect (ARCHITECTURE.md contract)",
+        "model": "opus"
+      },
+      {
+        "role": "art agents (sprites, tiles, scenery)",
+        "model": "sonnet"
+      },
+      {
+        "role": "sim/gameplay agents",
+        "model": "sonnet"
+      },
+      {
+        "role": "audio agents",
+        "model": "sonnet"
+      },
+      {
+        "role": "render/UI shell",
+        "model": "sonnet"
+      },
+      {
+        "role": "QA bot + verification",
+        "model": "sonnet"
+      },
+      {
+        "role": "boilerplate, lint, docs",
+        "model": "haiku"
+      }
+    ]
+  },
+  "verification": [
+    "node --test passes (ray hit golden cases, no fisheye distortion)",
+    "screenshot in a corridor shows straight vertical walls and shaded distance",
+    "sprite z-order test: a sprite behind a wall is hidden",
+    "FPS >= 55 at 320x200 on low tier",
+    "level validator: every key is reachable and every door pairs with a key",
+    "pointer lock falls back gracefully"
+  ],
+  "pitfalls": [
+    "fisheye from using Euclidean distance: use perpendicular distance",
+    "sprite sort and clipping bugs",
+    "pointer lock requires a user gesture",
+    "fractional DDA steps cause wall gaps at corners"
+  ],
+  "examples": [
+    {
+      "game": "duum",
+      "role": "reference"
+    }
+  ],
+  "tags": [
+    "raycaster",
+    "fps",
+    "first-person",
+    "retro",
+    "dungeon"
+  ],
+  "requires": {
+    "kits": [
+      "art-kit",
+      "audio-kit",
+      "fx-kit"
+    ],
+    "libs": [
+      "raycaster-core"
+    ],
+    "skills": []
+  },
+  "tech": {
+    "dependencies": "none",
+    "choices": [
+      "typed-array software framebuffer",
+      "putImageData blit"
+    ],
+    "limits": [
+      "no rooms over rooms, no sloped floors",
+      "about 320x200 at 60 fps on a low-end laptop",
+      "sprite count under 200"
+    ]
+  },
+  "recommend": {
+    "keywords": {
+      "fps": 8,
+      "doom": 8,
+      "wolfenstein": 8,
+      "duum": 9,
+      "raycaster": 9,
+      "raycasting": 9,
+      "first-person": 6,
+      "first person": 6,
+      "shooter": 5,
+      "dungeon": 3,
+      "maze": 3,
+      "corridor": 2,
+      "retro": 2
+    },
+    "anti": {
+      "platformer": 5,
+      "top-down": 3,
+      "isometric": 4,
+      "cartoon": 3
+    },
+    "cost": 3,
+    "platforms": [
+      "web",
+      "desktop"
+    ],
+    "pros": [
+      "runs on any CPU",
+      "iconic look",
+      "small codebase"
+    ],
+    "cons": [
+      "flat levels only",
+      "enemy AI and level design carry the fun"
+    ]
+  },
+  "themingGuide": "THEMING.md",
+  "version": "1.0.0"
+}

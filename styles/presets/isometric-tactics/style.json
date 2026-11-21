@@ -1,0 +1,233 @@
+{
+  "id": "isometric-tactics",
+  "name": "Isometric Tactics",
+  "description": "Grid-based turn-based strategy in 2:1 isometric projection: height levels, depth sorting, line of sight, and an AI that plans on the grid.",
+  "genre": [
+    "tactics",
+    "strategy",
+    "rpg",
+    "puzzle"
+  ],
+  "camera": "isometric",
+  "render": {
+    "tech": "canvas2d-pixel",
+    "dimension": "2.5d",
+    "resolution": {
+      "width": 480,
+      "height": 270,
+      "scaling": "integer-nearest",
+      "integerOnly": true
+    },
+    "notes": "Tiles 32x16 (2:1 diamond); draw by painter order sorted by (x+y, z); cached terrain layer, dynamic units on top."
+  },
+  "palette": {
+    "policy": "ramps",
+    "maxColors": 96,
+    "rampSize": 5,
+    "notes": "Top, left and right faces use three fixed lightness offsets from one ramp."
+  },
+  "art": {
+    "kit": "art-kit",
+    "tileSize": 32,
+    "spriteSize": [
+      32,
+      48
+    ],
+    "outline": "selective",
+    "settings": {
+      "projection": "2:1"
+    }
+  },
+  "character": {
+    "kit": "character-kit",
+    "rig": "param-rig",
+    "animFps": 10,
+    "settings": {
+      "facings": 4
+    }
+  },
+  "audio": {
+    "engine": "fm",
+    "channels": 6,
+    "bitDepth": 12,
+    "sampleRate": 32000,
+    "mood": "thoughtful, strategic"
+  },
+  "fx": [
+    {
+      "id": "particles",
+      "default": true
+    },
+    {
+      "id": "outlines",
+      "default": true,
+      "strength": 0.5
+    },
+    {
+      "id": "vignette",
+      "default": true,
+      "strength": 0.2
+    },
+    {
+      "id": "screen-shake",
+      "default": true,
+      "strength": 0.3
+    },
+    {
+      "id": "bloom",
+      "default": false,
+      "strength": 0.15
+    }
+  ],
+  "physics": {
+    "model": "none; discrete grid movement with height, cost maps and A* pathing",
+    "fixedStep": 0
+  },
+  "worldgen": {
+    "method": "seeded heightmap maps with spawn-balance validator",
+    "seeded": true
+  },
+  "input": {
+    "scheme": "pointer: click tile to select/move, hover previews; keyboard shortcuts",
+    "devices": [
+      "mouse",
+      "touch",
+      "keyboard"
+    ]
+  },
+  "performance": {
+    "targetFps": 60,
+    "frameBudgetMs": 10,
+    "minDevice": "low",
+    "drawCalls": 1500,
+    "memoryMB": 128
+  },
+  "swarm": {
+    "shape": "contract-first; rules engine and AI agents are the core, art parallel",
+    "agentCount": [
+      9,
+      15
+    ],
+    "roles": [
+      {
+        "role": "architect (ARCHITECTURE.md contract)",
+        "model": "opus"
+      },
+      {
+        "role": "art agents (sprites, tiles, scenery)",
+        "model": "sonnet"
+      },
+      {
+        "role": "sim/gameplay agents",
+        "model": "sonnet"
+      },
+      {
+        "role": "audio agents",
+        "model": "sonnet"
+      },
+      {
+        "role": "render/UI shell",
+        "model": "sonnet"
+      },
+      {
+        "role": "QA bot + verification",
+        "model": "sonnet"
+      },
+      {
+        "role": "boilerplate, lint, docs",
+        "model": "haiku"
+      }
+    ]
+  },
+  "verification": [
+    "node --test passes (rules engine is pure, seeded, replayable)",
+    "AI plays 20 seeded matches without illegal moves",
+    "depth sort golden test on tall tiles and units",
+    "screen picking maps every pixel to the right tile at all zoom levels",
+    "screenshots readable with a 1x zoom",
+    "save/replay round-trips"
+  ],
+  "pitfalls": [
+    "painter order errors with tall sprites: sort by tile then height",
+    "pointer to tile conversion off by half tile",
+    "AI runtime blowups on large maps: budget per turn",
+    "hidden information leaks through the UI"
+  ],
+  "examples": [
+    {
+      "game": "KÄSEKRIEG",
+      "role": "reference"
+    }
+  ],
+  "tags": [
+    "isometric",
+    "tactics",
+    "strategy",
+    "pixel",
+    "turn-based"
+  ],
+  "requires": {
+    "kits": [
+      "art-kit",
+      "character-kit",
+      "audio-kit",
+      "fx-kit"
+    ],
+    "libs": [
+      "world-gen"
+    ],
+    "skills": [
+      "designing-exhaustive-test-cases"
+    ]
+  },
+  "tech": {
+    "dependencies": "none",
+    "choices": [
+      "Canvas2D with cached terrain",
+      "pure-JS rules engine",
+      "A* and flood fill"
+    ],
+    "limits": [
+      "maps up to about 40x40 tiles at 60 fps",
+      "no free camera rotation (4 fixed views at most)"
+    ]
+  },
+  "recommend": {
+    "keywords": {
+      "isometric": 9,
+      "tactics": 8,
+      "turn-based": 7,
+      "turn based": 7,
+      "strategy": 5,
+      "tactical rpg": 7,
+      "fire emblem": 5,
+      "xcom": 5,
+      "grid": 3,
+      "chess": 2,
+      "puzzle": 1,
+      "kasekrieg": 6,
+      "käsekrieg": 6
+    },
+    "anti": {
+      "platformer": 5,
+      "fps": 6,
+      "real-time": 3,
+      "ascii": 3
+    },
+    "cost": 3,
+    "platforms": [
+      "web",
+      "desktop"
+    ],
+    "pros": [
+      "pure logic is easy to test",
+      "AI-vs-AI soak testing is easy"
+    ],
+    "cons": [
+      "UI heavy",
+      "balance work"
+    ]
+  },
+  "themingGuide": "THEMING.md",
+  "version": "1.0.0"
+}

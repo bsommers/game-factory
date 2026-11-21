@@ -1,0 +1,225 @@
+{
+  "id": "pixel-2.5d-parallax",
+  "name": "Pixel 2.5D Parallax",
+  "description": "Pixel art with depth: many parallax planes, lane or depth-layer movement, scaled sprites and fog, all on Canvas2D.",
+  "genre": [
+    "beat-em-up",
+    "runner",
+    "adventure"
+  ],
+  "camera": "parallax-2.5d",
+  "render": {
+    "tech": "canvas2d-pixel",
+    "dimension": "2.5d",
+    "resolution": {
+      "width": 480,
+      "height": 270,
+      "scaling": "integer-nearest",
+      "integerOnly": false,
+      "renderScaleTiers": [
+        1,
+        0.75,
+        0.5
+      ]
+    },
+    "notes": "Planes sorted back to front; far planes pre-baked to strips and scrolled by integer offsets."
+  },
+  "palette": {
+    "policy": "ramps",
+    "maxColors": 128,
+    "rampSize": 5,
+    "notes": "Atmospheric perspective: far planes use a compressed, desaturated ramp."
+  },
+  "art": {
+    "kit": "art-kit",
+    "tileSize": 16,
+    "spriteSize": [
+      32,
+      48
+    ],
+    "outline": "selective"
+  },
+  "character": {
+    "kit": "character-kit",
+    "rig": "param-rig",
+    "animFps": 12
+  },
+  "audio": {
+    "engine": "fm",
+    "channels": 6,
+    "bitDepth": 12,
+    "sampleRate": 32000,
+    "mood": "atmospheric"
+  },
+  "fx": [
+    {
+      "id": "fog",
+      "default": true,
+      "strength": 0.4
+    },
+    {
+      "id": "particles",
+      "default": true
+    },
+    {
+      "id": "vignette",
+      "default": true,
+      "strength": 0.3
+    },
+    {
+      "id": "bloom",
+      "default": false,
+      "strength": 0.2
+    },
+    {
+      "id": "screen-shake",
+      "default": true
+    }
+  ],
+  "physics": {
+    "model": "lane/depth-aware kinematics; depth is a separate axis with its own speed",
+    "fixedStep": 0.016666666666666666
+  },
+  "worldgen": {
+    "method": "segment-based scrolling strips, seeded",
+    "seeded": true
+  },
+  "input": {
+    "scheme": "8-way movement + attack/jump",
+    "devices": [
+      "keyboard",
+      "gamepad"
+    ]
+  },
+  "performance": {
+    "targetFps": 60,
+    "frameBudgetMs": 11,
+    "minDevice": "low",
+    "drawCalls": 1200,
+    "memoryMB": 192
+  },
+  "swarm": {
+    "shape": "contract-first; one agent owns layer compositing and depth sort",
+    "agentCount": [
+      10,
+      16
+    ],
+    "roles": [
+      {
+        "role": "architect (ARCHITECTURE.md contract)",
+        "model": "opus"
+      },
+      {
+        "role": "art agents (sprites, tiles, scenery)",
+        "model": "sonnet"
+      },
+      {
+        "role": "sim/gameplay agents",
+        "model": "sonnet"
+      },
+      {
+        "role": "audio agents",
+        "model": "sonnet"
+      },
+      {
+        "role": "render/UI shell",
+        "model": "sonnet"
+      },
+      {
+        "role": "QA bot + verification",
+        "model": "sonnet"
+      },
+      {
+        "role": "boilerplate, lint, docs",
+        "model": "haiku"
+      }
+    ]
+  },
+  "verification": [
+    "node --test passes",
+    "depth sort golden test: overlapping sprites draw in a fixed order",
+    "parallax planes tile without seams over 10 screens",
+    "screenshots show visible depth separation",
+    "FPS >= 55 with all planes on",
+    "low render-scale tier still reads"
+  ],
+  "pitfalls": [
+    "too many full-screen planes kill low-end fill rate: pre-bake",
+    "sprite scaling breaks pixel grid: scale in integer steps only",
+    "depth sorting flicker on ties: add a stable tiebreak",
+    "foreground planes hide the player"
+  ],
+  "examples": [
+    {
+      "game": "PawFall",
+      "role": "aspirational",
+      "note": "deeper jungle layers"
+    }
+  ],
+  "tags": [
+    "pixel",
+    "2.5d",
+    "parallax",
+    "beat-em-up",
+    "runner",
+    "2d"
+  ],
+  "requires": {
+    "kits": [
+      "art-kit",
+      "character-kit",
+      "audio-kit",
+      "fx-kit"
+    ],
+    "libs": [
+      "platformer-physics"
+    ],
+    "skills": []
+  },
+  "tech": {
+    "dependencies": "none",
+    "choices": [
+      "Canvas2D with pre-baked plane strips",
+      "fx-kit parallax helper"
+    ],
+    "limits": [
+      "no true perspective",
+      "at most 8 full-width planes at 60 fps on low tier"
+    ]
+  },
+  "recommend": {
+    "keywords": {
+      "parallax": 8,
+      "2.5d": 8,
+      "beat em up": 6,
+      "beat-em-up": 6,
+      "brawler": 5,
+      "runner": 4,
+      "depth": 3,
+      "lanes": 3,
+      "layers": 3,
+      "atmospheric": 2,
+      "pixel art": 2
+    },
+    "anti": {
+      "fps": 5,
+      "terminal": 6,
+      "ascii": 6
+    },
+    "cost": 3,
+    "platforms": [
+      "web",
+      "desktop"
+    ],
+    "pros": [
+      "depth impression with 2D art costs",
+      "good for atmosphere"
+    ],
+    "cons": [
+      "layer art multiplies",
+      "depth sorting complexity"
+    ]
+  },
+  "themingGuide": "THEMING.md",
+  "version": "1.0.0"
+}

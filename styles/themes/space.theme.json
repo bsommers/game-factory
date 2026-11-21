@@ -1,0 +1,14 @@
+{
+  "id": "space",
+  "name": "Space",
+  "description": "Deep navy void, neon cyan and magenta accents, metal greys.",
+  "compatibleStyles": ["retro-8bit-sidescroller", "retro-16bit", "pixel-2.5d-parallax", "cartoon-vector", "top-down-arcade", "raycaster-fps", "raytraced-3d", "lowpoly-3d", "cel-shaded-toon-3d", "ascii-terminal"],
+  "palette": {
+    "colors": { "void": "#0a0c1f", "hull": "#8a93ad", "steel": "#4a5270", "cyan": "#35e0ff", "magenta": "#ff3fa4", "star": "#fff7c2", "alert": "#ff4d4d", "plasma": "#8cff6b" },
+    "roles": { "background": "void", "text": "star", "accent": "cyan", "danger": "alert", "good": "plasma", "sky": "void", "ground": "steel" }
+  },
+  "typography": { "fontKit": "font5x7", "titleScale": 6, "bodyScale": 1, "case": "upper", "shadow": false },
+  "ui": { "skin": "holo-panel", "panel": "translucent", "cursor": "crosshair", "cornerStyle": "square" },
+  "audio": { "sfxMood": "zaps, sweeps, sonar pings", "musicMood": "arpeggiated synthwave", "scale": "natural minor", "bpm": 118 },
+  "title": { "layout": "centered-logo", "tagline": "Silence is only vacuum.", "background": "starfield with slow parallax", "logoPlacement": "center" }
+}

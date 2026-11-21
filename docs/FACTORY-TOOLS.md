@@ -16,6 +16,16 @@ Reusable pieces, born from real problems. Add to this list whenever a bug or man
 | `tools/smoke_windows.sh` | push zip to win-devvm, sha256 check, install, headless launch, uninstall, verify clean | build verification |
 | `tools/build.sh`, `tools/package_*.sh` | export + installers (macOS needs `MAC_HOST`) | build-all |
 | `tools/swarm-tracker/*` | swarm plan generator + live dashboard (:4782) | orchestration |
+| `swarm/dashboard/*` (Media panel) | tracker Media section: audio list with players + server-side `/api/wav-peaks?f=out/sfx/x.wav` waveform peaks, media totals strip (sprites/frames/sfx/music/shots/GIFs), per-phase done/total agent bar; serves `out/` + `dist/` with Range | orchestration |
+| `src/kits/art-kit` | PixBuf, palette lock, ASCII/draw-fn sprites, sheet packer + manifest validator, tiles/scenery, PNG | PawFall art modules |
+| `src/kits/character-kit` | character spec (palette, poses, anims) to sprites + animator; Colby/Pete rigs as examples | PawFall colby.js |
+| `src/kits/audio-kit` | SFX recipes, tracker songs, offline render, WAV, jingles, soundtrack map | PawFall sfx.js/music.js |
+| `src/kits/fx-kit` | particles, shake, flash, popups, day-night sky, parallax, foreground silhouettes | PawFall render modules |
+| `src/kits/docs-kit` | README / HOW-TO-PLAY / HOW-IT-WAS-MADE / Pages site generator fed by reports and screenshots | PawFall docs |
+| `src/lib/platformer-physics.js` | fixed-step platformer core: gravity/jump, pits, one-way + moving platforms, ladders, pendulum rope grab, circular edge transitions | PawFall player.js/physics.js |
+| `src/lib/hazard-kit.js` | hazard behaviour registry, contact resolution (lethal/points/solidTop), patroller/roller/cycler/spawner/taunting-boss patterns | PawFall hazards.js |
+| `src/lib/world-gen.js` | seeded circular level generator from a rule table (ramp, set-pieces, spacing, collectibles) + fairness validator with a reachability predicate | PawFall levels/gen.js, validate-level |
+| `src/lib/autopilot-kit.js` | look-ahead bot parts: trajectory, robust macro search, watchdog, skill humaniser | PawFall autopilot.js |
 
 ## Learnings worth reusing
 - Pin the orientation convention (models face -Z) in the contract AND in a test; two agents guessed differently.

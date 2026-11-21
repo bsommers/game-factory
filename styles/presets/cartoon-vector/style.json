@@ -1,0 +1,223 @@
+{
+  "id": "cartoon-vector",
+  "name": "Cartoon Vector",
+  "description": "Smooth-edged 2D cartoon art drawn with Canvas2D paths: thick strokes, flat fills, squash and stretch, skeletal rigs.",
+  "genre": [
+    "casual",
+    "puzzle",
+    "platformer",
+    "party"
+  ],
+  "camera": "side-scroller",
+  "render": {
+    "tech": "canvas2d-vector",
+    "dimension": "2d",
+    "resolution": {
+      "width": 1280,
+      "height": 720,
+      "scaling": "fit-letterbox",
+      "integerOnly": false
+    },
+    "notes": "Logical 1280x720 canvas scaled by devicePixelRatio; paths cached to offscreen canvases when static."
+  },
+  "palette": {
+    "policy": "free",
+    "maxColors": 4096,
+    "notes": "Free colour but keep a 12-colour theme set for coherence; contrast-check text."
+  },
+  "art": {
+    "kit": "art-kit",
+    "outline": "vector-stroke",
+    "settings": {
+      "strokeWidth": 4,
+      "lineJoin": "round"
+    }
+  },
+  "character": {
+    "kit": "character-kit",
+    "rig": "skeletal-2d",
+    "animFps": 30
+  },
+  "audio": {
+    "engine": "procedural-webaudio",
+    "channels": 16,
+    "bitDepth": 16,
+    "sampleRate": 44100,
+    "mood": "playful, rubbery"
+  },
+  "fx": [
+    {
+      "id": "outlines",
+      "default": true,
+      "strength": 0.8
+    },
+    {
+      "id": "particles",
+      "default": true
+    },
+    {
+      "id": "screen-shake",
+      "default": true,
+      "strength": 0.4
+    },
+    {
+      "id": "bloom",
+      "default": false,
+      "strength": 0.2
+    },
+    {
+      "id": "vignette",
+      "default": false
+    }
+  ],
+  "physics": {
+    "model": "simple rigid bodies or arcade kinematics; springs for squash/stretch",
+    "fixedStep": 0.016666666666666666
+  },
+  "worldgen": {
+    "method": "hand-authored levels with seeded decoration",
+    "seeded": true
+  },
+  "input": {
+    "scheme": "keyboard or pointer; touch friendly",
+    "devices": [
+      "keyboard",
+      "mouse",
+      "touch",
+      "gamepad"
+    ]
+  },
+  "performance": {
+    "targetFps": 60,
+    "frameBudgetMs": 12,
+    "minDevice": "mid",
+    "drawCalls": 1500,
+    "memoryMB": 256
+  },
+  "swarm": {
+    "shape": "contract-first; art agents work on shared rig and path helpers",
+    "agentCount": [
+      8,
+      14
+    ],
+    "roles": [
+      {
+        "role": "architect (ARCHITECTURE.md contract)",
+        "model": "opus"
+      },
+      {
+        "role": "art agents (sprites, tiles, scenery)",
+        "model": "sonnet"
+      },
+      {
+        "role": "sim/gameplay agents",
+        "model": "sonnet"
+      },
+      {
+        "role": "audio agents",
+        "model": "sonnet"
+      },
+      {
+        "role": "render/UI shell",
+        "model": "sonnet"
+      },
+      {
+        "role": "QA bot + verification",
+        "model": "sonnet"
+      },
+      {
+        "role": "boilerplate, lint, docs",
+        "model": "haiku"
+      }
+    ]
+  },
+  "verification": [
+    "node --test passes",
+    "visual diff on a fixed-seed screenshot at 1x and 2x DPR",
+    "FPS >= 55 with cached static layers",
+    "text contrast ratio >= 4.5 on UI",
+    "rig plays every animation with no pops at loop points",
+    "no console errors"
+  ],
+  "pitfalls": [
+    "redrawing every path every frame: cache static art",
+    "hairline strokes at high DPR",
+    "Path2D allocation per frame creates GC stutter",
+    "inconsistent stroke widths across assets"
+  ],
+  "examples": [
+    {
+      "game": "KÄSEKRIEG",
+      "role": "fits"
+    }
+  ],
+  "tags": [
+    "vector",
+    "cartoon",
+    "smooth",
+    "casual",
+    "2d",
+    "party"
+  ],
+  "requires": {
+    "kits": [
+      "art-kit",
+      "character-kit",
+      "audio-kit",
+      "fx-kit"
+    ],
+    "libs": [],
+    "skills": []
+  },
+  "tech": {
+    "dependencies": "none",
+    "choices": [
+      "Canvas2D Path2D",
+      "offscreen canvas caching",
+      "WebAudio"
+    ],
+    "limits": [
+      "several thousand animated paths per frame is the ceiling",
+      "no GPU shaders"
+    ]
+  },
+  "recommend": {
+    "keywords": {
+      "cartoon": 8,
+      "vector": 7,
+      "smooth": 4,
+      "casual": 4,
+      "party": 3,
+      "puzzle": 3,
+      "cute": 2,
+      "squash and stretch": 4,
+      "colourful": 2,
+      "colorful": 2,
+      "physics toy": 3,
+      "kids": 2
+    },
+    "anti": {
+      "8-bit": 6,
+      "8bit": 6,
+      "ascii": 6,
+      "fps": 4,
+      "retro": 3
+    },
+    "cost": 3,
+    "platforms": [
+      "web",
+      "desktop"
+    ],
+    "pros": [
+      "resolution independent",
+      "friendly look",
+      "easy animation tweening"
+    ],
+    "cons": [
+      "not pixel-perfect deterministic across browsers",
+      "caching required for perf"
+    ]
+  },
+  "themingGuide": "THEMING.md",
+  "version": "1.0.0"
+}

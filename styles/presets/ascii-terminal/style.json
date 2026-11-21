@@ -1,0 +1,207 @@
+{
+  "id": "ascii-terminal",
+  "name": "ASCII Terminal",
+  "description": "Text-grid game for the terminal or a canvas monospace grid: glyph tiles, 16 or 256 ANSI colours, keyboard play, minimal audio.",
+  "genre": [
+    "roguelike",
+    "puzzle",
+    "text-adventure",
+    "tool-game"
+  ],
+  "camera": "text-grid",
+  "render": {
+    "tech": "terminal-text",
+    "dimension": "text",
+    "resolution": {
+      "width": 80,
+      "height": 24,
+      "scaling": "fill-native",
+      "integerOnly": true
+    },
+    "notes": "Logical 80x24 cell grid; render to ANSI in Node, or to a monospace canvas in a browser from the same frame buffer."
+  },
+  "palette": {
+    "policy": "locked",
+    "maxColors": 16,
+    "rampSize": 4,
+    "notes": "ANSI 16 by default; 256-colour opt-in with an automatic 16-colour fallback."
+  },
+  "art": {
+    "kit": "art-kit",
+    "tileSize": 1,
+    "outline": "none",
+    "settings": {
+      "glyphs": "CP437 plus ASCII fallback table"
+    }
+  },
+  "character": {
+    "kit": "character-kit",
+    "rig": "glyph",
+    "animFps": 4
+  },
+  "audio": {
+    "engine": "terminal-bell",
+    "channels": 0,
+    "bitDepth": 8,
+    "sampleRate": 8000,
+    "mood": "minimal",
+    "settings": {
+      "bell": true,
+      "optionalWav": true
+    }
+  },
+  "fx": [
+    {
+      "id": "none",
+      "default": true,
+      "note": "the glyphs are the art"
+    },
+    {
+      "id": "vignette",
+      "default": false
+    },
+    {
+      "id": "particles",
+      "default": false,
+      "strength": 0.3,
+      "note": "glyph sparks only"
+    }
+  ],
+  "physics": {
+    "model": "discrete turn-based grid; no continuous physics",
+    "fixedStep": 0
+  },
+  "worldgen": {
+    "method": "seeded BSP rooms or cellular automata caves",
+    "seeded": true
+  },
+  "input": {
+    "scheme": "keyboard only: vi keys / arrows / WASD plus single-key commands",
+    "devices": [
+      "keyboard"
+    ]
+  },
+  "performance": {
+    "targetFps": 30,
+    "frameBudgetMs": 16,
+    "minDevice": "low",
+    "memoryMB": 32
+  },
+  "swarm": {
+    "shape": "tiny: 1 architect, 2-3 module agents, 1 QA",
+    "agentCount": [
+      3,
+      6
+    ],
+    "roles": [
+      {
+        "role": "architect",
+        "model": "sonnet"
+      },
+      {
+        "role": "gameplay and worldgen",
+        "model": "sonnet"
+      },
+      {
+        "role": "terminal renderer and input",
+        "model": "sonnet"
+      },
+      {
+        "role": "QA bot",
+        "model": "haiku"
+      },
+      {
+        "role": "docs and boilerplate",
+        "model": "haiku"
+      }
+    ]
+  },
+  "verification": [
+    "node --test passes (pure game core with frame-buffer snapshot tests)",
+    "snapshot of the 80x24 grid for a fixed seed matches the golden text",
+    "game runs with TERM=dumb using the plain fallback",
+    "Ctrl-C always restores the terminal state",
+    "bot completes a seeded run",
+    "no output wider than the terminal"
+  ],
+  "pitfalls": [
+    "terminal state not restored on crash: install exit handlers",
+    "unicode width differences between terminals",
+    "colour support detection (NO_COLOR, TERM)",
+    "blocking input in the game loop"
+  ],
+  "examples": [
+    {
+      "game": "KÄSEKRIEG",
+      "role": "fits",
+      "note": "a text-mode edition"
+    }
+  ],
+  "tags": [
+    "ascii",
+    "terminal",
+    "roguelike",
+    "text",
+    "tui"
+  ],
+  "requires": {
+    "kits": [
+      "docs-kit"
+    ],
+    "libs": [
+      "world-gen"
+    ],
+    "skills": [
+      "building-small-cli-tools"
+    ]
+  },
+  "tech": {
+    "dependencies": "none",
+    "choices": [
+      "Node readline raw mode + ANSI escapes",
+      "shared frame-buffer rendered to canvas in browsers"
+    ],
+    "limits": [
+      "no mouse in some terminals",
+      "no sound beyond the bell without a player"
+    ]
+  },
+  "recommend": {
+    "keywords": {
+      "ascii": 9,
+      "terminal": 8,
+      "roguelike": 8,
+      "text": 4,
+      "tui": 7,
+      "cli": 4,
+      "console": 4,
+      "text adventure": 6,
+      "nethack": 5,
+      "glyph": 3,
+      "command line": 4
+    },
+    "anti": {
+      "3d": 5,
+      "platformer": 4,
+      "cartoon": 4,
+      "parallax": 4
+    },
+    "cost": 1,
+    "platforms": [
+      "terminal",
+      "web",
+      "desktop"
+    ],
+    "pros": [
+      "cheapest style",
+      "perfect for logic-heavy games",
+      "trivial to test"
+    ],
+    "cons": [
+      "small audience",
+      "little spectacle"
+    ]
+  },
+  "themingGuide": "THEMING.md",
+  "version": "1.0.0"
+}

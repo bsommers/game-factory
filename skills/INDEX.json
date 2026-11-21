@@ -1,0 +1,965 @@
+{
+  "formatVersion": 1,
+  "count": 15,
+  "skills": [
+    {
+      "name": "add-fx",
+      "description": "Add juicy feedback with fx-kit: particles, screen shake, flash, score popups, day-night sky, parallax and foreground silhouettes.",
+      "triggers": [
+        "fx",
+        "effects",
+        "particles",
+        "juice",
+        "shake",
+        "screen shake",
+        "flash",
+        "popup",
+        "parallax",
+        "sky",
+        "day night",
+        "silhouette",
+        "polish",
+        "feedback",
+        "juicy",
+        "explosion",
+        "splash",
+        "confetti"
+      ],
+      "needs": [
+        "src/kits/fx-kit"
+      ],
+      "outputs": [
+        "render hooks",
+        "fx tests"
+      ],
+      "model": "sonnet",
+      "cost": "low",
+      "capabilities": [],
+      "kits": [
+        "fx-kit"
+      ],
+      "file": "add-fx.md",
+      "commands": [],
+      "steps": [
+        "`createParticles({seed, max})`; `burst('splash'|'dust'|'sparkle'|'confetti'|'poof', x, y)` at event time; `update(dt)`; `draw(ctx)`.",
+        "`createShake()` (`kick`, integer `offset()`), `createFlash()`, `createPopups()` for score text.",
+        "Sky: `skyRamp(DAY_NIGHT_STOPS, t01)`, `drawSkyBands`; backgrounds: `parallaxOffsets(layers, camX, tileW)`; `makeSilhouetteStrip('trees'|'hills'|'grass', w, h)`.",
+        "Trigger fx from sim events, never from render state."
+      ],
+      "keywords": [
+        "add",
+        "confetti",
+        "day",
+        "effect",
+        "explosion",
+        "feedback",
+        "flash",
+        "fx",
+        "juice",
+        "juicy",
+        "night",
+        "parallax",
+        "particle",
+        "polish",
+        "popup",
+        "screen",
+        "shake",
+        "silhouette",
+        "sky",
+        "splash"
+      ]
+    },
+    {
+      "name": "add-physics-hazards-worldgen",
+      "description": "Add platformer physics, hazards, seeded level generation, fairness validation and an autopilot using the src/lib kits.",
+      "triggers": [
+        "physics",
+        "platformer",
+        "gravity",
+        "jump",
+        "hazards",
+        "hazard",
+        "enemies",
+        "world gen",
+        "level generation",
+        "procedural",
+        "fairness",
+        "level",
+        "pit",
+        "vine",
+        "rope",
+        "ladder",
+        "collision",
+        "rollers",
+        "croc"
+      ],
+      "needs": [
+        "src/lib",
+        "src/core/defs.js TUNING"
+      ],
+      "outputs": [
+        "player/physics module",
+        "hazard registry",
+        "generated levels",
+        "validator tests"
+      ],
+      "model": "sonnet",
+      "cost": "medium",
+      "capabilities": [],
+      "kits": [
+        "platformer-physics",
+        "hazard-kit",
+        "world-gen",
+        "autopilot-kit"
+      ],
+      "file": "add-physics-hazards-worldgen.md",
+      "commands": [],
+      "steps": [
+        "Import from `src/lib/`: `platformer-physics.js` (fixed step), `hazard-kit.js` (behaviour registry), `world-gen.js` (rule table + validator), `autopilot-kit.js` (bot parts).",
+        "Put numbers in `TUNING` in the shared defs file; use `jumpRange`/`jumpHeight` from the lib to derive `MAX_PIT`.",
+        "Write a sweep script first for any reach geometry (vines, ropes) and tune from its output.",
+        "Generate with per-screen seeded streams; validate with a reachability predicate; add a \"different seed gives different output\" test.",
+        "Stagger cyclers (phase = `i * period / 3`)."
+      ],
+      "keywords": [
+        "add",
+        "collision",
+        "croc",
+        "enemy",
+        "fairness",
+        "gen",
+        "generation",
+        "gravity",
+        "hazard",
+        "jump",
+        "ladder",
+        "level",
+        "physic",
+        "pit",
+        "platformer",
+        "procedural",
+        "roller",
+        "rope",
+        "vine",
+        "world",
+        "worldgen"
+      ]
+    },
+    {
+      "name": "choose-model-per-agent",
+      "description": "Choose the cheapest adequate model tier (haiku, sonnet, opus) for each swarm agent or subagent task.",
+      "triggers": [
+        "model",
+        "model tier",
+        "haiku",
+        "sonnet",
+        "opus",
+        "cost",
+        "budget",
+        "tokens",
+        "cheap",
+        "expensive",
+        "which model",
+        "usage limit",
+        "token budget"
+      ],
+      "needs": [],
+      "outputs": [
+        "model column in SWARM.md"
+      ],
+      "model": "haiku",
+      "cost": "low",
+      "capabilities": [
+        "guide.plan"
+      ],
+      "kits": [],
+      "file": "choose-model-per-agent.md",
+      "commands": [],
+      "steps": [
+        "List agents and give each a one-line difficulty note.",
+        "Default to sonnet for modules, haiku for tooling and mechanical work.",
+        "Put the choice in the manifest header: `## id | model | phase | role | Name`.",
+        "Always pass `model` explicitly when spawning a subagent."
+      ],
+      "keywords": [
+        "agent",
+        "budget",
+        "cheap",
+        "choose",
+        "cost",
+        "expensive",
+        "haiku",
+        "limit",
+        "model",
+        "opu",
+        "per",
+        "sonnet",
+        "tier",
+        "token",
+        "usage",
+        "which"
+      ]
+    },
+    {
+      "name": "choose-style",
+      "description": "Pick and apply a game style preset (pixel 8-bit, 16-bit, raycaster, low-poly 3D, isometric, ASCII, vector) with theme and palette policy.",
+      "triggers": [
+        "style",
+        "preset",
+        "theme",
+        "3d",
+        "2d",
+        "pixel",
+        "retro",
+        "raycaster",
+        "isometric",
+        "ascii",
+        "low poly",
+        "vector",
+        "cartoon",
+        "palette",
+        "look",
+        "camera",
+        "art direction",
+        "fps",
+        "top down"
+      ],
+      "needs": [],
+      "outputs": [
+        "config/style.json",
+        "config/theme.json"
+      ],
+      "model": "haiku",
+      "cost": "low",
+      "capabilities": [
+        "styles.list",
+        "styles.show",
+        "styles.recommend",
+        "styles.apply",
+        "styles.validate"
+      ],
+      "kits": [],
+      "file": "choose-style.md",
+      "commands": [],
+      "steps": [
+        "`styles.recommend {idea, constraints: {platform, team, budget, device}}` ranks presets with reasons and trade-offs.",
+        "`styles.show {id, themes: true}` for the full preset and compatible themes.",
+        "`styles.apply {project, style, theme?, dryRun: true}` then without dryRun; `yes` overwrites differing files.",
+        "Tag every asset you later publish `style:<id>`."
+      ],
+      "keywords": [
+        "2d",
+        "3d",
+        "art",
+        "ascii",
+        "camera",
+        "cartoon",
+        "choose",
+        "direction",
+        "down",
+        "fps",
+        "isometric",
+        "look",
+        "low",
+        "palette",
+        "pixel",
+        "poly",
+        "preset",
+        "raycaster",
+        "retro",
+        "style",
+        "theme",
+        "top",
+        "vector"
+      ]
+    },
+    {
+      "name": "compose-music-sfx",
+      "description": "Compose chiptune music and sound effects with audio-kit: recipe tables, tracker songs, offline WAV render, jingles and a soundtrack map.",
+      "triggers": [
+        "music",
+        "sfx",
+        "sound",
+        "audio",
+        "song",
+        "soundtrack",
+        "jingle",
+        "wav",
+        "chiptune",
+        "synth",
+        "sound effect",
+        "tracker song",
+        "drums",
+        "loop",
+        "webaudio"
+      ],
+      "needs": [
+        "src/kits/audio-kit"
+      ],
+      "outputs": [
+        "sfx recipe table",
+        "songs",
+        "out/*.wav"
+      ],
+      "model": "sonnet",
+      "cost": "medium",
+      "capabilities": [
+        "registry.search"
+      ],
+      "kits": [
+        "audio-kit"
+      ],
+      "file": "compose-music-sfx.md",
+      "commands": [],
+      "steps": [
+        "SFX: a pure-data recipe table `{ name: (v, {arp}) => { v({src, dur, gain, f}) } }`; preview with `describeSfx` and render offline with `renderSfx`.",
+        "Songs: `{bpm, bars, loop, channels, drums}`; one bar is exactly 16 sixteenths (`\"D5:2 F#5:2 A5:4 .:8\"`). Check every bar with `parseBar`.",
+        "Render with `renderSong(song, sr)` and `toWav(pcm, sr)`; write to `out/`.",
+        "Map states to tracks with `soundtrack({menu:'title', play:'jungle'})`; stings via `jingle`.",
+        "Set master gain from measured peaks (peak <= 0.88)."
+      ],
+      "keywords": [
+        "audio",
+        "chiptune",
+        "compose",
+        "drum",
+        "effect",
+        "jingle",
+        "loop",
+        "music",
+        "sfx",
+        "song",
+        "sound",
+        "soundtrack",
+        "synth",
+        "tracker",
+        "wav",
+        "webaudio"
+      ]
+    },
+    {
+      "name": "debug-common-failures",
+      "description": "Triage common game-factory and swarm failures: broken contract parsing, stale state, unreachable hazards, blank frames, flaky tests, swarm usage limits.",
+      "triggers": [
+        "debug",
+        "bug",
+        "broken",
+        "fails",
+        "failing",
+        "error",
+        "crash",
+        "blank",
+        "stale",
+        "flaky",
+        "not working",
+        "fix",
+        "why",
+        "stuck",
+        "usage limit",
+        "drift",
+        "timeout",
+        "wrong"
+      ],
+      "needs": [
+        "LEARNINGS-PAWFALL.md",
+        "LEARNINGS-CATXZZON.md"
+      ],
+      "outputs": [
+        "root cause",
+        "fix",
+        "regression test"
+      ],
+      "model": "sonnet",
+      "cost": "medium",
+      "capabilities": [
+        "guide.check",
+        "guide.explain"
+      ],
+      "kits": [],
+      "file": "debug-common-failures.md",
+      "commands": [],
+      "steps": [
+        "Reproduce with the smallest test. 2. Change one thing at a time. 3. Add the regression test. 4. Record the lesson under \"Learnings\" in your report."
+      ],
+      "keywords": [
+        "blank",
+        "broken",
+        "bug",
+        "common",
+        "crash",
+        "debug",
+        "drift",
+        "error",
+        "fail",
+        "failure",
+        "fix",
+        "flaky",
+        "limit",
+        "not",
+        "stale",
+        "stuck",
+        "timeout",
+        "usage",
+        "why",
+        "work",
+        "wrong"
+      ]
+    },
+    {
+      "name": "find-reuse-assets",
+      "description": "Find and reuse sprites, tilesets, sfx, songs and code kits from asset libraries via the registry, install them with hash verification.",
+      "triggers": [
+        "asset",
+        "assets",
+        "library",
+        "libraries",
+        "registry",
+        "reuse",
+        "find sprite",
+        "search assets",
+        "install asset",
+        "catalogue",
+        "existing art",
+        "download",
+        "import assets",
+        "lock",
+        "verify"
+      ],
+      "needs": [
+        "registry.json (registry.add)",
+        "network for remote libs only"
+      ],
+      "outputs": [
+        "assets/library/*",
+        "assets.lock.json"
+      ],
+      "model": "haiku",
+      "cost": "low",
+      "capabilities": [
+        "registry.add",
+        "registry.refresh",
+        "registry.search",
+        "registry.show",
+        "library.install",
+        "library.verify",
+        "library.index"
+      ],
+      "kits": [],
+      "file": "find-reuse-assets.md",
+      "commands": [],
+      "steps": [
+        "Register a source once: `registry.add {source: \"owner/repo@ref\" | \"./local/path\"}`, then `registry.refresh {}` (offline-safe: searches work from the cache).",
+        "Search: `registry.search {query: \"cat sprite\", type: \"sprite\", tag: \"style:retro-8bit-sidescroller\"}`; inspect with `registry.show {id}`.",
+        "Install: `library.install {project, registryId, assets: [ids], dryRun: true}` first, then without dryRun (add `yes` to overwrite).",
+        "Prove integrity: `library.verify {project}` against `assets.lock.json`."
+      ],
+      "keywords": [
+        "art",
+        "asset",
+        "catalogue",
+        "download",
+        "exist",
+        "find",
+        "import",
+        "install",
+        "library",
+        "lock",
+        "registry",
+        "reuse",
+        "search",
+        "sprite",
+        "verify"
+      ]
+    },
+    {
+      "name": "make-sprites-characters",
+      "description": "Make pixel-art sprites, tiles and animated characters with art-kit and character-kit, palette locked and viewed at x6.",
+      "triggers": [
+        "sprite",
+        "sprites",
+        "character",
+        "pixel art",
+        "art",
+        "tile",
+        "tileset",
+        "animation",
+        "animator",
+        "palette",
+        "sheet",
+        "spritesheet",
+        "pixbuf",
+        "ascii art",
+        "draw",
+        "colby",
+        "rig",
+        "outline",
+        "art style"
+      ],
+      "needs": [
+        "src/kits/art-kit",
+        "src/kits/character-kit"
+      ],
+      "outputs": [
+        "sprite sheet png",
+        "manifest",
+        "character spec"
+      ],
+      "model": "sonnet",
+      "cost": "medium",
+      "capabilities": [
+        "registry.search",
+        "library.install"
+      ],
+      "kits": [
+        "art-kit",
+        "character-kit"
+      ],
+      "file": "make-sprites-characters.md",
+      "commands": [],
+      "steps": [
+        "First look for existing art: `registry.search {query, type: \"sprite\", tag: \"style:<id>\"}`; install with `library.install`.",
+        "Otherwise lock a palette: `lockPalette({...})`; `lock.offenders(sprite)` must be empty.",
+        "Static art: `spriteFromAscii(rows, legend)` or `spriteFromFn`. Characters: a spec `{name,size,palette,outline,poses,anims}` through `buildCharacter`, play with `createAnimator`.",
+        "Pack: `packSheet(...)` then `validateManifest(manifest, sheet, requiredNames)`; write with `encodePng`.",
+        "Preview at x6 (`tools/sheet.mjs --only <substr>`), judge the smallest, lowest-contrast sprite."
+      ],
+      "keywords": [
+        "animation",
+        "animator",
+        "art",
+        "ascii",
+        "character",
+        "colby",
+        "draw",
+        "outline",
+        "palette",
+        "pixbuf",
+        "pixel",
+        "rig",
+        "sheet",
+        "sprite",
+        "spritesheet",
+        "style",
+        "tile",
+        "tileset"
+      ]
+    },
+    {
+      "name": "plan-run-swarm",
+      "description": "Plan an agent swarm for a game or tool: contract first, disjoint file ownership, one SWARM.md manifest, generated prompt files, waves under a concurrency cap.",
+      "triggers": [
+        "swarm",
+        "parallel agents",
+        "orchestrate",
+        "manifest",
+        "plan agents",
+        "agents",
+        "waves",
+        "wave",
+        "orchestrator",
+        "split work",
+        "delegate",
+        "subagents"
+      ],
+      "needs": [
+        "ARCHITECTURE.md",
+        "docs/swarm/SWARM.md",
+        "tracker"
+      ],
+      "outputs": [
+        "docs/swarm/prompts/<id>.md",
+        ".tracker/plan.json",
+        "docs/swarm/reports/<id>.md"
+      ],
+      "model": "sonnet",
+      "cost": "medium",
+      "capabilities": [
+        "guide.plan",
+        "guide.check"
+      ],
+      "kits": [],
+      "file": "plan-run-swarm.md",
+      "commands": [
+        "npm run plan",
+        "npm run tracker",
+        "node tools/swarm-tracker/bin/track.mjs <id> start|progress|done|blocked|failed \"<msg>\""
+      ],
+      "steps": [
+        "Write the contract (ARCHITECTURE.md + shared defs file) before launching anyone.",
+        "Draft the manifest: `guide.plan {goal, agents?}` gives a skeleton using `swarm/templates/SWARM.md`; fill `owns:` lists that never overlap.",
+        "Generate prompts: `npm run plan` (= `swarm-plan.mjs`). Spawn each agent with one line: \"Read <root>/docs/swarm/prompts/<id>.md and execute it exactly.\"",
+        "Start with at most 4 agents running; launch critical-path agents first; plan waves (platform cap about 20 launches).",
+        "Each agent keeps `docs/swarm/progress/<id>.md` and ends with `CONTINUE: <step>` after about 25 tool calls; a fresh agent continues from it.",
+        "After each wave: re-run the suites yourself, commit, append to docs/CHECKPOINT.md."
+      ],
+      "keywords": [
+        "agent",
+        "delegate",
+        "manifest",
+        "orchestrate",
+        "orchestrator",
+        "parallel",
+        "plan",
+        "run",
+        "split",
+        "subagent",
+        "swarm",
+        "wave",
+        "work"
+      ]
+    },
+    {
+      "name": "publish-library",
+      "description": "Create, validate, index and publish an asset library repo from a game project's art, sfx and songs.",
+      "triggers": [
+        "publish library",
+        "create library",
+        "new library",
+        "share assets",
+        "export assets",
+        "library.new",
+        "library.add",
+        "publish",
+        "asset pack",
+        "push library",
+        "github repo"
+      ],
+      "needs": [
+        "gh CLI logged in",
+        "game project with a built sheet"
+      ],
+      "outputs": [
+        "library repo with library.json",
+        "assets/",
+        "INDEX.json",
+        "INDEX.md"
+      ],
+      "model": "sonnet",
+      "cost": "low",
+      "capabilities": [
+        "library.new",
+        "library.add",
+        "library.validate",
+        "library.index",
+        "library.publish",
+        "registry.add"
+      ],
+      "kits": [],
+      "file": "publish-library.md",
+      "commands": [],
+      "steps": [
+        "`library.new {name, dir, description, license, author}`.",
+        "`library.add {library, from: {project, adapter: \"pixbuf-web\", style, game}}` imports sprites, characters, tilesets, fx, sfx, songs with previews.",
+        "`library.validate {library}` then `library.index {library}`.",
+        "Plan the push: `library.publish {library, repo, visibility: \"private\"}` returns a CONFIRM_REQUIRED plan; run again with `yes: true` only after the user agrees.",
+        "Register it: `registry.add {source: \"owner/repo\"}`."
+      ],
+      "keywords": [
+        "asset",
+        "export",
+        "github",
+        "library",
+        "library.add",
+        "library.new",
+        "pack",
+        "publish",
+        "push",
+        "repo",
+        "share"
+      ]
+    },
+    {
+      "name": "qa-with-bot",
+      "description": "QA a game with an autopilot bot, headless smoke tests, screenshots and mutation checks instead of trusting \"tests pass\".",
+      "triggers": [
+        "qa",
+        "bot",
+        "autopilot",
+        "test",
+        "tests",
+        "testing",
+        "smoke",
+        "headless",
+        "regression",
+        "mutation",
+        "verify",
+        "screenshot",
+        "playtest",
+        "coverage",
+        "flaky"
+      ],
+      "needs": [
+        "src/lib/autopilot-kit.js",
+        "tools/shot.mjs"
+      ],
+      "outputs": [
+        "test/*.test.mjs",
+        "out/shots/*.png"
+      ],
+      "model": "sonnet",
+      "cost": "medium",
+      "capabilities": [
+        "guide.check"
+      ],
+      "kits": [
+        "autopilot-kit"
+      ],
+      "file": "qa-with-bot.md",
+      "commands": [],
+      "steps": [
+        "Build the bot from `autopilot-kit.js`: look-ahead over the real hazard update functions, robust-plan smoothing, a no-progress watchdog, a `skill` knob. The game-specific state mirror stays in the game.",
+        "Run it over many seeds; assert it finishes levels and the watchdog never fires.",
+        "Mutation check: reintroduce the bug, confirm the test fails, restore.",
+        "Screenshots: `tools/shot.mjs` renders via a shim 2D context; check mean/std (std < 0.01 means blank).",
+        "`npm test` and re-run suites yourself before committing."
+      ],
+      "keywords": [
+        "autopilot",
+        "bot",
+        "coverage",
+        "flaky",
+        "headless",
+        "mutation",
+        "playtest",
+        "qa",
+        "regression",
+        "screenshot",
+        "smoke",
+        "test",
+        "verify"
+      ]
+    },
+    {
+      "name": "setup-tracker",
+      "description": "Set up the swarm tracker (plan.json, live dashboard on port 4782, track.mjs reporting) for a project.",
+      "triggers": [
+        "tracker",
+        "dashboard",
+        "progress",
+        "track.mjs",
+        "plan.json",
+        "swarm tracker",
+        "monitor",
+        "status board",
+        "live dashboard",
+        "media panel"
+      ],
+      "needs": [
+        "docs/swarm/SWARM.md",
+        "tools/swarm-tracker"
+      ],
+      "outputs": [
+        ".tracker/plan.json",
+        "running dashboard"
+      ],
+      "model": "haiku",
+      "cost": "low",
+      "capabilities": [
+        "guide.check"
+      ],
+      "kits": [],
+      "file": "setup-tracker.md",
+      "commands": [],
+      "steps": [
+        "`factory new --web` already copies it; for an older repo run `bin/factory sync <dir>`.",
+        "`npm run plan` (generates prompts and `.tracker/plan.json`), `npm run tracker` (http://127.0.0.1:4782/).",
+        "Agents report with `node tools/swarm-tracker/bin/track.mjs <id> start|progress|done`.",
+        "Add `.tracker/` and `docs/swarm/prompts/` to `.gitignore`."
+      ],
+      "keywords": [
+        "board",
+        "dashboard",
+        "live",
+        "media",
+        "monitor",
+        "panel",
+        "plan.json",
+        "progress",
+        "setup",
+        "statu",
+        "swarm",
+        "track.mj",
+        "tracker"
+      ]
+    },
+    {
+      "name": "ship-github-pages",
+      "description": "Build the web game and ship it with its docs site to GitHub Pages (play/ build output, docs/ folder, repo push).",
+      "triggers": [
+        "ship",
+        "deploy",
+        "release",
+        "github pages",
+        "pages",
+        "publish game",
+        "play online",
+        "dist",
+        "package",
+        "build web",
+        "hosting",
+        "itch",
+        "launch"
+      ],
+      "needs": [
+        "gh CLI",
+        "passing tests",
+        "docs/index.html"
+      ],
+      "outputs": [
+        "dist/",
+        "docs/play/",
+        "Pages URL"
+      ],
+      "model": "sonnet",
+      "cost": "low",
+      "capabilities": [
+        "guide.check"
+      ],
+      "kits": [],
+      "file": "ship-github-pages.md",
+      "commands": [],
+      "steps": [
+        "`npm test` green; `guide.check` reports no errors.",
+        "Build the web package (`tools/web/pkg`) into the folder Pages serves; relative `play/` links need the build output there.",
+        "Generate docs (`write-docs-site`), commit, push.",
+        "Settings, Pages, branch main, folder /docs (or deploy `docs/site`). Add a build step; nothing builds it automatically.",
+        "Open the URL and play one level."
+      ],
+      "keywords": [
+        "deploy",
+        "dist",
+        "game",
+        "github",
+        "host",
+        "itch",
+        "launch",
+        "online",
+        "package",
+        "page",
+        "play",
+        "publish",
+        "release",
+        "ship",
+        "web"
+      ]
+    },
+    {
+      "name": "start-new-game",
+      "description": "Scaffold a new zero-dependency web game (or Godot game) with tooling, kits, swarm tracker and a chosen style preset.",
+      "triggers": [
+        "new game",
+        "start a game",
+        "scaffold",
+        "bootstrap",
+        "create project",
+        "init project",
+        "begin",
+        "new project",
+        "factory new"
+      ],
+      "needs": [
+        "Node 22+",
+        "git"
+      ],
+      "outputs": [
+        "game repo with src/kits",
+        "src/lib",
+        "tools",
+        "docs/swarm/SWARM.md"
+      ],
+      "model": "haiku",
+      "cost": "low",
+      "capabilities": [
+        "styles.recommend",
+        "styles.apply",
+        "styles.show"
+      ],
+      "kits": [
+        "art-kit",
+        "character-kit",
+        "audio-kit",
+        "fx-kit",
+        "docs-kit"
+      ],
+      "file": "start-new-game.md",
+      "commands": [
+        "bin/factory new ~/src/fun/mygame \"My Game\" --web",
+        "factory guide check ~/src/fun/mygame"
+      ],
+      "steps": [
+        "Pick a style first (camera, render tech, palette policy, cost): `factory styles recommend \"<idea>\"` (capability `styles.recommend {idea, constraints}`).",
+        "Scaffold: `bin/factory new <dir> \"<Title>\" --web` (browser, zero deps) or without `--web` for Godot.",
+        "Apply the style: `styles.apply {project: <dir>, style: <id>}` writes `config/style.json`, `config/theme.json` and lists kits to install.",
+        "Write the contract before any agent runs: `ARCHITECTURE.md` plus a shared definitions file (`src/core/defs.js`: art rows, layout, palette, tuning).",
+        "`cd <dir> && npm test && npm start` (serves on port 4781)."
+      ],
+      "keywords": [
+        "begin",
+        "bootstrap",
+        "factory",
+        "game",
+        "init",
+        "project",
+        "scaffold",
+        "start"
+      ]
+    },
+    {
+      "name": "write-docs-site",
+      "description": "Generate README, HOW-TO-PLAY, HOW-IT-WAS-MADE and a GitHub Pages site from swarm reports and screenshots with docs-kit.",
+      "triggers": [
+        "docs",
+        "documentation",
+        "readme",
+        "how to play",
+        "how it was made",
+        "site",
+        "pages site",
+        "website",
+        "write docs",
+        "screenshots",
+        "report",
+        "documenting"
+      ],
+      "needs": [
+        "docs/swarm/reports/*.md",
+        "out/shots"
+      ],
+      "outputs": [
+        "README.md",
+        "docs/HOW-TO-PLAY.md",
+        "docs/HOW-IT-WAS-MADE.md",
+        "docs/index.html"
+      ],
+      "model": "haiku",
+      "cost": "low",
+      "capabilities": [],
+      "kits": [
+        "docs-kit"
+      ],
+      "file": "write-docs-site.md",
+      "commands": [],
+      "steps": [
+        "Copy `examples/docs-config.example.json` to `docs.config.json`; fill title, tagline, controls.",
+        "Take screenshots with `tools/shot.mjs` into `out/shots`.",
+        "`node src/kits/docs-kit/cli.mjs docs.config.json . --reports docs/swarm/reports --shots out/shots`.",
+        "Hand-check numbers (counts, tests, sprites) against reality before committing."
+      ],
+      "keywords": [
+        "doc",
+        "document",
+        "documentation",
+        "made",
+        "page",
+        "play",
+        "readme",
+        "report",
+        "screenshot",
+        "site",
+        "was",
+        "website",
+        "write"
+      ]
+    }
+  ]
+}

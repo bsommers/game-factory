@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-factory.local/schemas/style.schema.json",
+  "title": "game-factory style preset",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id","name","description","version","genre","camera","render","palette","art","character","audio","fx","physics","worldgen","input","performance","swarm","verification","pitfalls","examples","tags","requires","tech","recommend","themingGuide"],
+  "properties": {
+    "id": {"type":"string","pattern":"^[a-z][a-z0-9.-]{2,40}$"},
+    "name": {"type":"string","minLength":3},
+    "description": {"type":"string","minLength":20},
+    "version": {"type":"string","pattern":"^\\d+\\.\\d+\\.\\d+$"},
+    "genre": {"type":"array","minItems":1,"items":{"type":"string"}},
+    "camera": {"type":"string","enum":["side-scroller","top-down","parallax-2.5d","isometric","first-person","third-person-3d","text-grid"]},
+    "render": {"type":"object","additionalProperties":false,"required":["tech","resolution"],"properties":{
+      "tech": {"type":"string","enum":["canvas2d-pixel","canvas2d-vector","webgl2-custom","webgl2-vendored-three","raycaster-canvas","shader-raymarch","terminal-text"]},
+      "dimension": {"type":"string","enum":["2d","2.5d","3d","text"]},
+      "resolution": {"type":"object","additionalProperties":false,"required":["width","height","scaling"],"properties":{
+        "width":{"type":"integer","minimum":20},"height":{"type":"integer","minimum":10},
+        "scaling":{"type":"string","enum":["integer-nearest","fit-letterbox","fill-native","dpr-adaptive","render-scale"]},
+        "integerOnly":{"type":"boolean"},
+        "renderScaleTiers":{"type":"array","items":{"type":"number","minimum":0.1,"maximum":2}}}},
+      "notes":{"type":"string"}}},
+    "palette": {"type":"object","additionalProperties":false,"required":["policy"],"properties":{
+      "policy":{"type":"string","enum":["locked","ramps","free","monochrome"]},
+      "maxColors":{"type":"integer","minimum":1,"maximum":4096},
+      "rampSize":{"type":"integer","minimum":2,"maximum":16},
+      "notes":{"type":"string"}}},
+    "art": {"type":"object","additionalProperties":false,"required":["kit"],"properties":{
+      "kit":{"type":"string"},"tileSize":{"type":"integer","minimum":1},"spriteSize":{"type":"array","items":{"type":"integer"},"minItems":2,"maxItems":2},
+      "outline":{"type":"string","enum":["none","1px-dark","selective","hull","vector-stroke"]},"settings":{"type":"object"}}},
+    "character": {"type":"object","additionalProperties":false,"required":["kit"],"properties":{
+      "kit":{"type":"string"},"rig":{"type":"string","enum":["ascii-poses","param-rig","skeletal-2d","skinned-3d","billboard","glyph"]},
+      "animFps":{"type":"integer","minimum":1,"maximum":60},"settings":{"type":"object"}}},
+    "audio": {"type":"object","additionalProperties":false,"required":["engine","channels","bitDepth","sampleRate"],"properties":{
+      "engine":{"type":"string","enum":["chip-pulse","fm","sampled-lofi","orchestral-synth","procedural-webaudio","terminal-bell"]},
+      "channels":{"type":"integer","minimum":0,"maximum":32},"bitDepth":{"type":"integer","enum":[4,8,12,16]},
+      "sampleRate":{"type":"integer","minimum":4000,"maximum":96000},"mood":{"type":"string"},"settings":{"type":"object"}}},
+    "fx": {"type":"array","items":{"type":"object","additionalProperties":false,"required":["id","default"],"properties":{
+      "id":{"type":"string","enum":["crt","scanlines","bloom","outlines","cel-shading","vignette","screen-shake","particles","palette-cycle","fog","dither","motion-blur","none"]},
+      "default":{"type":"boolean"},"strength":{"type":"number","minimum":0,"maximum":1},"note":{"type":"string"}}}},
+    "physics": {"type":"object","additionalProperties":false,"required":["model"],"properties":{
+      "model":{"type":"string"},"fixedStep":{"type":"number","minimum":0},"notes":{"type":"string"}}},
+    "worldgen": {"type":"object","additionalProperties":false,"required":["method"],"properties":{
+      "method":{"type":"string"},"seeded":{"type":"boolean"},"notes":{"type":"string"}}},
+    "input": {"type":"object","additionalProperties":false,"required":["scheme"],"properties":{
+      "scheme":{"type":"string"},"devices":{"type":"array","items":{"type":"string","enum":["keyboard","gamepad","mouse","touch","pointer-lock"]}},"notes":{"type":"string"}}},
+    "performance": {"type":"object","additionalProperties":false,"required":["targetFps","frameBudgetMs","minDevice"],"properties":{
+      "targetFps":{"type":"integer","minimum":15,"maximum":240},"frameBudgetMs":{"type":"number","minimum":1,"maximum":50},
+      "minDevice":{"type":"string","enum":["low","mid","high"]},"drawCalls":{"type":"integer","minimum":1},"triangles":{"type":"integer","minimum":0},
+      "memoryMB":{"type":"integer","minimum":1},"fallbackTier":{"type":"string"}}},
+    "swarm": {"type":"object","additionalProperties":false,"required":["shape","roles"],"properties":{
+      "shape":{"type":"string"},"agentCount":{"type":"array","items":{"type":"integer","minimum":1},"minItems":2,"maxItems":2},
+      "roles":{"type":"array","minItems":3,"items":{"type":"object","additionalProperties":false,"required":["role","model"],"properties":{
+        "role":{"type":"string"},"model":{"type":"string","enum":["haiku","sonnet","opus"]},"scope":{"type":"string"}}}}}},
+    "verification": {"type":"array","minItems":4,"items":{"type":"string","minLength":8}},
+    "pitfalls": {"type":"array","minItems":3,"items":{"type":"string","minLength":8}},
+    "examples": {"type":"array","minItems":1,"items":{"type":"object","additionalProperties":false,"required":["game","role"],"properties":{
+      "game":{"type":"string"},"role":{"type":"string","enum":["reference","fits","aspirational"]},"note":{"type":"string"}}}},
+    "tags": {"type":"array","minItems":2,"items":{"type":"string","pattern":"^[a-z0-9][a-z0-9.-]*$"}},
+    "requires": {"type":"object","additionalProperties":false,"required":["kits","libs","skills"],"properties":{
+      "kits":{"type":"array","items":{"type":"string"}},"libs":{"type":"array","items":{"type":"string"}},"skills":{"type":"array","items":{"type":"string"}}}},
+    "tech": {"type":"object","additionalProperties":false,"required":["dependencies","choices","limits"],"properties":{
+      "dependencies":{"type":"string","enum":["none","vendored-only"]},
+      "choices":{"type":"array","minItems":1,"items":{"type":"string"}},
+      "limits":{"type":"array","minItems":1,"items":{"type":"string"}}}},
+    "recommend": {"type":"object","additionalProperties":false,"required":["keywords","cost","platforms"],"properties":{
+      "keywords":{"type":"object","additionalProperties":{"type":"integer","minimum":1,"maximum":10}},
+      "anti":{"type":"object","additionalProperties":{"type":"integer","minimum":1,"maximum":10}},
+      "cost":{"type":"integer","minimum":1,"maximum":5},
+      "platforms":{"type":"array","minItems":1,"items":{"type":"string","enum":["web","desktop","terminal"]}},
+      "pros":{"type":"array","items":{"type":"string"}},"cons":{"type":"array","items":{"type":"string"}}}},
+    "themingGuide": {"type":"string","pattern":"^THEMING\\.md$"}
+  }
+}

@@ -1,0 +1,235 @@
+{
+  "id": "lowpoly-3d",
+  "name": "Low-poly 3D",
+  "description": "Flat-shaded faceted 3D with vertex colours: minimal WebGL2 renderer, procedural meshes, fog, and a few hundred polygons per object.",
+  "genre": [
+    "exploration",
+    "racing",
+    "flight",
+    "adventure"
+  ],
+  "camera": "third-person-3d",
+  "render": {
+    "tech": "webgl2-custom",
+    "dimension": "3d",
+    "resolution": {
+      "width": 1280,
+      "height": 720,
+      "scaling": "render-scale",
+      "integerOnly": false,
+      "renderScaleTiers": [
+        1,
+        0.75,
+        0.5
+      ]
+    },
+    "notes": "Single forward pass; flat normals from derivatives (dFdx/dFdy), vertex colours, exponential fog."
+  },
+  "palette": {
+    "policy": "ramps",
+    "maxColors": 96,
+    "rampSize": 4,
+    "notes": "Vertex colours come from a theme palette; a 4-step ramp per material family."
+  },
+  "art": {
+    "kit": "art-kit",
+    "outline": "none",
+    "settings": {
+      "meshes": "procedural icosphere, boxes, extrusions",
+      "vertexColors": true
+    }
+  },
+  "character": {
+    "kit": "character-kit",
+    "rig": "skinned-3d",
+    "animFps": 30,
+    "settings": {
+      "bones": 16
+    }
+  },
+  "audio": {
+    "engine": "procedural-webaudio",
+    "channels": 16,
+    "bitDepth": 16,
+    "sampleRate": 44100,
+    "mood": "calm, ambient"
+  },
+  "fx": [
+    {
+      "id": "fog",
+      "default": true,
+      "strength": 0.5
+    },
+    {
+      "id": "vignette",
+      "default": true,
+      "strength": 0.2
+    },
+    {
+      "id": "bloom",
+      "default": false,
+      "strength": 0.2
+    },
+    {
+      "id": "particles",
+      "default": true
+    },
+    {
+      "id": "dither",
+      "default": true,
+      "strength": 0.2,
+      "note": "hides colour banding in fog"
+    }
+  ],
+  "physics": {
+    "model": "kinematic character/vehicle on heightfield, sphere-vs-AABB collisions",
+    "fixedStep": 0.016666666666666666
+  },
+  "worldgen": {
+    "method": "seeded noise terrain (value/simplex) with chunk streaming",
+    "seeded": true
+  },
+  "input": {
+    "scheme": "WASD + mouse look or gamepad sticks",
+    "devices": [
+      "keyboard",
+      "mouse",
+      "gamepad",
+      "pointer-lock"
+    ]
+  },
+  "performance": {
+    "targetFps": 60,
+    "frameBudgetMs": 11,
+    "minDevice": "mid",
+    "drawCalls": 400,
+    "triangles": 300000,
+    "memoryMB": 256,
+    "fallbackTier": "render-scale 0.5, shorter draw distance"
+  },
+  "swarm": {
+    "shape": "contract-first; renderer agent plus mesh-generator agents",
+    "agentCount": [
+      9,
+      15
+    ],
+    "roles": [
+      {
+        "role": "architect (contract, math conventions)",
+        "model": "opus"
+      },
+      {
+        "role": "renderer/shader agent",
+        "model": "opus"
+      },
+      {
+        "role": "mesh/asset generators",
+        "model": "sonnet"
+      },
+      {
+        "role": "sim/gameplay agents",
+        "model": "sonnet"
+      },
+      {
+        "role": "audio agents",
+        "model": "sonnet"
+      },
+      {
+        "role": "QA bot + perf gate",
+        "model": "sonnet"
+      },
+      {
+        "role": "boilerplate, docs",
+        "model": "haiku"
+      }
+    ]
+  },
+  "verification": [
+    "node --test passes (mesh generators produce manifold output, noise is deterministic)",
+    "shader compile log is empty",
+    "screenshot shows faceted shading and fog falloff",
+    "FPS >= 55 mid tier, >= 30 low tier at 0.5 scale",
+    "triangle count under budget",
+    "seeded terrain chunk hashes are stable"
+  ],
+  "pitfalls": [
+    "chunk seams in terrain: share edge vertices",
+    "z-fighting at long draw distance: tune near/far",
+    "per-object draw calls: batch static geometry",
+    "headless CI has no GPU"
+  ],
+  "examples": [
+    {
+      "game": "catxzzon",
+      "role": "aspirational"
+    }
+  ],
+  "tags": [
+    "3d",
+    "lowpoly",
+    "webgl2",
+    "exploration",
+    "flat-shaded"
+  ],
+  "requires": {
+    "kits": [
+      "art-kit",
+      "audio-kit",
+      "fx-kit"
+    ],
+    "libs": [
+      "mini-gl",
+      "noise"
+    ],
+    "skills": []
+  },
+  "tech": {
+    "dependencies": "none",
+    "choices": [
+      "own WebGL2 mini-renderer",
+      "optional vendored three.js",
+      "Canvas2D painter-algorithm software rasteriser as an emergency fallback (under 5k triangles)"
+    ],
+    "limits": [
+      "300k triangles",
+      "one directional light plus ambient",
+      "no real-time shadows beyond blob shadows"
+    ]
+  },
+  "recommend": {
+    "keywords": {
+      "low-poly": 9,
+      "lowpoly": 9,
+      "low poly": 9,
+      "3d": 4,
+      "flight": 4,
+      "racing": 4,
+      "exploration": 3,
+      "terrain": 3,
+      "open world": 3,
+      "flat": 1,
+      "ambient": 1,
+      "voxel": 2
+    },
+    "anti": {
+      "8-bit": 6,
+      "ascii": 6,
+      "terminal": 6
+    },
+    "cost": 4,
+    "platforms": [
+      "web",
+      "desktop"
+    ],
+    "pros": [
+      "distinctive and cheap meshes",
+      "scales across GPUs"
+    ],
+    "cons": [
+      "needs a 3D engine layer",
+      "camera and collision work"
+    ]
+  },
+  "themingGuide": "THEMING.md",
+  "version": "1.0.0"
+}

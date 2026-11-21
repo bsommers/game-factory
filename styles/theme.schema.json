@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-factory.local/schemas/theme.schema.json",
+  "title": "game-factory theme mixin",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id","name","description","palette","typography","ui","audio","title"],
+  "properties": {
+    "id": {"type":"string","pattern":"^[a-z][a-z0-9-]{2,40}$"},
+    "name": {"type":"string","minLength":3},
+    "description": {"type":"string","minLength":10},
+    "compatibleStyles": {"type":"array","items":{"type":"string"}},
+    "palette": {"type":"object","additionalProperties":false,"required":["colors","roles"],"properties":{
+      "colors":{"type":"object","minProperties":4,"additionalProperties":{"type":"string","pattern":"^#[0-9a-fA-F]{6}$"}},
+      "roles":{"type":"object","additionalProperties":false,"required":["background","text","accent","danger"],"properties":{
+        "background":{"type":"string"},"text":{"type":"string"},"accent":{"type":"string"},"danger":{"type":"string"},
+        "good":{"type":"string"},"sky":{"type":"string"},"ground":{"type":"string"}}}}},
+    "typography": {"type":"object","additionalProperties":false,"required":["fontKit","titleScale","bodyScale"],"properties":{
+      "fontKit":{"type":"string"},"titleScale":{"type":"integer","minimum":1,"maximum":16},"bodyScale":{"type":"integer","minimum":1,"maximum":8},
+      "case":{"type":"string","enum":["upper","mixed","lower"]},"shadow":{"type":"boolean"}}},
+    "ui": {"type":"object","additionalProperties":false,"required":["skin","panel","cursor"],"properties":{
+      "skin":{"type":"string"},"panel":{"type":"string","enum":["solid","bordered","bevel","translucent","none"]},
+      "cursor":{"type":"string"},"cornerStyle":{"type":"string","enum":["square","notched","round"]}}},
+    "audio": {"type":"object","additionalProperties":false,"required":["sfxMood","musicMood"],"properties":{
+      "sfxMood":{"type":"string"},"musicMood":{"type":"string"},"scale":{"type":"string"},"bpm":{"type":"integer","minimum":40,"maximum":240}}},
+    "title": {"type":"object","additionalProperties":false,"required":["layout","tagline"],"properties":{
+      "layout":{"type":"string","enum":["centered-logo","logo-over-scene","split","marquee"]},"tagline":{"type":"string"},
+      "background":{"type":"string"},"logoPlacement":{"type":"string"}}}
+  }
+}

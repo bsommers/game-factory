@@ -1,0 +1,14 @@
+{
+  "id": "cheese-ratops",
+  "name": "Cheese Ratops",
+  "description": "Cheddar yellows and rat-grey tunnels: the cheese war of KÄSEKRIEG with ratops military trim.",
+  "compatibleStyles": ["isometric-tactics", "retro-16bit", "cartoon-vector", "top-down-arcade", "retro-8bit-sidescroller", "ascii-terminal"],
+  "palette": {
+    "colors": { "rind": "#2b1d12", "cheddar": "#f2b632", "swiss": "#ffe28a", "mould": "#4f8a5b", "ratgrey": "#6f6a73", "steel": "#3b3a45", "ember": "#e2552d", "paper": "#f5ecd7" },
+    "roles": { "background": "rind", "text": "paper", "accent": "cheddar", "danger": "ember", "good": "mould", "sky": "steel", "ground": "ratgrey" }
+  },
+  "typography": { "fontKit": "font5x7", "titleScale": 5, "bodyScale": 1, "case": "upper", "shadow": true },
+  "ui": { "skin": "military-stencil", "panel": "bevel", "cursor": "pointer", "cornerStyle": "notched" },
+  "audio": { "sfxMood": "squeaks, crunches, marching snares", "musicMood": "brassy march with a cheesy pulse lead", "scale": "harmonic minor", "bpm": 112 },
+  "title": { "layout": "marquee", "tagline": "Every wheel has its general.", "background": "tunnel mouth over a cheese wheel", "logoPlacement": "top-left" }
+}
