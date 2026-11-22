@@ -147,3 +147,5 @@ combat3d parity now 16 cases (added multihit-long-active, bone-fallback-hitbox, 
 **Authorizations:** none outstanding. Gate still closed for the colbdysseus repo/assets (licence audit, IP blocks, Meshy ToS), any PR or merge to `main`.
 **Open:** poses-animated JSON carries 16-17 digit doubles (Godot parse caveat); parity ports of fairness/balance/validateFighter (JS-only by design); wall/ramp locomotion parity; img2model back-view; Godot-side Go physics snapshot/restore; real-GPU raytrace check.
 **Resume:** `git status --short && node --test test/ 2>&1 | grep -E "^ℹ (pass|fail)"`.
+
+_Refreshed 2026-11-22 for /compact: state unchanged since the handoff above (HEAD a4f0e6e local, origin/multilang at 4b99289; suites 306/306 and 290/290; no background jobs)._
