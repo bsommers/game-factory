@@ -9,3 +9,4 @@ export * as collision2d from './collision2d.js';
 export * as physics2d from './physics2d.js';
 export * as mesh from './mesh.js';
 export * as meshio from './mesh-io.js';
+export * as gltfAnim from './gltf-anim.js';

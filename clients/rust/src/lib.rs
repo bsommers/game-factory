@@ -22,6 +22,7 @@ pub mod codes {
     pub const BAD_RESPONSE: &str = "BAD_RESPONSE";
     pub const CONFIRM_REQUIRED: &str = "CONFIRM_REQUIRED";
     pub const CONFLICT: &str = "CONFLICT";
+    pub const DUPLICATE: &str = "DUPLICATE";
     pub const EXISTS: &str = "EXISTS";
     pub const FAILED: &str = "FAILED";
     pub const FORBIDDEN: &str = "FORBIDDEN";
@@ -32,6 +33,7 @@ pub mod codes {
     pub const INTERNAL: &str = "INTERNAL";
     pub const INVALID: &str = "INVALID";
     pub const INVALID_THEME: &str = "INVALID_THEME";
+    pub const LICENSE_BLOCKED: &str = "LICENSE_BLOCKED";
     pub const MISSING_TEMPLATE: &str = "MISSING_TEMPLATE";
     pub const NOT_FETCHED: &str = "NOT_FETCHED";
     pub const NOT_FOUND: &str = "NOT_FOUND";

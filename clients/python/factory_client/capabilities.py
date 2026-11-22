@@ -34,6 +34,22 @@ class Capabilities:
         """docs.learnings: Return docs/LEARNINGS*.md (mistakes and fixes from past games), optionally one game."""
         return self.call("docs.learnings", {"game": game})
 
+    def godot_detect(self, *, godot: str | None = None):
+        """godot.detect: Find a Godot 4 binary (GODOT_BIN, PATH, /datanapps/tools/godot/*, ~/.local/share/godot) and report version, path, and whether xvfb-run / a display exist for screenshots."""
+        return self.call("godot.detect", {"godot": godot})
+
+    def godot_import_check(self, *, glb: str, godot: str | None = None, project: str | None = None, timeoutMs: int | None = None):
+        """godot.import-check: Headless-import a .glb with Godot and report what the engine actually sees: skeletons (bone count/names), animations (name, length, tracks, loop) and mesh count. Complements anim.inspect (which reads the file without the engine)."""
+        return self.call("godot.import-check", {"glb": glb, "godot": godot, "project": project, "timeoutMs": timeoutMs})
+
+    def godot_shot(self, *, driver: str | None = None, frames: int | None = None, godot: str | None = None, out: str | None = None, project: str | None = None, scene: str | None = None, size: str | None = None, timeoutMs: int | None = None):
+        """godot.shot: Render a scene to a PNG. Uses a real (software) renderer: on Linux without a display it wraps the run in xvfb-run and forces --rendering-driver opengl3 (Mesa llvmpipe), which works with no GPU. Not --headless (that is the dummy renderer)."""
+        return self.call("godot.shot", {"driver": driver, "frames": frames, "godot": godot, "out": out, "project": project, "scene": scene, "size": size, "timeoutMs": timeoutMs})
+
+    def godot_test(self, *, filter: str | None = None, godot: str | None = None, project: str | None = None, runner: str | None = None, timeoutMs: int | None = None):
+        """godot.test: Run a Godot project's headless tests (res://tests/run_all.gd, a simple GUT-free runner: test_*.gd files with test_* methods) and return per-test PASS/FAIL. Imports the project first when needed."""
+        return self.call("godot.test", {"filter": filter, "godot": godot, "project": project, "runner": runner, "timeoutMs": timeoutMs})
+
     def guide_check(self, *, project: str, skipAssets: bool | None = None):
         """guide.check: Inspect a project directory and report missing pieces (tests, tracker, contract, style/palette lock, docs, site, gitignore) with a fix and a skill for each."""
         return self.call("guide.check", {"project": project, "skipAssets": skipAssets})
@@ -82,17 +98,33 @@ class Capabilities:
         """languages.show: Show one language: kind, toolchain found/version, template, packagers, status."""
         return self.call("languages.show", {"id": id})
 
-    def library_add(self, *, library: str, author: str | None = None, files: list | None = None, from_: dict | None = None, license: str | None = None, tags: list[str] | None = None, types: list[str] | None = None, update: bool | None = None):
+    def library_add(self, *, library: str, allowDuplicate: bool | None = None, author: str | None = None, files: list | None = None, from_: dict | None = None, license: str | None = None, tags: list[str] | None = None, types: list[str] | None = None, update: bool | None = None):
         """library.add: Import assets into a library from a game project (adapter pixbuf-web: sprites, characters, tilesets, fx, sfx, songs, tagged style:<id>) and/or plain files; writes descriptors and previews, regenerates the index. Existing assets with different content need update:true (patch version bump)."""
-        return self.call("library.add", {"library": library, "author": author, "files": files, "from": from_, "license": license, "tags": tags, "types": types, "update": update})
+        return self.call("library.add", {"library": library, "allowDuplicate": allowDuplicate, "author": author, "files": files, "from": from_, "license": license, "tags": tags, "types": types, "update": update})
+
+    def library_attribution(self, *, format: str | None = None, library: str | None = None, project: str | None = None, write: bool | None = None):
+        """library.attribution: Generate ATTRIBUTION.md (library) or CREDITS.md (installed project, from assets.lock.json) for assets that require attribution; deterministic."""
+        return self.call("library.attribution", {"format": format, "library": library, "project": project, "write": write})
 
     def library_index(self, *, library: str, check: bool | None = None):
         """library.index: Regenerate INDEX.json and INDEX.md (deterministic, no timestamps), or with check:true only report staleness."""
         return self.call("library.index", {"library": library, "check": check})
 
-    def library_install(self, *, project: str, all: bool | None = None, assets: list[str] | None = None, dest: str | None = None, dryRun: bool | None = None, home: str | None = None, library: str | None = None, registryId: str | None = None, source: str | None = None, yes: bool | None = None):
+    def library_install(self, *, project: str, all: bool | None = None, assets: list[str] | None = None, dest: str | None = None, dryRun: bool | None = None, home: str | None = None, library: str | None = None, maxFileBytes: int | None = None, registryId: str | None = None, source: str | None = None, yes: bool | None = None):
         """library.install: Copy assets (and their in-library dependencies) into a game project, verifying sha256 before and after copying, and write/update assets.lock.json. Never executes anything."""
-        return self.call("library.install", {"project": project, "all": all, "assets": assets, "dest": dest, "dryRun": dryRun, "home": home, "library": library, "registryId": registryId, "source": source, "yes": yes})
+        return self.call("library.install", {"project": project, "all": all, "assets": assets, "dest": dest, "dryRun": dryRun, "home": home, "library": library, "maxFileBytes": maxFileBytes, "registryId": registryId, "source": source, "yes": yes})
+
+    def library_ip_review(self, *, library: str, ids: list[str] | None = None, set: dict | None = None, write: bool | None = None):
+        """library.ip-review: Keyword tripwire for trademarked characters, real brands, landmarks and map data in names, tags and prompts; flagged assets block a public publish until set {status: clear, confirm: true}. A tripwire only: a miss is not clearance."""
+        return self.call("library.ip-review", {"library": library, "ids": ids, "set": set, "write": write})
+
+    def library_license_audit(self, *, library: str, allowList: list[str] | None = None, fixMeshy: bool | None = None, target: str | None = None):
+        """library.license-audit: Dry-run of the public-publish gate: lists blocked assets with reasons (unknown/needs-review/NC/ND, free-plan Meshy not CC-BY, unresolved ipReview, stale ATTRIBUTION.md). Fails LICENSE_BLOCKED for target public. fixMeshy derives Meshy license fields from plan and visibility (never verifies)."""
+        return self.call("library.license-audit", {"library": library, "allowList": allowList, "fixMeshy": fixMeshy, "target": target})
+
+    def library_license_set(self, *, library: str, attribution: dict | None = None, commercialUse: bool | None = None, confirm: bool | None = None, evidence: list[str] | None = None, id: str | None = None, ids: list[str] | None = None, licenseFile: str | None = None, redistribute: bool | None = None, spdx: str | None = None, status: str | None = None, verifiedAt: str | None = None, verifiedBy: str | None = None):
+        """library.license-set: Record license info for an asset. Marking it verified or self-owned is the human sign-off and needs confirm:true (stamps verifiedBy/verifiedAt)."""
+        return self.call("library.license-set", {"library": library, "attribution": attribution, "commercialUse": commercialUse, "confirm": confirm, "evidence": evidence, "id": id, "ids": ids, "licenseFile": licenseFile, "redistribute": redistribute, "spdx": spdx, "status": status, "verifiedAt": verifiedAt, "verifiedBy": verifiedBy})
 
     def library_new(self, *, name: str, author: str | None = None, description: str | None = None, dir: str | None = None, license: str | None = None):
         """library.new: Scaffold a new asset-library repo (library.json, assets/, INDEX files, standalone validator, CI workflow)."""
@@ -102,13 +134,29 @@ class Capabilities:
         """library.publish: Create and push a GitHub repo for a library via gh. Confirm-first: without yes:true it only returns the plan. Refuses when secrets are detected. Never run without explicit user instruction."""
         return self.call("library.publish", {"library": library, "repo": repo, "visibility": visibility, "yes": yes})
 
-    def library_validate(self, *, library: str, checkIndex: bool | None = None):
+    def library_validate(self, *, library: str, checkIndex: bool | None = None, target: str | None = None):
         """library.validate: Validate a library: schemas, content hashes, path safety (no traversal or symlinks), size caps, dependencies, and that INDEX files are current."""
-        return self.call("library.validate", {"library": library, "checkIndex": checkIndex})
+        return self.call("library.validate", {"library": library, "checkIndex": checkIndex, "target": target})
 
     def library_verify(self, *, project: str):
         """library.verify: Check installed assets against assets.lock.json: reports modified, missing or tampered files."""
         return self.call("library.verify", {"project": project})
+
+    def meshy_import(self, *, input: str, clips: dict | None = None, height: float | None = None, id: str | None = None, out: str | None = None, overwrite: bool | None = None, project: str | None = None, provenance: dict | None = None, units: str | None = None):
+        """meshy.import: Normalise and import a Meshy (or Blender-style) animated .glb into assets/models: detect units and bake centimetres to metres (no node scale left behind), check facing, tidy clip names ("Armature|walking_man|baselayer" -> "walking_man"), write the GLB and a manifest entry with provenance (plan, visibility, jobId stay "unknown" unless supplied). Deterministic: no timestamps unless createdAt is given."""
+        return self.call("meshy.import", {"input": input, "clips": clips, "height": height, "id": id, "out": out, "overwrite": overwrite, "project": project, "provenance": provenance, "units": units})
+
+    def meshy_rig_map(self, *, a: str, b: str | None = None, out: str | None = None, overwrite: bool | None = None, project: str | None = None):
+        """meshy.rig-map: Compare two skeletons (rigSignature) and suggest a bone mapping a->b by exact name, humanoid role (Rigify, Mixamo, UE/Unity names) and hierarchy position, listing bones only in one rig (e.g. Bone_0NN extras) and the rest-pose delta. Also emits a Godot SkeletonProfileHumanoid BoneMap JSON for input a (or only that, when b is omitted)."""
+        return self.call("meshy.rig-map", {"a": a, "b": b, "out": out, "overwrite": overwrite, "project": project})
+
+    def meshy_split(self, *, input: str, out: str, ranges: list, clip: str | None = None, fps: float | None = None, keepOriginal: bool | None = None, only: bool | None = None, overwrite: bool | None = None, project: str | None = None, unit: str | None = None):
+        """meshy.split: Split or trim a merged clip by time ranges into new named clips, written to a new .glb (boundary keys are interpolated, times restart at 0). The source clip is replaced unless keepOriginal; other clips are kept unless only:true. Unused data is compacted away."""
+        return self.call("meshy.split", {"input": input, "out": out, "ranges": ranges, "clip": clip, "fps": fps, "keepOriginal": keepOriginal, "only": only, "overwrite": overwrite, "project": project, "unit": unit})
+
+    def meshy_verify(self, *, input: str, budget: dict | None = None, expect: dict | None = None, project: str | None = None):
+        """meshy.verify: Check an animated .glb is game-ready: uncompressed, skin and joint count, weights, bind height (catches cm), facing, clips and a missing idle, per-clip root drift, scale tracks, pose stability, size budget, textures. Returns pass/warn/fail/info checks; pass is false when any check fails."""
+        return self.call("meshy.verify", {"input": input, "budget": budget, "expect": expect, "project": project})
 
     def models_blender_check(self, *, files: list[str], blender: str | None = None, project: str | None = None, timeoutMs: int | None = None):
         """models.blender-check: Import model files headless in Blender and report triangles, bounds, volume and manifold per file (3MF uses a fallback parser: Blender has no built-in 3MF importer). Fails with NOT_FOUND when Blender is not installed."""

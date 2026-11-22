@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync, existsSync, mkdirSync, symlinkSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { addItems, addAssets, installAssets, verifyInstalled, publishLibrary, scanSecrets, newLibrary } from '../../factory-core/library/ops.mjs';
+import { licenseSet } from '../../factory-core/library/license.mjs';
 import { loadLibrary } from '../../factory-core/library/format.mjs';
 import { mkLib, item, tmp, readJ, png } from './helpers.mjs';
 
@@ -94,6 +95,8 @@ test('publish is confirm-first, scans secrets, and only calls gh with yes', () =
 test('publish with yes runs git+gh through the injected runner only', async () => {
   const d = mkLib('pub2', [item('a')]), calls = [];
   const run = (cmd, args) => { calls.push([cmd, ...args].join(' ')); return { status: 0, stdout: 'https://github.com/me/pub2\n', stderr: '' }; };
+  assert.equal(publishLibrary({ library: d, repo: 'me/pub2', yes: true, visibility: 'public' }, run).error.code, 'LICENSE_BLOCKED'); assert.equal(calls.length, 0); // v1 asset: license status unknown
+  assert.equal(licenseSet({ library: d, id: 'a', status: 'verified', redistribute: true, confirm: true }).ok, true);
   const r = publishLibrary({ library: d, repo: 'me/pub2', yes: true, visibility: 'public' }, run);
   assert.equal(r.ok, true); assert.ok(calls.some((c) => /^gh repo create me\/pub2 --public/.test(c)));
   assert.equal(publishLibrary({ library: d, repo: 'bad repo; rm -rf', yes: true }, run).error.code, 'BAD_INPUT');

@@ -82,6 +82,60 @@ func (c *Client) DocsLearnings(ctx context.Context, in DocsLearningsInput) (*Env
 	return c.Call(ctx, "docs.learnings", in)
 }
 
+// GodotDetectInput is the input of godot.detect.
+type GodotDetectInput struct {
+	Godot *string `json:"godot,omitempty"` // explicit binary path to probe
+}
+
+// GodotDetect calls godot.detect: Find a Godot 4 binary (GODOT_BIN, PATH, /datanapps/tools/godot/*, ~/.local/share/godot) and report version, path, and whether xvfb-run / a display exist for screenshots.
+func (c *Client) GodotDetect(ctx context.Context, in GodotDetectInput) (*Envelope, error) {
+	return c.Call(ctx, "godot.detect", in)
+}
+
+// GodotImportCheckInput is the input of godot.import-check.
+type GodotImportCheckInput struct {
+	Glb       string  `json:"glb"` // .glb path (absolute, or relative to project when project is given)
+	Godot     *string `json:"godot,omitempty"`
+	Project   *string `json:"project,omitempty"` // optional existing project; the glb must live inside it. Without it a throwaway project is used.
+	TimeoutMs *int64  `json:"timeoutMs,omitempty"`
+}
+
+// GodotImportCheck calls godot.import-check: Headless-import a .glb with Godot and report what the engine actually sees: skeletons (bone count/names), animations (name, length, tracks, loop) and mesh count. Complements anim.inspect (which reads the file without the engine).
+func (c *Client) GodotImportCheck(ctx context.Context, in GodotImportCheckInput) (*Envelope, error) {
+	return c.Call(ctx, "godot.import-check", in)
+}
+
+// GodotShotInput is the input of godot.shot.
+type GodotShotInput struct {
+	Driver    *string `json:"driver,omitempty"` // default opengl3
+	Frames    *int64  `json:"frames,omitempty"`
+	Godot     *string `json:"godot,omitempty"`
+	Out       *string `json:"out,omitempty"` // output PNG (default <project>/shot.png)
+	Project   *string `json:"project,omitempty"`
+	Scene     *string `json:"scene,omitempty"` // scene path, res:// or relative to project (default: the project main scene via res://scenes/main.tscn)
+	Size      *string `json:"size,omitempty"`  // WxH, default 1280x720
+	TimeoutMs *int64  `json:"timeoutMs,omitempty"`
+}
+
+// GodotShot calls godot.shot: Render a scene to a PNG. Uses a real (software) renderer: on Linux without a display it wraps the run in xvfb-run and forces --rendering-driver opengl3 (Mesa llvmpipe), which works with no GPU. Not --headless (that is the dummy renderer).
+func (c *Client) GodotShot(ctx context.Context, in GodotShotInput) (*Envelope, error) {
+	return c.Call(ctx, "godot.shot", in)
+}
+
+// GodotTestInput is the input of godot.test.
+type GodotTestInput struct {
+	Filter    *string `json:"filter,omitempty"` // substring of file or test name
+	Godot     *string `json:"godot,omitempty"`
+	Project   *string `json:"project,omitempty"` // project dir containing project.godot (default .)
+	Runner    *string `json:"runner,omitempty"`  // res:// runner script (default res://tests/run_all.gd)
+	TimeoutMs *int64  `json:"timeoutMs,omitempty"`
+}
+
+// GodotTest calls godot.test: Run a Godot project's headless tests (res://tests/run_all.gd, a simple GUT-free runner: test_*.gd files with test_* methods) and return per-test PASS/FAIL. Imports the project first when needed.
+func (c *Client) GodotTest(ctx context.Context, in GodotTestInput) (*Envelope, error) {
+	return c.Call(ctx, "godot.test", in)
+}
+
 // GuideCheckInput is the input of guide.check.
 type GuideCheckInput struct {
 	Project    string `json:"project"` // project directory
@@ -220,19 +274,33 @@ func (c *Client) LanguagesShow(ctx context.Context, in LanguagesShowInput) (*Env
 
 // LibraryAddInput is the input of library.add.
 type LibraryAddInput struct {
-	Library string         `json:"library"`          // library directory
-	Author  *string        `json:"author,omitempty"` // override author
-	Files   []any          `json:"files,omitempty"`
-	From    map[string]any `json:"from,omitempty"`
-	License *string        `json:"license,omitempty"` // override license
-	Tags    []string       `json:"tags,omitempty"`    // extra tags for every added asset
-	Types   []string       `json:"types,omitempty"`
-	Update  *bool          `json:"update,omitempty"`
+	Library        string         `json:"library"`                  // library directory
+	AllowDuplicate *bool          `json:"allowDuplicate,omitempty"` // allow a model/animation/texture file whose sha256 already exists in another asset
+	Author         *string        `json:"author,omitempty"`         // override author
+	Files          []any          `json:"files,omitempty"`
+	From           map[string]any `json:"from,omitempty"`
+	License        *string        `json:"license,omitempty"` // override license
+	Tags           []string       `json:"tags,omitempty"`    // extra tags for every added asset
+	Types          []string       `json:"types,omitempty"`
+	Update         *bool          `json:"update,omitempty"`
 }
 
 // LibraryAdd calls library.add: Import assets into a library from a game project (adapter pixbuf-web: sprites, characters, tilesets, fx, sfx, songs, tagged style:<id>) and/or plain files; writes descriptors and previews, regenerates the index. Existing assets with different content need update:true (patch version bump).
 func (c *Client) LibraryAdd(ctx context.Context, in LibraryAddInput) (*Envelope, error) {
 	return c.Call(ctx, "library.add", in)
+}
+
+// LibraryAttributionInput is the input of library.attribution.
+type LibraryAttributionInput struct {
+	Format  *string `json:"format,omitempty"`  // one of: md, json
+	Library *string `json:"library,omitempty"` // library directory
+	Project *string `json:"project,omitempty"` // game project directory (uses assets.lock.json)
+	Write   *bool   `json:"write,omitempty"`   // write the file (default true)
+}
+
+// LibraryAttribution calls library.attribution: Generate ATTRIBUTION.md (library) or CREDITS.md (installed project, from assets.lock.json) for assets that require attribution; deterministic.
+func (c *Client) LibraryAttribution(ctx context.Context, in LibraryAttributionInput) (*Envelope, error) {
+	return c.Call(ctx, "library.attribution", in)
 }
 
 // LibraryIndexInput is the input of library.index.
@@ -248,21 +316,70 @@ func (c *Client) LibraryIndex(ctx context.Context, in LibraryIndexInput) (*Envel
 
 // LibraryInstallInput is the input of library.install.
 type LibraryInstallInput struct {
-	Project    string   `json:"project"` // game project directory
-	All        *bool    `json:"all,omitempty"`
-	Assets     []string `json:"assets,omitempty"` // asset ids
-	Dest       *string  `json:"dest,omitempty"`   // destination under the project (default assets/library)
-	DryRun     *bool    `json:"dryRun,omitempty"`
-	Home       *string  `json:"home,omitempty"`       // registry home directory (default $FACTORY_HOME or ~/.game-factory)
-	Library    *string  `json:"library,omitempty"`    // library directory (or use registryId)
-	RegistryId *string  `json:"registryId,omitempty"` // id of a registered library
-	Source     *string  `json:"source,omitempty"`     // provenance string recorded in the lock
-	Yes        *bool    `json:"yes,omitempty"`        // overwrite differing files
+	Project      string   `json:"project"` // game project directory
+	All          *bool    `json:"all,omitempty"`
+	Assets       []string `json:"assets,omitempty"` // asset ids
+	Dest         *string  `json:"dest,omitempty"`   // destination under the project (default assets/library)
+	DryRun       *bool    `json:"dryRun,omitempty"`
+	Home         *string  `json:"home,omitempty"`         // registry home directory (default $FACTORY_HOME or ~/.game-factory)
+	Library      *string  `json:"library,omitempty"`      // library directory (or use registryId)
+	MaxFileBytes *int64   `json:"maxFileBytes,omitempty"` // consumer cap per file (overrides the library limits)
+	RegistryId   *string  `json:"registryId,omitempty"`   // id of a registered library
+	Source       *string  `json:"source,omitempty"`       // provenance string recorded in the lock
+	Yes          *bool    `json:"yes,omitempty"`          // overwrite differing files
 }
 
 // LibraryInstall calls library.install: Copy assets (and their in-library dependencies) into a game project, verifying sha256 before and after copying, and write/update assets.lock.json. Never executes anything.
 func (c *Client) LibraryInstall(ctx context.Context, in LibraryInstallInput) (*Envelope, error) {
 	return c.Call(ctx, "library.install", in)
+}
+
+// LibraryIpReviewInput is the input of library.ip-review.
+type LibraryIpReviewInput struct {
+	Library string         `json:"library"`       // library directory
+	Ids     []string       `json:"ids,omitempty"` // only these assets
+	Set     map[string]any `json:"set,omitempty"`
+	Write   *bool          `json:"write,omitempty"` // record ipReview flags in descriptors (default true)
+}
+
+// LibraryIpReview calls library.ip-review: Keyword tripwire for trademarked characters, real brands, landmarks and map data in names, tags and prompts; flagged assets block a public publish until set {status: clear, confirm: true}. A tripwire only: a miss is not clearance.
+func (c *Client) LibraryIpReview(ctx context.Context, in LibraryIpReviewInput) (*Envelope, error) {
+	return c.Call(ctx, "library.ip-review", in)
+}
+
+// LibraryLicenseAuditInput is the input of library.license-audit.
+type LibraryLicenseAuditInput struct {
+	Library   string   `json:"library"`             // library directory
+	AllowList []string `json:"allowList,omitempty"` // allowed SPDX ids (trailing * wildcard); default from library.json licensePolicy or built-in
+	FixMeshy  *bool    `json:"fixMeshy,omitempty"`  // write derived Meshy license fields
+	Target    *string  `json:"target,omitempty"`    // default public; private only warns
+}
+
+// LibraryLicenseAudit calls library.license-audit: Dry-run of the public-publish gate: lists blocked assets with reasons (unknown/needs-review/NC/ND, free-plan Meshy not CC-BY, unresolved ipReview, stale ATTRIBUTION.md). Fails LICENSE_BLOCKED for target public. fixMeshy derives Meshy license fields from plan and visibility (never verifies).
+func (c *Client) LibraryLicenseAudit(ctx context.Context, in LibraryLicenseAuditInput) (*Envelope, error) {
+	return c.Call(ctx, "library.license-audit", in)
+}
+
+// LibraryLicenseSetInput is the input of library.license-set.
+type LibraryLicenseSetInput struct {
+	Library       string         `json:"library"` // library directory
+	Attribution   map[string]any `json:"attribution,omitempty"`
+	CommercialUse *bool          `json:"commercialUse,omitempty"`
+	Confirm       *bool          `json:"confirm,omitempty"`     // explicit human confirmation, required for verified/self-owned
+	Evidence      []string       `json:"evidence,omitempty"`    // evidence
+	Id            *string        `json:"id,omitempty"`          // asset id
+	Ids           []string       `json:"ids,omitempty"`         // several asset ids
+	LicenseFile   *string        `json:"licenseFile,omitempty"` // license text file inside the asset dir
+	Redistribute  *bool          `json:"redistribute,omitempty"`
+	Spdx          *string        `json:"spdx,omitempty"`       // SPDX id or LicenseRef-<x> (also sets the descriptor license)
+	Status        *string        `json:"status,omitempty"`     // one of: verified, self-owned, needs-review, unknown, blocked
+	VerifiedAt    *string        `json:"verifiedAt,omitempty"` // date (default today)
+	VerifiedBy    *string        `json:"verifiedBy,omitempty"` // who signs off (default user)
+}
+
+// LibraryLicenseSet calls library.license-set: Record license info for an asset. Marking it verified or self-owned is the human sign-off and needs confirm:true (stamps verifiedBy/verifiedAt).
+func (c *Client) LibraryLicenseSet(ctx context.Context, in LibraryLicenseSetInput) (*Envelope, error) {
+	return c.Call(ctx, "library.license-set", in)
 }
 
 // LibraryNewInput is the input of library.new.
@@ -283,7 +400,7 @@ func (c *Client) LibraryNew(ctx context.Context, in LibraryNewInput) (*Envelope,
 type LibraryPublishInput struct {
 	Library    string  `json:"library"`              // library directory
 	Repo       *string `json:"repo,omitempty"`       // "name" or "owner/name" (default: library name)
-	Visibility *string `json:"visibility,omitempty"` // default private
+	Visibility *string `json:"visibility,omitempty"` // default private; public runs the license gate and fails with LICENSE_BLOCKED
 	Yes        *bool   `json:"yes,omitempty"`        // explicit confirmation
 }
 
@@ -294,8 +411,9 @@ func (c *Client) LibraryPublish(ctx context.Context, in LibraryPublishInput) (*E
 
 // LibraryValidateInput is the input of library.validate.
 type LibraryValidateInput struct {
-	Library    string `json:"library"`              // library directory
-	CheckIndex *bool  `json:"checkIndex,omitempty"` // also require INDEX files to be current (default true)
+	Library    string  `json:"library"`              // library directory
+	CheckIndex *bool   `json:"checkIndex,omitempty"` // also require INDEX files to be current (default true)
+	Target     *string `json:"target,omitempty"`     // also run the license gate (data.licenseAudit); public fails with LICENSE_BLOCKED
 }
 
 // LibraryValidate calls library.validate: Validate a library: schemas, content hashes, path safety (no traversal or symlinks), size caps, dependencies, and that INDEX files are current.
@@ -311,6 +429,70 @@ type LibraryVerifyInput struct {
 // LibraryVerify calls library.verify: Check installed assets against assets.lock.json: reports modified, missing or tampered files.
 func (c *Client) LibraryVerify(ctx context.Context, in LibraryVerifyInput) (*Envelope, error) {
 	return c.Call(ctx, "library.verify", in)
+}
+
+// MeshyImportInput is the input of meshy.import.
+type MeshyImportInput struct {
+	Input      string         `json:"input"` // .glb path (project-relative or absolute)
+	Clips      map[string]any `json:"clips,omitempty"`
+	Height     *float64       `json:"height,omitempty"` // rescale to this height in metres (overrides units)
+	Id         *string        `json:"id,omitempty"`     // model id (default derived from the file name)
+	Out        *string        `json:"out,omitempty"`    // directory inside the project (default assets/models)
+	Overwrite  *bool          `json:"overwrite,omitempty"`
+	Project    *string        `json:"project,omitempty"`
+	Provenance map[string]any `json:"provenance,omitempty"`
+	Units      *string        `json:"units,omitempty"` // auto detects from bind height (default)
+}
+
+// MeshyImport calls meshy.import: Normalise and import a Meshy (or Blender-style) animated .glb into assets/models: detect units and bake centimetres to metres (no node scale left behind), check facing, tidy clip names ("Armature|walking_man|baselayer" -> "walking_man"), write the GLB and a manifest entry with provenance (plan, visibility, jobId stay "unknown" unless supplied). Deterministic: no timestamps unless createdAt is given.
+func (c *Client) MeshyImport(ctx context.Context, in MeshyImportInput) (*Envelope, error) {
+	return c.Call(ctx, "meshy.import", in)
+}
+
+// MeshyRigMapInput is the input of meshy.rig-map.
+type MeshyRigMapInput struct {
+	A         string  `json:"a"`             // first .glb
+	B         *string `json:"b,omitempty"`   // second .glb to compare against (optional)
+	Out       *string `json:"out,omitempty"` // write the Godot bone map JSON here (inside the project)
+	Overwrite *bool   `json:"overwrite,omitempty"`
+	Project   *string `json:"project,omitempty"`
+}
+
+// MeshyRigMap calls meshy.rig-map: Compare two skeletons (rigSignature) and suggest a bone mapping a->b by exact name, humanoid role (Rigify, Mixamo, UE/Unity names) and hierarchy position, listing bones only in one rig (e.g. Bone_0NN extras) and the rest-pose delta. Also emits a Godot SkeletonProfileHumanoid BoneMap JSON for input a (or only that, when b is omitted).
+func (c *Client) MeshyRigMap(ctx context.Context, in MeshyRigMapInput) (*Envelope, error) {
+	return c.Call(ctx, "meshy.rig-map", in)
+}
+
+// MeshySplitInput is the input of meshy.split.
+type MeshySplitInput struct {
+	Input        string   `json:"input"`
+	Out          string   `json:"out"` // output .glb path inside the project
+	Ranges       []any    `json:"ranges"`
+	Clip         *string  `json:"clip,omitempty"` // source clip (default: the only clip)
+	Fps          *float64 `json:"fps,omitempty"`  // frames per second when unit is frames (default 30)
+	KeepOriginal *bool    `json:"keepOriginal,omitempty"`
+	Only         *bool    `json:"only,omitempty"` // write only the new clips
+	Overwrite    *bool    `json:"overwrite,omitempty"`
+	Project      *string  `json:"project,omitempty"`
+	Unit         *string  `json:"unit,omitempty"` // unit of start/end (default seconds)
+}
+
+// MeshySplit calls meshy.split: Split or trim a merged clip by time ranges into new named clips, written to a new .glb (boundary keys are interpolated, times restart at 0). The source clip is replaced unless keepOriginal; other clips are kept unless only:true. Unused data is compacted away.
+func (c *Client) MeshySplit(ctx context.Context, in MeshySplitInput) (*Envelope, error) {
+	return c.Call(ctx, "meshy.split", in)
+}
+
+// MeshyVerifyInput is the input of meshy.verify.
+type MeshyVerifyInput struct {
+	Input   string         `json:"input"`
+	Budget  map[string]any `json:"budget,omitempty"` // limits; exceeding an explicit limit fails, a default limit only warns
+	Expect  map[string]any `json:"expect,omitempty"`
+	Project *string        `json:"project,omitempty"`
+}
+
+// MeshyVerify calls meshy.verify: Check an animated .glb is game-ready: uncompressed, skin and joint count, weights, bind height (catches cm), facing, clips and a missing idle, per-clip root drift, scale tracks, pose stability, size budget, textures. Returns pass/warn/fail/info checks; pass is false when any check fails.
+func (c *Client) MeshyVerify(ctx context.Context, in MeshyVerifyInput) (*Envelope, error) {
+	return c.Call(ctx, "meshy.verify", in)
 }
 
 // ModelsBlenderCheckInput is the input of models.blender-check.

@@ -1,6 +1,6 @@
 # Checkpoint (multilang work)
 
-Branch `multilang` (tag `pre-multilang` = previous state; `main` untouched). Plan: `docs/PLAN-MULTILANG.md`. Pushed to `origin/multilang` at `8867292` (character controller `1577441`, model export `55e3349`, checkpoint refresh `8867292`).
+Branch `multilang` (tag `pre-multilang` = previous state; `main` untouched). Plan: `docs/PLAN-MULTILANG.md`. Pushed to `origin/multilang` at `e5398b1` (cross-platform fixes `3d10465`, animated glb `e5398b1`).
 
 ## Done (committed and pushed)
 - Languages axis (`factory-core/languages`), standalone packaging (`factory-core/package`), generated clients (`clients/`; regenerate with `bin/factory call clients.generate '{}'`).
@@ -53,7 +53,7 @@ Full suite: `node --test test/` = 154 pass, 0 fail.
 
 **Next:** nothing in flight. Candidate work from the Open list above (investigate the 'tall step height' character case; GPU kit; Tauri/Wails/Electron builds; Go cgo build needs X11 dev libs). Resume check: `git status --short && node --test test/ 2>&1 | grep -E "^ℹ (pass|fail)"`.
 
-## Cross-platform testing (done 2026-11-21, UNCOMMITTED)
+## Cross-platform testing (done 2026-11-21, committed 3d10465)
 **User request:** "let's test this on MacOS (ssh bill@bigmac.local) and Windows (use VM via win-devvm repo ~/src/)".
 **Results now:** Linux 164/164. Mac (arm64, macOS 27) 160 pass, 4 skipped (no pytest), 0 fail. Windows 11 VM: every test file passes (rust dispatch ran for real; go/python not installed so skipped) provided Git's `sh` is on PATH.
 **Fixes made (all uncommitted):**
@@ -65,6 +65,21 @@ Full suite: `node --test test/` = 154 pass, 0 fail.
 **Known Windows limits:** web scaffold (`project.new --web`) and some tasks shell out to `sh` (bin/factory-scaffold.sh, tools/*.sh), so Git's usr\bin must be on PATH. Go not installed in the VM. Tauri/Wails/Electron/Neutralino packaging NOT tried on Mac or Windows.
 **Scratch:** Mac `~/gf-test ~/gf-target ~/gf-tmp ~/gf-suite.log /tmp/gf.tgz` (cleaned at end of session); VM `gf-test`, `C:\gf-tmp`, `C:\gf-target`, `gf.tgz`.
 
-## Animated .glb tooling (built 2026-11-21, UNCOMMITTED)
+## Animated .glb tooling (committed and pushed, e5398b1)
 User: "build the animated glb tooling". Done: `templates/web-project/src/lib/gltf-anim.js` (parse nodes/skins/clips, pose + slerp/step/cubicspline sampling, CPU skinning, `AnimPlayer` with state map + crossfade, `mergeAnimGLB`, Draco/meshopt rejected as UNSUPPORTED), `factory-core/anim/` (`anim.inspect|import|merge|sample`, registered in factory-core/index.mjs), skill `skills/animated-models.md` (INDEX regenerated), clients regenerated, `test/anim.test.mjs` + `test/helpers/anim-glb.mjs` (rig built in code). Suite: 173 pass, 0 fail on Linux.
 **Unverified:** no real Meshy file yet (user will supply). Likely first-contact issues: Draco/meshopt, big root scale/rotation on the Armature (applied via node transforms, should work), textures (images are exposed in model.images but nothing renders them), >4 joint influences (only JOINTS_0/WEIGHTS_0). Not run on Mac/Windows (pure JS, expected fine). No renderer integration yet (character-kit adapter, raytrace-kit from animated poses): candidates for next.
+
+## Session handoff (refreshed 2026-11-22, before /compact)
+**Status:** code clean at `e5398b1`, pushed; only this file is modified (uncommitted). Baseline: `node --test test/` = 173 pass, 0 fail (Linux). No background processes. Mac scratch cleaned; Windows VM still running with `gf-test`, `C:\gf-tmp`, `C:\gf-target`, `gf.tgz`, `winrun.ps1`, `wf.ps1` left in the guest home.
+**Open / candidates:** (1) user will supply real Meshy .glb files: run `anim.inspect` first, expect Draco, Armature scale, texture issues; (2) renderer hookups for animated models (character-kit adapter, raytrace from posed meshes, texture support); (3) Tauri/Wails/Electron/Neutralino packaging on Mac and Windows untried; Tauri/Wails on Linux need `sudo apt install libgtk-3-dev libwebkit2gtk-4.1-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev`; (4) Go not installed in the Windows VM; Windows needs Git `sh` on PATH for web scaffolds; (5) GPU kit unverified on real GPU; Go physics snapshot/restore not ported.
+**Authorizations:** none outstanding. Commits/pushes only on explicit request each time; ssh to bigmac.local and the win-devvm VM were for the testing task only.
+**Resume:** `git status --short && node --test test/ 2>&1 | grep -E "^ℹ (pass|fail)"`.
+
+## 3D action-adventure track (colbdysseus) - 2026-11-22
+- Plan: `docs/PLAN-3D-ACTION.md`; research in `docs/research/` (engine, toolkit, meshy, asset-library). Agent-reported claims there are partly unverified (see the plan's open items).
+- Decisions: Godot primary (4.7.2-stable at /datanapps/tools/godot, `docs/GODOT.md`), data-first gameplay JSON + JS reference sim, public text-only `game-assets` catalogue + private game repos, no Git LFS.
+- Wave 0 done: `godot.*` (detect/test/shot/import-check) + `templates/godot-action3d/`; library schema v2 + license gate (`library.license-set|license-audit|attribution|ip-review`, `LICENSE_BLOCKED`); `meshy.import|verify|split|rig-map` (`docs/MESHY.md`), `gltf-anim` exported from web lib index. Capability names must stay `area.verb` (hyphens only). Clients regenerated; ERROR_CODES gained LICENSE_BLOCKED, DUPLICATE.
+- Full suite: 202 pass, 0 fail.
+- Next: wave 1 (camera3d, anim-graph, locomotion3d, combat3d, ai3d, boss3d), then wave 2 Godot runtime. Not done: skills/INDEX.json entries for godot/meshy, Godot export templates, meshy.generate API client.
+- NOTHING public yet: no public repo created or pushed. Gate: user confirms Meshy plan/visibility per model, license-audit clean, IP blocks (Green Lantern/Superman marks, Cujo, real names) resolved.
+- Game-specific specs live in ~/src/fun/colbdysseus/spec/.

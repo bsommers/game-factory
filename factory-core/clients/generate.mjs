@@ -9,7 +9,7 @@ export const LANGS = ['go', 'rust', 'python'];
 const TEMPLATES = fileURLToPath(new URL('./templates/', import.meta.url));
 
 // Stable error.code set: every code the factory emits plus the transport-level ones the clients add themselves.
-export const ERROR_CODES = ['BAD_CONFIG', 'BAD_INPUT', 'BAD_LOCK', 'CONFIRM_REQUIRED', 'CONFLICT', 'EXISTS', 'FAILED', 'FORBIDDEN', 'GH_FAILED', 'GIT_FAILED', 'IMPORT_FAILED', 'INTEGRITY', 'INTERNAL', 'INVALID', 'INVALID_THEME', 'MISSING_TEMPLATE', 'NOT_FETCHED', 'NOT_FOUND', 'NO_LOCK', 'NO_PROJECT', 'REGISTRY_ERROR', 'SECRETS_FOUND', 'STALE_INDEX', 'TAMPERED', 'TASK_FAILED', 'UNKNOWN_CAPABILITY', 'UNSAFE'];
+export const ERROR_CODES = ['BAD_CONFIG', 'BAD_INPUT', 'BAD_LOCK', 'CONFIRM_REQUIRED', 'CONFLICT', 'DUPLICATE', 'EXISTS', 'FAILED', 'FORBIDDEN', 'GH_FAILED', 'GIT_FAILED', 'IMPORT_FAILED', 'INTEGRITY', 'INTERNAL', 'INVALID', 'INVALID_THEME', 'LICENSE_BLOCKED', 'MISSING_TEMPLATE', 'NOT_FETCHED', 'NOT_FOUND', 'NO_LOCK', 'NO_PROJECT', 'REGISTRY_ERROR', 'SECRETS_FOUND', 'STALE_INDEX', 'TAMPERED', 'TASK_FAILED', 'UNKNOWN_CAPABILITY', 'UNSAFE'];
 export const CLIENT_CODES = ['TRANSPORT', 'BAD_RESPONSE']; // never sent by the server
 
 const words = (s) => s.split(/[^A-Za-z0-9]+/).filter(Boolean);

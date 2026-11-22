@@ -1,6 +1,6 @@
 # Asset libraries and the library registry
 
-An **asset library** is a plain git repo of reusable game assets (sprites, characters, tilesets, sfx, songs, fx, fonts, levels, docs, code kits) that people, agents and software can discover without opening a single asset file. A **registry** merges many libraries (GitHub or local) into one searchable catalogue. Code: `factory-core/library/`; scaffold: `templates/asset-library/`; tests: `test/library/`.
+An **asset library** is a plain git repo of reusable game assets (sprites, characters, tilesets, sfx, songs, fx, fonts, levels, docs, code kits) that people, agents and software can discover without opening a single asset file. A **registry** merges many libraries (GitHub or local) into one searchable catalogue. Code: `factory-core/library/`; scaffold: `templates/asset-library/`; tests: `test/library/`, `test/library-v2.test.mjs`.
 
 ## Format
 
@@ -16,6 +16,20 @@ Descriptor fields: `id`, `type` (`sprite|character|tileset|sfx|song|fx|font|leve
 
 Validation (`library.validate`, also run in CI) checks: schemas; every file exists with the right size and sha256; `hash`; descriptor id equals directory; types are listed in `library.json`; dependencies resolve (version ranges `1.2.3`, `^`, `~`, `>=`, `*`) with no cycles; INDEX files are current; and, because libraries are untrusted input: only safe relative POSIX paths (no `..`, absolute, drive letters, backslashes), no symlinks or special files anywhere, caps (JSON 1 MiB, file 16 MiB, library 128 MiB, 5000 files, 2000 assets), and `__proto__` keys are rejected.
 
+## Schema v2 (formatVersion 2, backward compatible)
+
+New libraries are `formatVersion: 2`; v1 libraries load, validate, index and install unchanged (their INDEX files stay byte-identical). v2 adds, all optional in the schema:
+- asset types `model|animation|texture|material|hdri|music`; `contentId` (same value as `hash`).
+- `licenseInfo {spdx, status: verified|self-owned|needs-review|unknown|blocked, redistribute, commercialUse, attribution{required,text,url}, licenseFile, evidence[], verifiedBy, verifiedAt}`. `library.add` writes `needs-review` unless the item supplies one; only `library.license-set ... confirm:true` marks verified/self-owned. Changing the content of a signed-off asset (`update:true`) drops it back to `needs-review`.
+- `provenance` gains `tool, jobId, plan (free|pro|studio|enterprise|unknown), visibility (private|community), prompt, sourceUrl, derivedFrom[]`; `ipReview {status: clear|flagged|unchecked, notes, hits}`.
+- `model {tris, verts, materials, rig{type,bones,skinned,skeletonHash}, clips[{name,duration,loop,fps,file}], ...}`, `animation {targetRig, skeletonHash, clips}`, `audio {codec, sampleRate, channels, loopable, bpm, loudnessLufs}`. For `.glb` files `library.add` reads tris/verts/materials/clips/rig from the file (explicit values win).
+- `library.json` `limits {fileBytes, libraryBytes}` raise the per-file / per-library caps (defaults 16 MiB / 128 MiB; ceiling 2 GiB / 64 GiB); a consumer cap (`loadLibrary(dir, {maxFileBytes})`, `library.install maxFileBytes`) always wins. `licensePolicy {allow[]}` overrides the SPDX allow-list; `releaseBase` is reserved for blob hosting.
+- `library.add` reports `duplicates` (same sha256 in another asset) and refuses them with `DUPLICATE` for model/animation/texture/material/hdri/music unless `allowDuplicate:true`.
+
+### Public-publish gate
+
+`library.publish visibility:public` (also with no `yes`), `library.validate target:public` and the generated CI (`validate-cli.mjs audit . --public`, public repos only) fail with `LICENSE_BLOCKED` unless every asset has: `licenseInfo.status` verified/self-owned (v1 descriptors count as unknown), `redistribute:true`, a license on the allow-list (default CC0-1.0, CC-BY-4.0, CC-BY-SA-4.0, MIT, Apache-2.0, `LicenseRef-Owner-*`, a few permissive others; NC/ND always denied), non-empty attribution text when required, a verifiedBy sign-off, no flagged or unresolved `ipReview`. Meshy assets (`provenance.generator: meshy`) also need `plan` and `visibility`; free plan must be CC-BY-4.0 with a credit; paid plan + `community` visibility needs a human sign-off. `ATTRIBUTION.md` must be current when any asset needs attribution. Private visibility never blocks. The IP scan is a keyword tripwire, not a clearance, and none of this is legal advice.
+
 ## Capabilities
 
 All registered by `registerLibrary(registry)` / the `capabilities` array in `factory-core/library/capabilities.mjs`, in the core format `{name, summary, inputSchema, outputSchema, handler(input) -> {ok, data, error, next}}`. `library.add` is async (a Promise); the rest are synchronous. Errors carry stable `error.code`s.
@@ -29,6 +43,10 @@ All registered by `registerLibrary(registry)` / the `capabilities` array in `fac
 | `library.publish` | `gh repo create --source . --push`; confirm-first | `library`, `repo`, `visibility` (default private), `yes` |
 | `library.install` | Copy assets plus in-library dependencies into a game, verify sha256 before and after, write `assets.lock.json` | `project`, `library` or `registryId`, `assets`/`all`, `dest` (default `assets/library`), `yes`, `dryRun` |
 | `library.verify` | Compare installed files with `assets.lock.json` (modified/missing/tampered) | `project` |
+| `library.license-set` | Record license info; `verified`/`self-owned` is the human sign-off and needs `confirm:true` | `library`, `id`/`ids`, `spdx`, `status`, `redistribute`, `commercialUse`, `attribution`, `evidence`, `confirm` |
+| `library.license-audit` | Dry-run of the public gate; `LICENSE_BLOCKED` with reasons per asset for `target: public` | `library`, `target`, `allowList`, `fixMeshy` |
+| `library.attribution` | Write `ATTRIBUTION.md` (library) or `CREDITS.md` (project, from `assets.lock.json`) | `library` or `project`, `format`, `write` |
+| `library.ip-review` | Keyword tripwire for trademarked characters, brands, landmarks, map data; records `ipReview`; `set {id,status:clear,confirm}` is the human decision | `library`, `ids`, `write`, `set` |
 | `registry.add/remove/list` | Manage `registry.json` | `source` (`owner/repo[@ref]` or a local path), `id` |
 | `registry.refresh` | `git clone --depth 1` (fallback `gh repo clone`), validate, cache, rebuild catalogue | `id`, `offline` |
 | `registry.search` | Query the merged catalogue | `query`, `type`, `tag` (all must match), `license`, `library`, `limit`, `offline` |
@@ -88,4 +106,4 @@ Each capability maps one-to-one to an MCP tool (`library_new`, `library_add`, ..
 
 ## Tests
 
-`node --test test/library/`: schema validation, index determinism, install integrity and tamper detection, path-traversal/symlink/size rejection, publish confirm-first and secret refusal (via an injected runner), registry merge, filters, conflicts, offline mode, hostile remote libraries (injected git).
+`node --test test/library/ test/library-v2.test.mjs`: schema validation, index determinism, install integrity and tamper detection, path-traversal/symlink/size rejection, publish confirm-first and secret refusal (via an injected runner), registry merge, filters, conflicts, offline mode, hostile remote libraries (injected git).

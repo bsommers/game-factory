@@ -12,6 +12,13 @@ export const LIMITS = Object.freeze({
   maxFilesPerAsset: 256,
   maxPathLen: 240,
 });
+/** Hard ceilings a library.json "limits" override can never exceed (GitHub Release file cap; sane library cap). */
+export const LIMIT_CEILING = Object.freeze({ fileBytes: 2 * 1024 ** 3, libraryBytes: 64 * 1024 ** 3 });
+/** Effective byte limits: defaults, raised by a manifest's limits{fileBytes,libraryBytes}, or by consumer opts (opts win), clamped to the ceiling. */
+export function effectiveLimits(manifestLimits, opts = {}) {
+  const pick = (o, m, d, c) => Math.min(c, Math.max(1, Number.isFinite(o) ? o : Number.isFinite(m) ? m : d));
+  return { maxFileBytes: pick(opts.maxFileBytes, manifestLimits?.fileBytes, LIMITS.maxFileBytes, LIMIT_CEILING.fileBytes), maxLibraryBytes: pick(opts.maxLibraryBytes, manifestLimits?.libraryBytes, LIMITS.maxLibraryBytes, LIMIT_CEILING.libraryBytes) };
+}
 
 export const sha256 = (buf) => createHash('sha256').update(buf).digest('hex');
 
@@ -37,7 +44,7 @@ export function resolveInside(root, rel) {
 }
 
 /** Walk a tree without following symlinks. Returns { files: [rel...], problems: [string] } (symlinks, specials and caps are problems). */
-export function walkTree(root, { skip = ['.git', 'node_modules'] } = {}) {
+export function walkTree(root, { skip = ['.git', 'node_modules'], maxFileBytes = LIMITS.maxFileBytes, maxLibraryBytes = LIMITS.maxLibraryBytes } = {}) {
   const files = [], problems = []; let bytes = 0;
   const rec = (rel) => {
     let names; try { names = readdirSync(join(root, rel)).sort(); } catch (e) { problems.push(`cannot read ${rel || '.'}: ${e.code || e.message}`); return; }
@@ -48,14 +55,14 @@ export function walkTree(root, { skip = ['.git', 'node_modules'] } = {}) {
       else if (st.isDirectory()) rec(r);
       else if (st.isFile()) {
         files.push(r); bytes += st.size;
-        if (st.size > LIMITS.maxFileBytes) problems.push(`file too large (${st.size} bytes): ${r}`);
+        if (st.size > maxFileBytes) problems.push(`file too large (${st.size} bytes): ${r}`);
         if (files.length > LIMITS.maxFiles) { problems.push(`more than ${LIMITS.maxFiles} files`); return; }
       } else problems.push(`special file not allowed: ${r}`);
       if (files.length > LIMITS.maxFiles) return;
     }
   };
   rec('');
-  if (bytes > LIMITS.maxLibraryBytes) problems.push(`library larger than ${LIMITS.maxLibraryBytes} bytes`);
+  if (bytes > maxLibraryBytes) problems.push(`library larger than ${maxLibraryBytes} bytes`);
   return { files, bytes, problems };
 }
 

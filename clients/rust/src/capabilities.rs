@@ -180,6 +180,128 @@ impl Client {
     }
 }
 
+/// Input of `godot.detect`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct GodotDetectInput {
+    /// explicit binary path to probe
+    pub godot: Option<String>,
+}
+
+impl GodotDetectInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.godot { m.insert("godot".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// godot.detect: Find a Godot 4 binary (GODOT_BIN, PATH, /datanapps/tools/godot/*, ~/.local/share/godot) and report version, path, and whether xvfb-run / a display exist for screenshots.
+    pub fn godot_detect(&self, input: &GodotDetectInput) -> Result<Envelope, Error> {
+        self.call("godot.detect", &input.to_json())
+    }
+}
+
+/// Input of `godot.import-check`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct GodotImportCheckInput {
+    /// .glb path (absolute, or relative to project when project is given)
+    pub glb: String,
+    pub godot: Option<String>,
+    /// optional existing project; the glb must live inside it. Without it a throwaway project is used.
+    pub project: Option<String>,
+    pub timeout_ms: Option<i64>,
+}
+
+impl GodotImportCheckInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("glb".to_string(), serde_json::to_value(&self.glb).unwrap_or(Value::Null));
+        if let Some(v) = &self.godot { m.insert("godot".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.timeout_ms { m.insert("timeoutMs".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// godot.import-check: Headless-import a .glb with Godot and report what the engine actually sees: skeletons (bone count/names), animations (name, length, tracks, loop) and mesh count. Complements anim.inspect (which reads the file without the engine).
+    pub fn godot_import_check(&self, input: &GodotImportCheckInput) -> Result<Envelope, Error> {
+        self.call("godot.import-check", &input.to_json())
+    }
+}
+
+/// Input of `godot.shot`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct GodotShotInput {
+    /// default opengl3
+    pub driver: Option<String>,
+    pub frames: Option<i64>,
+    pub godot: Option<String>,
+    /// output PNG (default <project>/shot.png)
+    pub out: Option<String>,
+    pub project: Option<String>,
+    /// scene path, res:// or relative to project (default: the project main scene via res://scenes/main.tscn)
+    pub scene: Option<String>,
+    /// WxH, default 1280x720
+    pub size: Option<String>,
+    pub timeout_ms: Option<i64>,
+}
+
+impl GodotShotInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.driver { m.insert("driver".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.frames { m.insert("frames".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.godot { m.insert("godot".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.out { m.insert("out".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.scene { m.insert("scene".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.size { m.insert("size".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.timeout_ms { m.insert("timeoutMs".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// godot.shot: Render a scene to a PNG. Uses a real (software) renderer: on Linux without a display it wraps the run in xvfb-run and forces --rendering-driver opengl3 (Mesa llvmpipe), which works with no GPU. Not --headless (that is the dummy renderer).
+    pub fn godot_shot(&self, input: &GodotShotInput) -> Result<Envelope, Error> {
+        self.call("godot.shot", &input.to_json())
+    }
+}
+
+/// Input of `godot.test`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct GodotTestInput {
+    /// substring of file or test name
+    pub filter: Option<String>,
+    pub godot: Option<String>,
+    /// project dir containing project.godot (default .)
+    pub project: Option<String>,
+    /// res:// runner script (default res://tests/run_all.gd)
+    pub runner: Option<String>,
+    pub timeout_ms: Option<i64>,
+}
+
+impl GodotTestInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.filter { m.insert("filter".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.godot { m.insert("godot".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.runner { m.insert("runner".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.timeout_ms { m.insert("timeoutMs".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// godot.test: Run a Godot project's headless tests (res://tests/run_all.gd, a simple GUT-free runner: test_*.gd files with test_* methods) and return per-test PASS/FAIL. Imports the project first when needed.
+    pub fn godot_test(&self, input: &GodotTestInput) -> Result<Envelope, Error> {
+        self.call("godot.test", &input.to_json())
+    }
+}
+
 /// Input of `guide.check`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct GuideCheckInput {
@@ -488,6 +610,8 @@ impl Client {
 pub struct LibraryAddInput {
     /// library directory
     pub library: String,
+    /// allow a model/animation/texture file whose sha256 already exists in another asset
+    pub allow_duplicate: Option<bool>,
     /// override author
     pub author: Option<String>,
     pub files: Option<Vec<serde_json::Value>>,
@@ -504,6 +628,7 @@ impl LibraryAddInput {
     pub fn to_json(&self) -> Value {
         let mut m = Map::new();
         m.insert("library".to_string(), serde_json::to_value(&self.library).unwrap_or(Value::Null));
+        if let Some(v) = &self.allow_duplicate { m.insert("allowDuplicate".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
         if let Some(v) = &self.author { m.insert("author".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
         if let Some(v) = &self.files { m.insert("files".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
         if let Some(v) = &self.from { m.insert("from".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
@@ -519,6 +644,37 @@ impl Client {
     /// library.add: Import assets into a library from a game project (adapter pixbuf-web: sprites, characters, tilesets, fx, sfx, songs, tagged style:<id>) and/or plain files; writes descriptors and previews, regenerates the index. Existing assets with different content need update:true (patch version bump).
     pub fn library_add(&self, input: &LibraryAddInput) -> Result<Envelope, Error> {
         self.call("library.add", &input.to_json())
+    }
+}
+
+/// Input of `library.attribution`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct LibraryAttributionInput {
+    /// one of: md, json
+    pub format: Option<String>,
+    /// library directory
+    pub library: Option<String>,
+    /// game project directory (uses assets.lock.json)
+    pub project: Option<String>,
+    /// write the file (default true)
+    pub write: Option<bool>,
+}
+
+impl LibraryAttributionInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.format { m.insert("format".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.library { m.insert("library".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.write { m.insert("write".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// library.attribution: Generate ATTRIBUTION.md (library) or CREDITS.md (installed project, from assets.lock.json) for assets that require attribution; deterministic.
+    pub fn library_attribution(&self, input: &LibraryAttributionInput) -> Result<Envelope, Error> {
+        self.call("library.attribution", &input.to_json())
     }
 }
 
@@ -561,6 +717,8 @@ pub struct LibraryInstallInput {
     pub home: Option<String>,
     /// library directory (or use registryId)
     pub library: Option<String>,
+    /// consumer cap per file (overrides the library limits)
+    pub max_file_bytes: Option<i64>,
     /// id of a registered library
     pub registry_id: Option<String>,
     /// provenance string recorded in the lock
@@ -579,6 +737,7 @@ impl LibraryInstallInput {
         if let Some(v) = &self.dry_run { m.insert("dryRun".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
         if let Some(v) = &self.home { m.insert("home".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
         if let Some(v) = &self.library { m.insert("library".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.max_file_bytes { m.insert("maxFileBytes".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
         if let Some(v) = &self.registry_id { m.insert("registryId".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
         if let Some(v) = &self.source { m.insert("source".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
         if let Some(v) = &self.yes { m.insert("yes".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
@@ -590,6 +749,122 @@ impl Client {
     /// library.install: Copy assets (and their in-library dependencies) into a game project, verifying sha256 before and after copying, and write/update assets.lock.json. Never executes anything.
     pub fn library_install(&self, input: &LibraryInstallInput) -> Result<Envelope, Error> {
         self.call("library.install", &input.to_json())
+    }
+}
+
+/// Input of `library.ip-review`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct LibraryIpReviewInput {
+    /// library directory
+    pub library: String,
+    /// only these assets
+    pub ids: Option<Vec<String>>,
+    pub set: Option<serde_json::Value>,
+    /// record ipReview flags in descriptors (default true)
+    pub write: Option<bool>,
+}
+
+impl LibraryIpReviewInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("library".to_string(), serde_json::to_value(&self.library).unwrap_or(Value::Null));
+        if let Some(v) = &self.ids { m.insert("ids".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.set { m.insert("set".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.write { m.insert("write".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// library.ip-review: Keyword tripwire for trademarked characters, real brands, landmarks and map data in names, tags and prompts; flagged assets block a public publish until set {status: clear, confirm: true}. A tripwire only: a miss is not clearance.
+    pub fn library_ip_review(&self, input: &LibraryIpReviewInput) -> Result<Envelope, Error> {
+        self.call("library.ip-review", &input.to_json())
+    }
+}
+
+/// Input of `library.license-audit`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct LibraryLicenseAuditInput {
+    /// library directory
+    pub library: String,
+    /// allowed SPDX ids (trailing * wildcard); default from library.json licensePolicy or built-in
+    pub allow_list: Option<Vec<String>>,
+    /// write derived Meshy license fields
+    pub fix_meshy: Option<bool>,
+    /// default public; private only warns
+    pub target: Option<String>,
+}
+
+impl LibraryLicenseAuditInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("library".to_string(), serde_json::to_value(&self.library).unwrap_or(Value::Null));
+        if let Some(v) = &self.allow_list { m.insert("allowList".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.fix_meshy { m.insert("fixMeshy".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.target { m.insert("target".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// library.license-audit: Dry-run of the public-publish gate: lists blocked assets with reasons (unknown/needs-review/NC/ND, free-plan Meshy not CC-BY, unresolved ipReview, stale ATTRIBUTION.md). Fails LICENSE_BLOCKED for target public. fixMeshy derives Meshy license fields from plan and visibility (never verifies).
+    pub fn library_license_audit(&self, input: &LibraryLicenseAuditInput) -> Result<Envelope, Error> {
+        self.call("library.license-audit", &input.to_json())
+    }
+}
+
+/// Input of `library.license-set`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct LibraryLicenseSetInput {
+    /// library directory
+    pub library: String,
+    pub attribution: Option<serde_json::Value>,
+    pub commercial_use: Option<bool>,
+    /// explicit human confirmation, required for verified/self-owned
+    pub confirm: Option<bool>,
+    /// evidence
+    pub evidence: Option<Vec<String>>,
+    /// asset id
+    pub id: Option<String>,
+    /// several asset ids
+    pub ids: Option<Vec<String>>,
+    /// license text file inside the asset dir
+    pub license_file: Option<String>,
+    pub redistribute: Option<bool>,
+    /// SPDX id or LicenseRef-<x> (also sets the descriptor license)
+    pub spdx: Option<String>,
+    /// one of: verified, self-owned, needs-review, unknown, blocked
+    pub status: Option<String>,
+    /// date (default today)
+    pub verified_at: Option<String>,
+    /// who signs off (default user)
+    pub verified_by: Option<String>,
+}
+
+impl LibraryLicenseSetInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("library".to_string(), serde_json::to_value(&self.library).unwrap_or(Value::Null));
+        if let Some(v) = &self.attribution { m.insert("attribution".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.commercial_use { m.insert("commercialUse".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.confirm { m.insert("confirm".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.evidence { m.insert("evidence".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.id { m.insert("id".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.ids { m.insert("ids".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.license_file { m.insert("licenseFile".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.redistribute { m.insert("redistribute".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.spdx { m.insert("spdx".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.status { m.insert("status".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.verified_at { m.insert("verifiedAt".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.verified_by { m.insert("verifiedBy".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// library.license-set: Record license info for an asset. Marking it verified or self-owned is the human sign-off and needs confirm:true (stamps verifiedBy/verifiedAt).
+    pub fn library_license_set(&self, input: &LibraryLicenseSetInput) -> Result<Envelope, Error> {
+        self.call("library.license-set", &input.to_json())
     }
 }
 
@@ -634,7 +909,7 @@ pub struct LibraryPublishInput {
     pub library: String,
     /// "name" or "owner/name" (default: library name)
     pub repo: Option<String>,
-    /// default private
+    /// default private; public runs the license gate and fails with LICENSE_BLOCKED
     pub visibility: Option<String>,
     /// explicit confirmation
     pub yes: Option<bool>,
@@ -665,6 +940,8 @@ pub struct LibraryValidateInput {
     pub library: String,
     /// also require INDEX files to be current (default true)
     pub check_index: Option<bool>,
+    /// also run the license gate (data.licenseAudit); public fails with LICENSE_BLOCKED
+    pub target: Option<String>,
 }
 
 impl LibraryValidateInput {
@@ -672,6 +949,7 @@ impl LibraryValidateInput {
         let mut m = Map::new();
         m.insert("library".to_string(), serde_json::to_value(&self.library).unwrap_or(Value::Null));
         if let Some(v) = &self.check_index { m.insert("checkIndex".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.target { m.insert("target".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
         Value::Object(m)
     }
 }
@@ -702,6 +980,152 @@ impl Client {
     /// library.verify: Check installed assets against assets.lock.json: reports modified, missing or tampered files.
     pub fn library_verify(&self, input: &LibraryVerifyInput) -> Result<Envelope, Error> {
         self.call("library.verify", &input.to_json())
+    }
+}
+
+/// Input of `meshy.import`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct MeshyImportInput {
+    /// .glb path (project-relative or absolute)
+    pub input: String,
+    pub clips: Option<serde_json::Value>,
+    /// rescale to this height in metres (overrides units)
+    pub height: Option<f64>,
+    /// model id (default derived from the file name)
+    pub id: Option<String>,
+    /// directory inside the project (default assets/models)
+    pub out: Option<String>,
+    pub overwrite: Option<bool>,
+    pub project: Option<String>,
+    pub provenance: Option<serde_json::Value>,
+    /// auto detects from bind height (default)
+    pub units: Option<String>,
+}
+
+impl MeshyImportInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("input".to_string(), serde_json::to_value(&self.input).unwrap_or(Value::Null));
+        if let Some(v) = &self.clips { m.insert("clips".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.height { m.insert("height".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.id { m.insert("id".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.out { m.insert("out".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.overwrite { m.insert("overwrite".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.provenance { m.insert("provenance".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.units { m.insert("units".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// meshy.import: Normalise and import a Meshy (or Blender-style) animated .glb into assets/models: detect units and bake centimetres to metres (no node scale left behind), check facing, tidy clip names ("Armature|walking_man|baselayer" -> "walking_man"), write the GLB and a manifest entry with provenance (plan, visibility, jobId stay "unknown" unless supplied). Deterministic: no timestamps unless createdAt is given.
+    pub fn meshy_import(&self, input: &MeshyImportInput) -> Result<Envelope, Error> {
+        self.call("meshy.import", &input.to_json())
+    }
+}
+
+/// Input of `meshy.rig-map`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct MeshyRigMapInput {
+    /// first .glb
+    pub a: String,
+    /// second .glb to compare against (optional)
+    pub b: Option<String>,
+    /// write the Godot bone map JSON here (inside the project)
+    pub out: Option<String>,
+    pub overwrite: Option<bool>,
+    pub project: Option<String>,
+}
+
+impl MeshyRigMapInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("a".to_string(), serde_json::to_value(&self.a).unwrap_or(Value::Null));
+        if let Some(v) = &self.b { m.insert("b".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.out { m.insert("out".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.overwrite { m.insert("overwrite".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// meshy.rig-map: Compare two skeletons (rigSignature) and suggest a bone mapping a->b by exact name, humanoid role (Rigify, Mixamo, UE/Unity names) and hierarchy position, listing bones only in one rig (e.g. Bone_0NN extras) and the rest-pose delta. Also emits a Godot SkeletonProfileHumanoid BoneMap JSON for input a (or only that, when b is omitted).
+    pub fn meshy_rig_map(&self, input: &MeshyRigMapInput) -> Result<Envelope, Error> {
+        self.call("meshy.rig-map", &input.to_json())
+    }
+}
+
+/// Input of `meshy.split`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct MeshySplitInput {
+    pub input: String,
+    /// output .glb path inside the project
+    pub out: String,
+    pub ranges: Vec<serde_json::Value>,
+    /// source clip (default: the only clip)
+    pub clip: Option<String>,
+    /// frames per second when unit is frames (default 30)
+    pub fps: Option<f64>,
+    pub keep_original: Option<bool>,
+    /// write only the new clips
+    pub only: Option<bool>,
+    pub overwrite: Option<bool>,
+    pub project: Option<String>,
+    /// unit of start/end (default seconds)
+    pub unit: Option<String>,
+}
+
+impl MeshySplitInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("input".to_string(), serde_json::to_value(&self.input).unwrap_or(Value::Null));
+        m.insert("out".to_string(), serde_json::to_value(&self.out).unwrap_or(Value::Null));
+        m.insert("ranges".to_string(), serde_json::to_value(&self.ranges).unwrap_or(Value::Null));
+        if let Some(v) = &self.clip { m.insert("clip".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.fps { m.insert("fps".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.keep_original { m.insert("keepOriginal".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.only { m.insert("only".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.overwrite { m.insert("overwrite".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.unit { m.insert("unit".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// meshy.split: Split or trim a merged clip by time ranges into new named clips, written to a new .glb (boundary keys are interpolated, times restart at 0). The source clip is replaced unless keepOriginal; other clips are kept unless only:true. Unused data is compacted away.
+    pub fn meshy_split(&self, input: &MeshySplitInput) -> Result<Envelope, Error> {
+        self.call("meshy.split", &input.to_json())
+    }
+}
+
+/// Input of `meshy.verify`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct MeshyVerifyInput {
+    pub input: String,
+    /// limits; exceeding an explicit limit fails, a default limit only warns
+    pub budget: Option<serde_json::Value>,
+    pub expect: Option<serde_json::Value>,
+    pub project: Option<String>,
+}
+
+impl MeshyVerifyInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("input".to_string(), serde_json::to_value(&self.input).unwrap_or(Value::Null));
+        if let Some(v) = &self.budget { m.insert("budget".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.expect { m.insert("expect".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// meshy.verify: Check an animated .glb is game-ready: uncompressed, skin and joint count, weights, bind height (catches cm), facing, clips and a missing idle, per-clip root drift, scale tracks, pose stability, size budget, textures. Returns pass/warn/fail/info checks; pass is false when any check fails.
+    pub fn meshy_verify(&self, input: &MeshyVerifyInput) -> Result<Envelope, Error> {
+        self.call("meshy.verify", &input.to_json())
     }
 }
 
