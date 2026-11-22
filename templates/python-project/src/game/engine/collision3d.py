@@ -651,8 +651,9 @@ def norm_world(w):
     """Flat soup (sequence) or ``{tris, count?, candidates?}`` -> ``{tris, count, candidates}``."""
     if isinstance(w, dict):
         tris = w["tris"]
-        return {"tris": tris, "count": w["count"] if w.get("count") is not None else len(tris) // 9, "candidates": w.get("candidates")}
-    return {"tris": w, "count": len(w) // 9, "candidates": None}
+        return {"tris": tris, "count": w["count"] if w.get("count") is not None else len(tris) // 9, "candidates": w.get("candidates"),
+                "materials": w.get("materials")}
+    return {"tris": w, "count": len(w) // 9, "candidates": None, "materials": None}
 
 
 def _tri_at(T, o): return [[T[o], T[o + 1], T[o + 2]], [T[o + 3], T[o + 4], T[o + 5]], [T[o + 6], T[o + 7], T[o + 8]]]
@@ -788,6 +789,7 @@ def capsule_contacts(a, b, r, world):
 def create_character(pos=None, radius=None, height=None, step_height=None, min_ground_y=None, skin=None, snap_distance=None, max_iterations=None):
     def d(v, x): return x if v is None else v
     return {"pos": list(pos or [0, 0, 0]), "vel": [0, 0, 0], "grounded": False, "groundNormal": [0, 1, 0],
+            "groundIndex": -1, "groundMaterial": None, "groundVelocity": [0, 0, 0],
             "radius": d(radius, 0.4), "height": d(height, 1.8), "stepHeight": d(step_height, 0.35),
             "minGroundY": d(min_ground_y, 0.6427876096865394), "skin": d(skin, 1e-4),
             "snapDistance": d(snap_distance, 0.3), "maxIterations": d(max_iterations, 4)}
@@ -827,6 +829,7 @@ def _slide(ch, w, p0, d0, stick, info):
         info["hits"].append(n)
         if f[1] >= ch["minGroundY"]:
             info["floor"] = f
+            info["floorIndex"] = hit["index"]
             if stick:
                 d = [0, 0, 0]
                 break
@@ -879,8 +882,17 @@ def move_and_slide(ch, vel, dt, world):
     """Move the character by ``vel*dt`` (slide + step-up + ground snap). Mutates and returns ``ch``."""
     w = norm_world(world)
     was_grounded, start = ch["grounded"], list(ch["pos"])
+    gv = ch.get("groundVelocity") or [0, 0, 0] if was_grounded else [0, 0, 0]
     depenetrate(ch, w)
     cur = list(ch["pos"])
+    # Moving ground: carry by gv*dt (horizontal slide, then upward sweep). The world is the platform at its CURRENT position.
+    if gv[0] != 0 or gv[1] != 0 or gv[2] != 0:
+        cd = [gv[0] * dt, 0, gv[2] * dt]
+        if len2(cd) > 0:
+            cur = _slide(ch, w, cur, cd, False, {"hits": []})
+        if gv[1] > 0:
+            cur = _slide(ch, w, cur, [0, gv[1] * dt, 0], True, {"hits": []})
+        ch["pos"] = cur
     hd = [vel[0] * dt, 0, vel[2] * dt]
     info_h = {"hits": [], "wall": False, "floor": None, "ceil": False}
     if len2(hd) > 0:
@@ -893,18 +905,21 @@ def move_and_slide(ch, vel, dt, world):
     vy = vel[1] * dt
     if vy != 0:
         cur = _slide(ch, w, cur, [0, vy, 0], True, info_v)
-    grounded, gn = False, [0, 1, 0]
-    if vel[1] <= 0:
+    grounded, gn, gi = False, [0, 1, 0], -1
+    if vel[1] - gv[1] <= 0:
         if info_v["floor"]:
-            grounded, gn = True, info_v["floor"]
+            grounded, gn, gi = True, info_v["floor"], info_v["floorIndex"]
         else:
             dist = ch["snapDistance"] if was_grounded else ch["skin"] * 3
             dv = [0, -dist, 0]
             hit = _sweep_ch(ch, w, cur, dv)
             if hit and (hit.get("face") or hit["normal"])[1] >= ch["minGroundY"]:
                 cur = madd(madd(cur, dv, hit["t"]), hit["normal"], ch["skin"])
-                grounded, gn = True, hit.get("face") or hit["normal"]
+                grounded, gn, gi = True, hit.get("face") or hit["normal"], hit["index"]
     ch["pos"], ch["grounded"], ch["groundNormal"] = cur, grounded, gn
+    mats = w.get("materials")
+    ch["groundIndex"] = gi if grounded else -1
+    ch["groundMaterial"] = mats[gi] if grounded and mats is not None and 0 <= gi < len(mats) else None
     inv = 1 / dt if dt > 0 else 0
     vy_out = vel[1]
     if grounded:

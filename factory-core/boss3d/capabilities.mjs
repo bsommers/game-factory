@@ -46,4 +46,19 @@ export function registerBoss3d(r) {
       const sim = B.simulate(def, { runs: i.runs ?? 20, seed: i.seed ?? 1, profile: i.profile || {}, maxSeconds: i.maxSeconds ?? 300 }); if (!i.full) delete sim.results;
       return ok(sim, sim.winRate === 0 ? ['win rate 0: check boss3d.fairness, or weaken the boss / strengthen the profile'] : ['boss3d.fairness to gate telegraphs and avoidability']);
     }) });
+
+  r.register({ name: 'boss3d.balance', summary: 'Balance report: N seeded headless fights per skill tier (novice/average/expert/oracle) reporting win rate, time-to-kill, damage taken and deaths per phase, checked against target win-rate bands per tier (defaults novice 10-35%, average 40-65%, expert 70-90%, oracle 85-100%), plus the fairness gate. pass=false when any tier is out of band or fairness fails.',
+    inputSchema: obj({ ...src, runs: { type: 'integer', minimum: 1, maximum: 500 }, seed: { type: 'integer' }, maxSeconds: { type: 'number', minimum: 5, maximum: 1200 },
+      tiers: { type: 'array', items: { type: 'string', enum: Object.keys(B.SKILL_TIERS) } },
+      bands: { type: 'object', description: 'override win-rate bands: {tier: [min,max]} (fractions 0-1)' }, fairness: { type: 'boolean', description: 'also require boss3d.fairness to pass (default true)' } }), outputSchema: out,
+    handler: wrap(async (i, def) => {
+      const v = B.validateBoss(def); if (!v.ok) return fail('BAD_INPUT', 'boss definition is structurally invalid; run boss3d.validate', v.errors);
+      for (const [t, b] of Object.entries(i.bands || {})) if (!B.SKILL_TIERS[t] || !Array.isArray(b) || b.length !== 2 || !(b[0] >= 0 && b[1] <= 1 && b[0] <= b[1])) return fail('BAD_INPUT', `bands.${t}: need a known tier and [min,max] within 0..1`);
+      const rep = B.balance(def, { runs: i.runs ?? 100, seed: i.seed ?? 1, tiers: i.tiers?.length ? i.tiers : undefined, bands: i.bands || {}, maxSeconds: i.maxSeconds ?? 300 });
+      const fair = i.fairness === false ? null : B.fairness(def, {}); rep.fairness = fair ? { pass: fair.pass, errorCount: fair.errorCount } : null;
+      rep.pass = rep.pass && (!fair || fair.pass);
+      if (rep.pass) return ok(rep, ['boss3d.simulate for per-run detail']);
+      const bad = Object.entries(rep.tiers).filter(([, t]) => !t.pass).map(([k, t]) => `${k} ${Math.round(t.winRate * 100)}% outside ${Math.round(t.band[0] * 100)}-${Math.round(t.band[1] * 100)}%`);
+      return { ok: false, data: rep, error: { code: 'TASK_FAILED', message: [...bad, ...(fair && !fair.pass ? ['fairness failed'] : [])].join('; ') }, next: ['tune boss hp / damage / telegraph / cooldowns in the boss JSON (win rate too high: raise damage or hp; too low: lengthen windups), keep boss3d.fairness passing, re-run boss3d.balance'] };
+    }) });
 }

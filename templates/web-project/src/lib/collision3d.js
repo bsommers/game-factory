@@ -384,8 +384,8 @@ export function rayTriangle(o, d, tri, opts = {}) {
 // ---------------- sweeps (swept sphere / capsule vs triangle soup) ----------------
 // World = flat tris array, or {tris, count?, candidates?(min,max) -> ascending index array} (see bvh.asWorld).
 export function normWorld(w) {
-  if (Array.isArray(w) || ArrayBuffer.isView(w)) return { tris: w, count: Math.floor(w.length / 9), candidates: null };
-  return { tris: w.tris, count: w.count ?? Math.floor(w.tris.length / 9), candidates: w.candidates || null };
+  if (Array.isArray(w) || ArrayBuffer.isView(w)) return { tris: w, count: Math.floor(w.length / 9), candidates: null, materials: null };
+  return { tris: w.tris, count: w.count ?? Math.floor(w.tris.length / 9), candidates: w.candidates || null, materials: w.materials || null };
 }
 const triAt = (T, o) => [[T[o], T[o + 1], T[o + 2]], [T[o + 3], T[o + 4], T[o + 5]], [T[o + 6], T[o + 7], T[o + 8]]];
 function ids(w, min, max) { return w.candidates ? w.candidates(min, max) : null; }
@@ -474,6 +474,7 @@ export function capsuleContacts(a, b, r, world) {
 // pos = FEET centre. Capsule core runs from pos+r to pos+height-r along +Y. Y is up.
 export function createCharacter(o = {}) {
   return { pos: [...(o.pos || [0, 0, 0])], vel: [0, 0, 0], grounded: false, groundNormal: [0, 1, 0],
+    groundIndex: -1, groundMaterial: null, groundVelocity: [0, 0, 0],
     radius: o.radius ?? 0.4, height: o.height ?? 1.8, stepHeight: o.stepHeight ?? 0.35,
     minGroundY: o.minGroundY ?? 0.6427876096865394, // cos(50 deg): steeper than this is not walkable
     skin: o.skin ?? 1e-4, snapDistance: o.snapDistance ?? 0.3, maxIterations: o.maxIterations ?? 4 };
@@ -497,7 +498,7 @@ function slide(ch, w, p0, d0, stick, info) {
     if (!hit) { p = add(p, d); d = [0, 0, 0]; break; }
     p = madd(madd(p, d, hit.t), hit.normal, ch.skin);
     const n = hit.normal, f = hit.face || n; info.hits.push(n);
-    if (f[1] >= ch.minGroundY) { info.floor = f; if (stick) { d = [0, 0, 0]; break; } if (n[1] < ch.minGroundY) info.wall = true; }
+    if (f[1] >= ch.minGroundY) { info.floor = f; info.floorIndex = hit.index; if (stick) { d = [0, 0, 0]; break; } if (n[1] < ch.minGroundY) info.wall = true; }
     else if (n[1] < -0.7) info.ceil = true;
     else info.wall = true;
     let nn = n;
@@ -531,8 +532,16 @@ function tryStep(ch, w, start, hd) {
 // (pos, vel, grounded, groundNormal) and returns it. vel y includes gravity/jump, supplied by the caller.
 export function moveAndSlide(ch, vel, dt, world) {
   const w = normWorld(world), wasGrounded = ch.grounded, start = [...ch.pos];
+  const gv = wasGrounded && ch.groundVelocity ? ch.groundVelocity : [0, 0, 0];
   depenetrate(ch, w);
   let cur = [...ch.pos];
+  // Moving ground: carry by gv*dt (horizontal slide, then upward sweep). The world is the platform at its CURRENT position.
+  if (gv[0] !== 0 || gv[1] !== 0 || gv[2] !== 0) {
+    const cd = [gv[0] * dt, 0, gv[2] * dt];
+    if (len2(cd) > 0) cur = slide(ch, w, cur, cd, false, { hits: [] });
+    if (gv[1] > 0) cur = slide(ch, w, cur, [0, gv[1] * dt, 0], true, { hits: [] });
+    ch.pos = cur;
+  }
   const hd = [vel[0] * dt, 0, vel[2] * dt], infoH = { hits: [], wall: false, floor: null, ceil: false };
   if (len2(hd) > 0) {
     cur = slide(ch, w, cur, hd, false, infoH);
@@ -545,14 +554,16 @@ export function moveAndSlide(ch, vel, dt, world) {
   const vy = vel[1] * dt;
   if (vy !== 0) cur = slide(ch, w, cur, [0, vy, 0], true, infoV);
   let grounded = false, gn = [0, 1, 0];
-  if (vel[1] <= 0) {
-    if (infoV.floor) { grounded = true; gn = infoV.floor; }
+  let gi = -1;
+  if (vel[1] - gv[1] <= 0) {
+    if (infoV.floor) { grounded = true; gn = infoV.floor; gi = infoV.floorIndex; }
     else {
       const dist = wasGrounded ? ch.snapDistance : ch.skin * 3, dv = [0, -dist, 0], hit = sweepCh(ch, w, cur, dv);
-      if (hit && (hit.face || hit.normal)[1] >= ch.minGroundY) { cur = madd(madd(cur, dv, hit.t), hit.normal, ch.skin); grounded = true; gn = hit.face || hit.normal; }
+      if (hit && (hit.face || hit.normal)[1] >= ch.minGroundY) { cur = madd(madd(cur, dv, hit.t), hit.normal, ch.skin); grounded = true; gn = hit.face || hit.normal; gi = hit.index; }
     }
   }
   ch.pos = cur; ch.grounded = grounded; ch.groundNormal = gn;
+  ch.groundIndex = grounded ? gi : -1; ch.groundMaterial = grounded && w.materials ? (w.materials[gi] ?? null) : null;
   const inv = dt > 0 ? 1 / dt : 0;
   let vyOut = vel[1];
   if (grounded) vyOut = 0; else if (infoV.ceil && vyOut > 0) vyOut = 0;

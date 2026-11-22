@@ -103,6 +103,9 @@ const slopeWorld = (deg) => { const a = deg * Math.PI / 180, y1 = 10 * Math.tan(
 // Segment kinds keep the runner deterministic and trivially portable: every port applies the same per-step velocity rule.
 export function runCharacter(input) {
   const ch = C.createCharacter(input.cfg), dt = 1 / 60, trace = [];
+  // world is a flat soup or {tris, materials}; the runner works on a copy because platform segments translate triangles.
+  const wd = Array.isArray(input.world) ? { tris: [...input.world] } : { ...input.world, tris: [...input.world.tris] };
+  const world = Array.isArray(input.world) ? wd.tris : wd;
   let vy = 0;
   for (const seg of input.script) {
     if (seg.jump !== undefined) vy = seg.jump;
@@ -110,18 +113,24 @@ export function runCharacter(input) {
       let vel;
       if (seg.vel) vel = seg.vel;
       else { vy = ch.grounded && vy <= 0 ? 0 : vy - 20 * dt; vel = [seg.dx ?? 0, vy, seg.dz ?? 0]; }
-      C.moveAndSlide(ch, vel, dt, input.world);
+      const pf = seg.platform; // {from, count, velocity}: triangles [from, from+count) move by velocity*dt BEFORE the call
+      if (pf) for (let t = pf.from; t < pf.from + pf.count; t++) for (let k2 = 0; k2 < 9; k2++) wd.tris[t * 9 + k2] += pf.velocity[k2 % 3] * dt;
+      ch.groundVelocity = pf ? pf.velocity : [0, 0, 0];
+      C.moveAndSlide(ch, vel, dt, world);
       if (!seg.vel && ch.grounded && vy <= 0) vy = 0;
       trace.push([ch.pos[0], ch.pos[1], ch.pos[2], ch.grounded ? 1 : 0]);
     }
   }
-  return { trace, final: { pos: ch.pos, vel: ch.vel, grounded: ch.grounded, groundNormal: ch.groundNormal } };
+  const final = { pos: ch.pos, vel: ch.vel, grounded: ch.grounded, groundNormal: ch.groundNormal };
+  if (input.reportGround) { final.groundIndex = ch.groundIndex; final.groundMaterial = ch.groundMaterial; }
+  return { trace, final };
 }
 function characterCases() {
   const mk = (name, cfg, world, script) => {
     const input = rnd({ cfg, world, script });
     return { name, ...input, expected: rnd(runCharacter(input)) };
   };
+  const mkg = (name, cfg, world, script) => { const input = rnd({ cfg, world, script, reportGround: true }); return { name, ...input, expected: rnd(runCharacter(input)) }; };
   const settle = { vel: [0, -5, 0], n: 60 };
   return [
     mk('lands on floor and stays', { pos: [0, 2, 0] }, FLOOR, [{ fall: true, n: 120 }]),
@@ -135,6 +144,16 @@ function characterCases() {
     mk('70 degree slope blocks', { pos: [-1, 0, 0] }, slopeWorld(70), [settle, { vel: [2, -1, 0], n: 90 }]),
     mk('small radius and tall step height config', { pos: [0, 0, 0], radius: 0.25, height: 1.2, stepHeight: 0.6 }, [...FLOOR, ...boxTris(2, 0, -5, 9, 0.5, 5)], [settle, { vel: [2, -1, 0], n: 120 }]),
     mk('no ground snap, no step', { pos: [0, 0, 0], stepHeight: 0, snapDistance: 0 }, [...FLOOR, ...boxTris(2, 0, -5, 9, 0.2, 5)], [settle, { vel: [2, -1, 0], n: 120 }]),
+    mkg('ground info: floor triangle index', { pos: [0, 2, 0] }, FLOOR, [{ fall: true, n: 120 }]),
+    mkg('ground info: standing on a box top', { pos: [0, 0, 0] }, [...FLOOR, ...boxTris(2, 0, -5, 9, 0.25, 5)], [settle, { vel: [2, -1, 0], n: 120 }]),
+    mkg('ground info: airborne reports none', { pos: [0, 3, 0] }, FLOOR, [{ vel: [0, 0, 0], n: 5 }]),
+    mkg('material id: ice patch after step-up', { pos: [0, 0, 0] }, { tris: [...FLOOR, ...boxTris(2, 0, -5, 9, 0.25, 5)], materials: [0, 0, ...Array(12).fill(7)] }, [settle, { vel: [2, -1, 0], n: 120 }]),
+    mkg('material id: default null and null entries', { pos: [0, 2, 0] }, { tris: FLOOR, materials: [null, 4] }, [{ fall: true, n: 120 }]),
+    mkg('rising platform carries the character', { pos: [0, 0, 0] }, boxTris(-2, -1, -2, 2, 0, 2), [{ vel: [0, -5, 0], n: 60 }, { vel: [0, -1, 0], n: 120, platform: { from: 0, count: 12, velocity: [0, 1.5, 0] } }]),
+    mkg('platform rising faster than the snap distance per step', { pos: [0, 0, 0] }, boxTris(-2, -1, -2, 2, 0, 2), [{ vel: [0, -5, 0], n: 60 }, { vel: [0, 0, 0], n: 60, platform: { from: 0, count: 12, velocity: [0, 12, 0] } }]),
+    mkg('platform moves horizontally and carries', { pos: [0, 0, 0] }, boxTris(-2, -1, -2, 14, 0, 2), [{ vel: [0, -5, 0], n: 60 }, { vel: [0, -1, 0], n: 120, platform: { from: 0, count: 12, velocity: [2, 0, 0.5] } }]),
+    mkg('walking on a diagonal moving platform', { pos: [0, 0, 0] }, boxTris(-2, -1, -2, 30, 0, 6), [{ vel: [0, -5, 0], n: 60 }, { vel: [1, -1, 0], n: 120, platform: { from: 0, count: 12, velocity: [1, 0.5, 0.5] } }, { vel: [1, -1, 0], n: 30 }]),
+    mkg('platform carry blocked by wall', { pos: [0, 0, 0] }, [...boxTris(-2, -1, -2, 8, 0, 2), ...boxTris(3, 0, -2, 4, 3, 2)], [{ vel: [0, -5, 0], n: 60 }, { vel: [0, -1, 0], n: 120, platform: { from: 0, count: 12, velocity: [2, 0, 0] } }]),
     mk('wander over mixed geometry', { pos: [0, 1, 0] }, [...FLOOR, ...boxTris(3, 0, -5, 4, 2, 5), ...boxTris(-3, 0, -5, -2, 0.2, 5)],
       Array.from({ length: 40 }, (_, i) => ({ vel: [Math.sin(i / 4) * 4, -4, Math.cos(i * 0.18) * 2], n: 10 }))),
   ];

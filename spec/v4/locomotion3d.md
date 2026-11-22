@@ -41,6 +41,5 @@ Sections `body, ground, air, jump, land, dodge, swim, slide, knockback` (see sch
 ## Determinism
 Same config, inputs, world and env callbacks give bit-identical state on one runtime; `hashState` of the state/log is used in tests. Cross-runtime (Godot port) expectations follow the collision3d vector policy: float compare at 1e-9 for positions, states and events exactly.
 
-## Requests for collision3d (not made; owner: collision3d)
-- `moveAndSlide` only snaps to ground when `vel.y <= 0`, so a platform rising faster than the character relies on depenetration. A `groundVelocity` hint or a returned `groundTriIndex` would let platforms be identified by triangle instead of by an `env.platform(pos)` position test.
-- Returning the ground triangle index / material id from `moveAndSlide` (e.g. `ch.groundIndex`) would make `env.surface` lookups exact instead of position-based.
+## Requests for collision3d (done in spec/v3/collision3d.md, "Ground info and moving ground")
+- `ch.groundIndex` / `ch.groundMaterial` (world `{tris, materials}`) from `moveAndSlide`, and `ch.groundVelocity` as an input hint for moving/rising platforms. `env.surface` / `env.platform` may now key on these instead of position tests.

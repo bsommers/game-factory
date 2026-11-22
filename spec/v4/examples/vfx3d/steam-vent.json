@@ -1,0 +1,11 @@
+{
+  "id": "steam-vent",
+  "name": "Sewer steam vent",
+  "kind": "steam",
+  "seed": 9,
+  "field": { "kind": "flow", "flow": [0, 6, 0], "ramp": 0.5, "pulse": { "period": 6, "active": 3, "idle": 0.1 }, "area": { "shape": "cylinder", "center": [0, 0, 0], "radius": 1.2, "height": 6 } },
+  "emitters": [
+    { "id": "steam", "rate": 60, "lifetime": [1.6, 2.6], "maxParticles": 200, "shape": { "type": "cone", "radius": 0.3 }, "direction": [0, 1, 0], "spread": 10, "speed": [3, 5],
+      "gravity": [0, 0.6, 0], "drag": 0.9, "size": { "start": 0.5, "end": 2.2 }, "blend": "mix",
+      "color": [{ "t": 0, "c": "#f2f6f7", "a": 0.55 }, { "t": 0.6, "c": "#d5dee0", "a": 0.3 }, { "t": 1, "c": "#c0ccd0", "a": 0 }] } ]
+}

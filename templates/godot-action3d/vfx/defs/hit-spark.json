@@ -1,0 +1,64 @@
+{
+  "id": "hit-spark",
+  "name": "Hit spark burst",
+  "kind": "spark",
+  "seed": 21,
+  "emitters": [
+    {
+      "id": "sparks",
+      "rate": 0,
+      "burst": {
+        "count": 60,
+        "time": 0.2,
+        "repeat": 0.9
+      },
+      "lifetime": [
+        0.5,
+        0.9
+      ],
+      "maxParticles": 200,
+      "shape": {
+        "type": "sphere",
+        "radius": 0.05
+      },
+      "direction": [
+        0,
+        1,
+        0
+      ],
+      "spread": 180,
+      "speed": [
+        2.5,
+        6
+      ],
+      "gravity": [
+        0,
+        -9,
+        0
+      ],
+      "drag": 1.0,
+      "size": {
+        "start": 0.16,
+        "end": 0.02
+      },
+      "blend": "add",
+      "color": [
+        {
+          "t": 0,
+          "c": "#ffffff",
+          "a": 1
+        },
+        {
+          "t": 0.4,
+          "c": "#ffd25a",
+          "a": 0.9
+        },
+        {
+          "t": 1,
+          "c": "#ff6a1a",
+          "a": 0
+        }
+      ]
+    }
+  ]
+}

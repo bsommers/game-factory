@@ -1,0 +1,23 @@
+{
+  "$schema": "../../schemas/limb3d.schema.json",
+  "id": "hydra-neck",
+  "description": "Thick six-segment hydra neck: slow seek, heavy bite and a ground slam, severable with regrowth.",
+  "segments": 6,
+  "segmentLength": 1.6,
+  "lengthTaper": 0.8,
+  "radius": { "base": 0.9, "tip": 0.5 },
+  "root": { "pos": [0, 0, 0], "dir": [0, 1, 0] },
+  "solver": "fabrik",
+  "iterations": 8,
+  "maxBend": 38,
+  "maxBase": 55,
+  "restFrac": 0.85,
+  "seek": { "range": 18, "speed": 3.5, "height": 1.5 },
+  "sway": { "amp": 0.04, "freq": 0.25 },
+  "sever": { "allowed": true, "minKeep": 1 },
+  "regrow": { "delay": 6, "interval": 1.5 },
+  "motions": {
+    "bite": { "kind": "strike", "windup": 0.8, "strike": 0.18, "recover": 0.7, "curves": { "windup": "easeInOut", "strike": "easeIn", "recover": "easeInOut" }, "damage": 18, "hitSegments": 2, "retract": 0.6, "lift": 4, "warning": { "vfx": "neck-coil" } },
+    "slam": { "kind": "slam", "windup": 1.0, "strike": 0.2, "recover": 1.0, "damage": 25, "hitSegments": 3, "height": 6, "warning": { "vfx": "head-rise" } }
+  }
+}

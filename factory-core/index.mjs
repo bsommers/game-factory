@@ -19,13 +19,18 @@ import { registerBoss3d } from './boss3d/index.mjs';
 import { registerCombat3d } from './combat3d/index.mjs';
 import { registerLocomotion3d } from './locomotion3d/index.mjs';
 import { registerCamera3d } from './camera3d/index.mjs';
+import { registerParity } from './parity/index.mjs';
+import { registerVfx3d } from './vfx3d/index.mjs';
+import { registerLevel3d } from './level3d/index.mjs';
+import { registerLimb3d } from './limb3d/index.mjs';
+import { registerImg2model } from './img2model/index.mjs';
 export * from './registry.mjs';
 export { validate } from './schema.mjs';
 export function buildRegistry() {
   const r = createRegistry();
   registerStyles(r); registerLibrary(r); registerGuide(r); registerCore(r);
-  registerLanguages(r); registerPackage(r); registerClients(r); registerRendering(r); registerModels(r); registerAnim(r); registerAi3d(r); registerAnimGraph(r); registerMeshy(r); registerCombat3d(r); registerGodot(r); registerLocomotion3d(r); registerCamera3d(r);
-  registerBoss3d(r);
+  registerLanguages(r); registerPackage(r); registerClients(r); registerRendering(r); registerModels(r); registerAnim(r); registerAi3d(r); registerAnimGraph(r); registerMeshy(r); registerCombat3d(r); registerGodot(r); registerLocomotion3d(r); registerCamera3d(r); registerParity(r);
+  registerVfx3d(r); registerBoss3d(r); registerLimb3d(r); registerLevel3d(r); registerImg2model(r);
   return r;
 }
 export const FACTORY_ROOT = fileURLToPath(new URL('..', import.meta.url)).replace(/[\\/]$/, '');

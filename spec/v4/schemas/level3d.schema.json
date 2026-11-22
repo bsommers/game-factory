@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-factory/spec/v4/schemas/level3d.schema.json",
+  "title": "level3d level",
+  "description": "A 3D action level: geometry pieces, spawns, triggers, hazards, checkpoints, boss arena and nav settings. Y-up, metres. Reference/semantic checks (unique ids, ground, reachability, arena closure) are done by level3d.validate.",
+  "type": "object",
+  "required": ["version", "id", "bounds", "pieces", "spawns"],
+  "additionalProperties": true,
+  "$defs": {
+    "vec3": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 },
+    "vec2": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
+    "id": { "type": "string", "minLength": 1 },
+    "volume": {
+      "type": "object", "required": ["id", "shape", "pos"],
+      "properties": { "id": { "$ref": "#/$defs/id" }, "shape": { "enum": ["box", "sphere", "cylinder"] }, "pos": { "$ref": "#/$defs/vec3" }, "size": { "$ref": "#/$defs/vec3" }, "radius": { "type": "number", "exclusiveMinimum": 0 }, "height": { "type": "number", "exclusiveMinimum": 0 } }
+    },
+    "piece": {
+      "type": "object", "required": ["id", "type", "pos"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" }, "type": { "enum": ["box", "ramp", "heightmap", "glb"] }, "pos": { "$ref": "#/$defs/vec3" }, "yaw": { "type": "number" }, "collide": { "type": "boolean" },
+        "size": { "$ref": "#/$defs/vec3" }, "cellSize": { "type": "number", "exclusiveMinimum": 0 }, "heights": { "type": "array", "items": { "type": "array", "items": { "type": "number" } } },
+        "asset": { "type": "string" }, "proxy": { "type": "object", "required": ["size"], "properties": { "size": { "$ref": "#/$defs/vec3" }, "offset": { "$ref": "#/$defs/vec3" } } }
+      }
+    }
+  },
+  "properties": {
+    "version": { "const": 1 }, "id": { "$ref": "#/$defs/id" }, "name": { "type": "string" },
+    "bounds": { "type": "object", "required": ["min", "max"], "properties": { "min": { "$ref": "#/$defs/vec3" }, "max": { "$ref": "#/$defs/vec3" } } },
+    "locomotion": { "type": "object", "description": "radius/height/stepHeight/slopeLimitDeg (or a locomotion3d config with body{})" },
+    "nav": { "type": "object", "properties": {
+      "cellSize": { "type": "number", "minimum": 0.1, "maximum": 4 }, "groundTolerance": { "type": "number", "minimum": 0 },
+      "links": { "type": "array", "items": { "type": "object", "required": ["from", "to"], "properties": { "id": { "type": "string" }, "from": { "$ref": "#/$defs/vec3" }, "to": { "$ref": "#/$defs/vec3" } } } },
+      "blockers": { "type": "array", "items": { "type": "object", "required": ["min", "max"], "properties": { "min": { "$ref": "#/$defs/vec3" }, "max": { "$ref": "#/$defs/vec3" } } } } } },
+    "pieces": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/piece" } },
+    "spawns": { "type": "array", "minItems": 1, "items": { "type": "object", "required": ["id", "kind", "pos"], "properties": { "id": { "$ref": "#/$defs/id" }, "kind": { "enum": ["player", "enemy", "boss", "pickup", "npc", "prop"] }, "pos": { "$ref": "#/$defs/vec3" }, "yaw": { "type": "number" }, "config": { "type": "string" }, "boss": { "type": "string" }, "item": { "type": "string" }, "flying": { "type": "boolean" }, "allowUnreachable": { "type": "boolean" } } } },
+    "triggers": { "type": "array", "items": { "allOf": [{ "$ref": "#/$defs/volume" }, { "required": ["event"], "properties": { "event": { "type": "string", "minLength": 1 }, "once": { "type": "boolean" }, "activates": { "type": "array", "items": { "type": "string" } } } }] } },
+    "hazards": { "type": "array", "items": { "allOf": [{ "$ref": "#/$defs/volume" }, { "required": ["kind"], "properties": { "kind": { "enum": ["flood", "vortex", "debris", "gas", "lava", "spikes", "void", "water"] }, "dps": { "type": "number", "minimum": 0 }, "ref": { "type": "string" }, "startActive": { "type": "boolean" } } }] } },
+    "checkpoints": { "type": "array", "items": { "type": "object", "required": ["id", "pos", "radius"], "properties": { "id": { "$ref": "#/$defs/id" }, "pos": { "$ref": "#/$defs/vec3" }, "radius": { "type": "number", "exclusiveMinimum": 0 }, "respawn": { "type": "string" }, "allowUnreachable": { "type": "boolean" } } } },
+    "arena": { "type": "object", "required": ["shape"], "properties": {
+      "shape": { "enum": ["circle", "box"] }, "center": { "$ref": "#/$defs/vec2" }, "radius": { "type": "number", "exclusiveMinimum": 0 }, "min": { "$ref": "#/$defs/vec2" }, "max": { "$ref": "#/$defs/vec2" },
+      "boss": { "type": "string" }, "seed": { "$ref": "#/$defs/vec3" }, "closed": { "type": "boolean" },
+      "gates": { "type": "array", "items": { "type": "object", "required": ["pos", "radius"], "properties": { "pos": { "$ref": "#/$defs/vec3" }, "radius": { "type": "number", "exclusiveMinimum": 0 } } } },
+      "hazards": { "type": "array", "items": { "type": "string" } } } }
+  }
+}

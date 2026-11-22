@@ -890,6 +890,9 @@ type TriWorld struct {
 	Tris       []float64
 	Count      int
 	Candidates func(min, max V3) []int
+	// Materials is an optional per-triangle material id array (parallel to the triangles); nil = none.
+	// A nil entry (or an index past the end) means no material.
+	Materials []*int
 }
 
 // SoupWorld wraps a flat triangle soup.
@@ -1132,21 +1135,24 @@ type CharacterOpts struct {
 
 // Character is the controller state; MoveAndSlide mutates Pos, Vel, Grounded and GroundNormal.
 type Character struct {
-	Pos, Vel      V3
-	Grounded      bool
-	GroundNormal  V3
-	Radius        float64
-	Height        float64
-	StepHeight    float64
-	MinGroundY    float64 // cos(50 deg): steeper than this is not walkable
-	Skin          float64
-	SnapDistance  float64
-	MaxIterations int
+	Pos, Vel       V3
+	Grounded       bool
+	GroundNormal   V3
+	GroundIndex    int  // triangle index under the feet, -1 when not grounded
+	GroundMaterial *int // material id of that triangle, nil when none
+	GroundVelocity V3   // input hint: velocity of the ground (moving platform), used only when grounded
+	Radius         float64
+	Height         float64
+	StepHeight     float64
+	MinGroundY     float64 // cos(50 deg): steeper than this is not walkable
+	Skin           float64
+	SnapDistance   float64
+	MaxIterations  int
 }
 
 // NewCharacter builds a controller with the JS defaults.
 func NewCharacter(o CharacterOpts) *Character {
-	c := &Character{GroundNormal: V3{0, 1, 0}, Radius: 0.4, Height: 1.8, StepHeight: 0.35,
+	c := &Character{GroundNormal: V3{0, 1, 0}, GroundIndex: -1, Radius: 0.4, Height: 1.8, StepHeight: 0.35,
 		MinGroundY: 0.6427876096865394, Skin: 1e-4, SnapDistance: 0.3, MaxIterations: 4}
 	if o.Pos != nil {
 		c.Pos = *o.Pos
@@ -1205,10 +1211,11 @@ func (c *Character) Depenetrate(w TriWorld, iterations int) {
 }
 
 type slideInfo struct {
-	hits  []V3
-	wall  bool
-	floor *V3
-	ceil  bool
+	hits       []V3
+	wall       bool
+	floor      *V3
+	floorIndex int
+	ceil       bool
 }
 
 func (c *Character) slide(w TriWorld, p0, d0 V3, stick bool, info *slideInfo) V3 {
@@ -1228,6 +1235,7 @@ func (c *Character) slide(w TriWorld, p0, d0 V3, stick bool, info *slideInfo) V3
 		if f[1] >= c.MinGroundY {
 			ff := f
 			info.floor = &ff
+			info.floorIndex = hit.Index
 			if stick {
 				d = V3{}
 				break
@@ -1301,8 +1309,23 @@ func (c *Character) tryStep(w TriWorld, start, hd V3) (V3, bool) {
 func (c *Character) MoveAndSlide(vel V3, dt float64, w TriWorld) *Character {
 	wasGrounded := c.Grounded
 	start := c.Pos
+	gv := V3{}
+	if wasGrounded {
+		gv = c.GroundVelocity
+	}
 	c.Depenetrate(w, 4)
 	cur := c.Pos
+	// Moving ground: carry by gv*dt (horizontal slide, then upward sweep). The world is the platform at its CURRENT position.
+	if gv[0] != 0 || gv[1] != 0 || gv[2] != 0 {
+		cd := V3{float64(gv[0] * dt), 0, float64(gv[2] * dt)}
+		if v3len2(cd) > 0 {
+			cur = c.slide(w, cur, cd, false, &slideInfo{})
+		}
+		if gv[1] > 0 {
+			cur = c.slide(w, cur, V3{0, float64(gv[1] * dt), 0}, true, &slideInfo{})
+		}
+		c.Pos = cur
+	}
 	hd := V3{float64(vel[0] * dt), 0, float64(vel[2] * dt)}
 	infoH := &slideInfo{}
 	if v3len2(hd) > 0 {
@@ -1320,10 +1343,12 @@ func (c *Character) MoveAndSlide(vel V3, dt float64, w TriWorld) *Character {
 	}
 	grounded := false
 	gn := V3{0, 1, 0}
-	if vel[1] <= 0 {
+	gi := -1
+	if vel[1]-gv[1] <= 0 {
 		if infoV.floor != nil {
 			grounded = true
 			gn = *infoV.floor
+			gi = infoV.floorIndex
 		} else {
 			dist := c.Skin * 3
 			if wasGrounded {
@@ -1335,10 +1360,18 @@ func (c *Character) MoveAndSlide(vel V3, dt float64, w TriWorld) *Character {
 				cur = v3madd(v3madd(cur, dv, hit.T), hit.Normal, c.Skin)
 				grounded = true
 				gn = hit.Face
+				gi = hit.Index
 			}
 		}
 	}
 	c.Pos, c.Grounded, c.GroundNormal = cur, grounded, gn
+	c.GroundIndex, c.GroundMaterial = -1, nil
+	if grounded {
+		c.GroundIndex = gi
+		if gi >= 0 && gi < len(w.Materials) {
+			c.GroundMaterial = w.Materials[gi]
+		}
+	}
 	inv := 0.0
 	if dt > 0 {
 		inv = 1 / dt

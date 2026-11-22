@@ -79,7 +79,7 @@ test('examples validate and pass the fairness gate; sim produces sane stats', ()
     const d = ex(n), v = B.validateBoss(d); assert.ok(v.ok, JSON.stringify(v.errors)); const f = B.fairness(d); assert.ok(f.pass, JSON.stringify(f.findings));
     const r = B.simulate(d, { runs: 10 }); assert.ok(r.winRate > 0, `${n} winnable`); assert.ok(r.timeToKill.mean > 5 && r.timeToKill.mean < 300);
   }
-  const weak = B.simulate(ex('hydra'), { runs: 10, profile: { dodgeSkill: 0, hp: 40 } }), strong = B.simulate(ex('hydra'), { runs: 10 });
+  const weak = B.simulate(ex('hydra'), { runs: 10, profile: { dodgeSkill: 0, hp: 1000 } }), strong = B.simulate(ex('hydra'), { runs: 10, profile: { hp: 1000 } });
   assert.ok(weak.damageTaken.mean > strong.damageTaken.mean, 'unskilled bot is hurt more');
 });
 test('planted unfair bosses are rejected by the fairness gate', () => {

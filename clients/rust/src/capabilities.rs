@@ -271,6 +271,47 @@ impl Client {
     }
 }
 
+/// Input of `boss3d.balance`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Boss3dBalanceInput {
+    /// override win-rate bands: {tier: [min,max]} (fractions 0-1)
+    pub bands: Option<serde_json::Value>,
+    /// boss definition (spec/v4/schemas/boss3d.schema.json)
+    pub boss: Option<serde_json::Value>,
+    /// also require boss3d.fairness to pass (default true)
+    pub fairness: Option<bool>,
+    /// path to a boss .json (relative to project)
+    pub file: Option<String>,
+    pub max_seconds: Option<f64>,
+    pub project: Option<String>,
+    pub runs: Option<i64>,
+    pub seed: Option<i64>,
+    pub tiers: Option<Vec<String>>,
+}
+
+impl Boss3dBalanceInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.bands { m.insert("bands".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.boss { m.insert("boss".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.fairness { m.insert("fairness".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.file { m.insert("file".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.max_seconds { m.insert("maxSeconds".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.runs { m.insert("runs".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.seed { m.insert("seed".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.tiers { m.insert("tiers".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// boss3d.balance: Balance report: N seeded headless fights per skill tier (novice/average/expert/oracle) reporting win rate, time-to-kill, damage taken and deaths per phase, checked against target win-rate bands per tier (defaults novice 10-35%, average 40-65%, expert 70-90%, oracle 85-100%), plus the fairness gate. pass=false when any tier is out of band or fairness fails.
+    pub fn boss3d_balance(&self, input: &Boss3dBalanceInput) -> Result<Envelope, Error> {
+        self.call("boss3d.balance", &input.to_json())
+    }
+}
+
 /// Input of `boss3d.fairness`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Boss3dFairnessInput {
@@ -890,6 +931,150 @@ impl Client {
     }
 }
 
+/// Input of `img2model.build`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Img2modelBuildInput {
+    /// path to the character sheet (front view left, side view right, flat background). Read-only; may be outside the project
+    pub image: String,
+    /// output directory (created)
+    pub out_dir: String,
+    pub blender: Option<String>,
+    /// voxels along the height for the carve (default 128)
+    pub detail: Option<i64>,
+    pub force_distance_weights: Option<bool>,
+    /// model height in metres (default 1.0)
+    pub height_meters: Option<f64>,
+    /// file base name (default: image file name)
+    pub name: Option<String>,
+    pub overwrite: Option<bool>,
+    pub project: Option<String>,
+    /// write front/side/three-quarter/back and skeleton PNGs (default true)
+    pub render: Option<bool>,
+    /// detect a saturated cape/cloak by colour and model it as a thin sheet (default true)
+    pub separate_cape: Option<bool>,
+    /// gaussian sigma in voxels (default 1.1)
+    pub smooth: Option<f64>,
+    /// pixel column separating the front and side views (default: auto, widest empty gap in the middle)
+    pub split_x: Option<i64>,
+    /// default 6
+    pub tail_bones: Option<i64>,
+    /// colour distance from the background that counts as figure (default auto from border noise)
+    pub threshold: Option<f64>,
+    pub timeout_ms: Option<i64>,
+    /// target triangles (default 10000)
+    pub triangle_budget: Option<i64>,
+}
+
+impl Img2modelBuildInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("image".to_string(), serde_json::to_value(&self.image).unwrap_or(Value::Null));
+        m.insert("outDir".to_string(), serde_json::to_value(&self.out_dir).unwrap_or(Value::Null));
+        if let Some(v) = &self.blender { m.insert("blender".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.detail { m.insert("detail".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.force_distance_weights { m.insert("forceDistanceWeights".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.height_meters { m.insert("heightMeters".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.name { m.insert("name".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.overwrite { m.insert("overwrite".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.render { m.insert("render".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.separate_cape { m.insert("separateCape".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.smooth { m.insert("smooth".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.split_x { m.insert("splitX".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.tail_bones { m.insert("tailBones".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.threshold { m.insert("threshold".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.timeout_ms { m.insert("timeoutMs".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.triangle_budget { m.insert("triangleBudget".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// img2model.build: Character sheet (front + side view) -> rigged GLB: silhouettes, visual-hull body (lofted super-ellipse slices, tail swept from the side view, optional thin cape sheet), decimated mesh, inferred Mixamo/Meshy-named skeleton with a tail chain, automatic weights (distance fallback), projected texture, .blend, skeleton JSON and preview renders. Needs Blender.
+    pub fn img2model_build(&self, input: &Img2modelBuildInput) -> Result<Envelope, Error> {
+        self.call("img2model.build", &input.to_json())
+    }
+}
+
+/// Input of `img2model.silhouette`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Img2modelSilhouetteInput {
+    /// path to the character sheet (front view left, side view right, flat background). Read-only; may be outside the project
+    pub image: String,
+    /// output directory (created)
+    pub out_dir: String,
+    pub blender: Option<String>,
+    pub clean_radius: Option<i64>,
+    pub close_radius: Option<i64>,
+    /// model height in metres (default 1.0)
+    pub height_meters: Option<f64>,
+    /// file base name (default: image file name)
+    pub name: Option<String>,
+    pub project: Option<String>,
+    /// pixel column separating the front and side views (default: auto, widest empty gap in the middle)
+    pub split_x: Option<i64>,
+    /// colour distance from the background that counts as figure (default auto from border noise)
+    pub threshold: Option<f64>,
+    pub timeout_ms: Option<i64>,
+}
+
+impl Img2modelSilhouetteInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("image".to_string(), serde_json::to_value(&self.image).unwrap_or(Value::Null));
+        m.insert("outDir".to_string(), serde_json::to_value(&self.out_dir).unwrap_or(Value::Null));
+        if let Some(v) = &self.blender { m.insert("blender".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.clean_radius { m.insert("cleanRadius".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.close_radius { m.insert("closeRadius".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.height_meters { m.insert("heightMeters".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.name { m.insert("name".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.split_x { m.insert("splitX".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.threshold { m.insert("threshold".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.timeout_ms { m.insert("timeoutMs".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// img2model.silhouette: Segment the front and side figures of a character sheet by background colour (largest components, text labels dropped, holes filled) and report bounds, split column and scale; writes mask and overlay debug PNGs. Needs Blender (bundled numpy).
+    pub fn img2model_silhouette(&self, input: &Img2modelSilhouetteInput) -> Result<Envelope, Error> {
+        self.call("img2model.silhouette", &input.to_json())
+    }
+}
+
+/// Input of `img2model.verify`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Img2modelVerifyInput {
+    pub glb: String,
+    pub blender: Option<String>,
+    pub max_triangles: Option<i64>,
+    /// default 10
+    pub min_joints: Option<i64>,
+    pub project: Option<String>,
+    pub timeout_ms: Option<i64>,
+}
+
+impl Img2modelVerifyInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("glb".to_string(), serde_json::to_value(&self.glb).unwrap_or(Value::Null));
+        if let Some(v) = &self.blender { m.insert("blender".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.max_triangles { m.insert("maxTriangles".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.min_joints { m.insert("minJoints".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.timeout_ms { m.insert("timeoutMs".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// img2model.verify: Re-import a rigged GLB in Blender and check triangle count, bounds, joints, that every vertex is weighted with weights summing to 1 (max 4 influences), texture/UV presence, and a pose test (rotating arm/leg/tail/head bones moves vertices). Fails with TASK_FAILED listing failed checks.
+    pub fn img2model_verify(&self, input: &Img2modelVerifyInput) -> Result<Envelope, Error> {
+        self.call("img2model.verify", &input.to_json())
+    }
+}
+
 /// Input of `kits.list`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct KitsListInput {
@@ -969,6 +1154,88 @@ impl Client {
     /// languages.show: Show one language: kind, toolchain found/version, template, packagers, status.
     pub fn languages_show(&self, input: &LanguagesShowInput) -> Result<Envelope, Error> {
         self.call("languages.show", &input.to_json())
+    }
+}
+
+/// Input of `level3d.bake`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Level3dBakeInput {
+    /// resolve glb piece assets as files under the project dir
+    pub check_assets: Option<bool>,
+    /// path to a level .json (relative to project)
+    pub file: Option<String>,
+    /// level JSON (spec/v4/level3d.md)
+    pub level: Option<serde_json::Value>,
+    /// locomotion3d config; body.stepHeight/slopeLimitDeg/radius/height drive the nav bake (overrides level.locomotion)
+    pub locomotion: Option<serde_json::Value>,
+    /// directory inside the project (default assets/levels/baked)
+    pub out: Option<String>,
+    pub overwrite: Option<bool>,
+    /// project dir (default .)
+    pub project: Option<String>,
+    /// known ids to resolve references against; only the lists you pass are enforced
+    pub refs: Option<serde_json::Value>,
+}
+
+impl Level3dBakeInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.check_assets { m.insert("checkAssets".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.file { m.insert("file".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.level { m.insert("level".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.locomotion { m.insert("locomotion".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.out { m.insert("out".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.overwrite { m.insert("overwrite".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.refs { m.insert("refs".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// level3d.bake: Bake a level JSON into runtime artifacts under out/ (default assets/levels/baked): <id>.collision.bvh (serialized triangle BVH, spec/v3/bvh.md), <id>.nav.json (walkable-grid nav, ai3d NavProvider) and <id>.bake.json (hash, stats, reachability). Refuses invalid levels; output is byte-identical for the same input.
+    pub fn level3d_bake(&self, input: &Level3dBakeInput) -> Result<Envelope, Error> {
+        self.call("level3d.bake", &input.to_json())
+    }
+}
+
+/// Input of `level3d.validate`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Level3dValidateInput {
+    /// resolve glb piece assets as files under the project dir
+    pub check_assets: Option<bool>,
+    /// false: structure and references only (skip bake, ground, reachability, closure)
+    pub deep: Option<bool>,
+    /// path to a level .json (relative to project)
+    pub file: Option<String>,
+    /// level JSON (spec/v4/level3d.md)
+    pub level: Option<serde_json::Value>,
+    /// locomotion3d config; body.stepHeight/slopeLimitDeg/radius/height drive the nav bake (overrides level.locomotion)
+    pub locomotion: Option<serde_json::Value>,
+    /// project dir (default .)
+    pub project: Option<String>,
+    /// known ids to resolve references against; only the lists you pass are enforced
+    pub refs: Option<serde_json::Value>,
+}
+
+impl Level3dValidateInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.check_assets { m.insert("checkAssets".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.deep { m.insert("deep".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.file { m.insert("file".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.level { m.insert("level".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.locomotion { m.insert("locomotion".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.refs { m.insert("refs".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// level3d.validate: Validate a 3D level JSON: structure and references (spawns, triggers, hazards, checkpoints, arena), spawns standing on ground, every spawn/pickup/checkpoint reachable from a player spawn over the baked nav grid, boss arena bounds closed (except listed gates). Returns errors/warnings with JSON paths plus the deterministic bake hash.
+    pub fn level3d_validate(&self, input: &Level3dValidateInput) -> Result<Envelope, Error> {
+        self.call("level3d.validate", &input.to_json())
     }
 }
 
@@ -1347,6 +1614,77 @@ impl Client {
     /// library.verify: Check installed assets against assets.lock.json: reports modified, missing or tampered files.
     pub fn library_verify(&self, input: &LibraryVerifyInput) -> Result<Envelope, Error> {
         self.call("library.verify", &input.to_json())
+    }
+}
+
+/// Input of `limb3d.simulate`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Limb3dSimulateInput {
+    pub commands: Option<Vec<serde_json::Value>>,
+    /// path to a limb .json (relative to project)
+    pub file: Option<String>,
+    /// include the event list and final pose
+    pub full: Option<bool>,
+    /// limb definition (spec/v4/schemas/limb3d.schema.json)
+    pub limb: Option<serde_json::Value>,
+    pub project: Option<String>,
+    /// trajectory sampling interval in steps
+    pub sample: Option<i64>,
+    pub seed: Option<i64>,
+    pub severs: Option<Vec<serde_json::Value>>,
+    pub steps: Option<i64>,
+    /// target keyframes, linearly interpolated, sorted by f
+    pub targets: Option<Vec<serde_json::Value>>,
+}
+
+impl Limb3dSimulateInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.commands { m.insert("commands".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.file { m.insert("file".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.full { m.insert("full".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.limb { m.insert("limb".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.sample { m.insert("sample".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.seed { m.insert("seed".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.severs { m.insert("severs".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.steps { m.insert("steps".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.targets { m.insert("targets".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// limb3d.simulate: Run a limb headlessly over a scripted path (target keyframes, motion commands, severs): tip trajectory, max segment length error, max bend angle, capsule-list summary (count min/max/mean, damaging frames), event counts, final bone pose and a determinism hash.
+    pub fn limb3d_simulate(&self, input: &Limb3dSimulateInput) -> Result<Envelope, Error> {
+        self.call("limb3d.simulate", &input.to_json())
+    }
+}
+
+/// Input of `limb3d.validate`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Limb3dValidateInput {
+    /// path to a limb .json (relative to project)
+    pub file: Option<String>,
+    /// limb definition (spec/v4/schemas/limb3d.schema.json)
+    pub limb: Option<serde_json::Value>,
+    pub project: Option<String>,
+}
+
+impl Limb3dValidateInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.file { m.insert("file".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.limb { m.insert("limb".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// limb3d.validate: Validate a limb3d definition (hydra neck / tentacle): segment count and lengths, radius, solver, bend limits, seek, sway, sever/regrow and motion timings. Returns errors with JSON paths plus warnings and reach.
+    pub fn limb3d_validate(&self, input: &Limb3dValidateInput) -> Result<Envelope, Error> {
+        self.call("limb3d.validate", &input.to_json())
     }
 }
 
@@ -1853,6 +2191,48 @@ impl Client {
     }
 }
 
+/// Input of `nav.bake`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct NavBakeInput {
+    /// resolve glb piece assets as files under the project dir
+    pub check_assets: Option<bool>,
+    /// path to a level .json (relative to project)
+    pub file: Option<String>,
+    /// level JSON (spec/v4/level3d.md)
+    pub level: Option<serde_json::Value>,
+    /// locomotion3d config; body.stepHeight/slopeLimitDeg/radius/height drive the nav bake (overrides level.locomotion)
+    pub locomotion: Option<serde_json::Value>,
+    /// directory inside the project (default assets/levels/baked)
+    pub out: Option<String>,
+    pub overwrite: Option<bool>,
+    /// project dir (default .)
+    pub project: Option<String>,
+    /// known ids to resolve references against; only the lists you pass are enforced
+    pub refs: Option<serde_json::Value>,
+}
+
+impl NavBakeInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.check_assets { m.insert("checkAssets".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.file { m.insert("file".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.level { m.insert("level".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.locomotion { m.insert("locomotion".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.out { m.insert("out".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.overwrite { m.insert("overwrite".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.refs { m.insert("refs".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// nav.bake: Bake only the navigation grid of a level JSON (slope/step/radius/height from the level or a locomotion3d config) to <id>.nav.json; an ai3d NavProvider (findPath/isClear/walkable) can be rebuilt from it with navFromJSON. Reports node/edge counts and reachability from player spawns.
+    pub fn nav_bake(&self, input: &NavBakeInput) -> Result<Envelope, Error> {
+        self.call("nav.bake", &input.to_json())
+    }
+}
+
 /// Input of `package.shells`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PackageShellsInput {
@@ -1912,6 +2292,39 @@ impl Client {
     /// package.standalone: Package a project (web, rust, go, godot, python) as a standalone app with a chosen shell; returns artifacts [{path,sha256,bytes}] and the plan. dryRun only plans. Toolchain missing => plan with status SKIP and reason.
     pub fn package_standalone(&self, input: &PackageStandaloneInput) -> Result<Envelope, Error> {
         self.call("package.standalone", &input.to_json())
+    }
+}
+
+/// Input of `parity.run`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct ParityRunInput {
+    /// one of: combat3d, boss3d
+    pub module: String,
+    /// case names to run (default all; see data.available)
+    pub cases: Option<Vec<String>>,
+    /// explicit Godot binary
+    pub godot: Option<String>,
+    /// keep the scratch project (path in data.scratch)
+    pub keep: Option<bool>,
+    pub timeout_ms: Option<i64>,
+}
+
+impl ParityRunInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("module".to_string(), serde_json::to_value(&self.module).unwrap_or(Value::Null));
+        if let Some(v) = &self.cases { m.insert("cases".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.godot { m.insert("godot".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.keep { m.insert("keep".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.timeout_ms { m.insert("timeoutMs".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// parity.run: Cross-runtime parity: run the JS reference (combat3d / boss3d) and the GDScript mirror in Godot headless on the same example JSON, diff event-log hashes (pinned duel hash 6fedb1fe, boss simulate hash) and key numbers, and return per-case pass/fail. NOT_FOUND when Godot is absent.
+    pub fn parity_run(&self, input: &ParityRunInput) -> Result<Envelope, Error> {
+        self.call("parity.run", &input.to_json())
     }
 }
 
@@ -2479,5 +2892,75 @@ impl Client {
     /// swarm.track: Append a progress event for an agent (start|progress|done|blocked|failed|note), or record a check.
     pub fn swarm_track(&self, input: &SwarmTrackInput) -> Result<Envelope, Error> {
         self.call("swarm.track", &input.to_json())
+    }
+}
+
+/// Input of `vfx3d.sample`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Vfx3dSampleInput {
+    /// vfx3d definition (spec/v4/schemas/vfx3d.schema.json)
+    pub effect: Option<serde_json::Value>,
+    pub emitter: Option<i64>,
+    /// path to an effect .json (relative to project)
+    pub file: Option<String>,
+    /// max particles returned
+    pub limit: Option<i64>,
+    /// [x,y,z] points (water/surface use x,z); default [[0,0,0]]
+    pub points: Option<Vec<serde_json::Value>>,
+    pub project: Option<String>,
+    pub resisting: Option<bool>,
+    /// seconds; default [0]
+    pub times: Option<Vec<f64>>,
+    /// default field
+    pub what: Option<String>,
+}
+
+impl Vfx3dSampleInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.effect { m.insert("effect".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.emitter { m.insert("emitter".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.file { m.insert("file".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.limit { m.insert("limit".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.points { m.insert("points".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.resisting { m.insert("resisting".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.times { m.insert("times".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.what { m.insert("what".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// vfx3d.sample: Evaluate an effect at points and times: force-field vector and damage (field), Gerstner water height and normal (water), whirlpool surface height incl. funnel (surface), or live seeded particles of one emitter (particles). Same maths the Godot loader and boss3d/locomotion3d use.
+    pub fn vfx3d_sample(&self, input: &Vfx3dSampleInput) -> Result<Envelope, Error> {
+        self.call("vfx3d.sample", &input.to_json())
+    }
+}
+
+/// Input of `vfx3d.validate`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Vfx3dValidateInput {
+    /// vfx3d definition (spec/v4/schemas/vfx3d.schema.json)
+    pub effect: Option<serde_json::Value>,
+    /// path to an effect .json (relative to project)
+    pub file: Option<String>,
+    pub project: Option<String>,
+}
+
+impl Vfx3dValidateInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.effect { m.insert("effect".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.file { m.insert("file".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// vfx3d.validate: Validate a vfx3d effect definition (whirlpool, flood water, sludge, fire, steam, sparks): force field, Gerstner waves, visual params and particle emitters. Errors carry JSON paths; warnings flag choppy waves or a vortex without ramp.
+    pub fn vfx3d_validate(&self, input: &Vfx3dValidateInput) -> Result<Envelope, Error> {
+        self.call("vfx3d.validate", &input.to_json())
     }
 }

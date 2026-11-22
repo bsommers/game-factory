@@ -455,6 +455,28 @@ export function simulate(def, { runs = 20, seed = 1, profile = {}, maxSeconds = 
     hash: hashJSON(results.map((r) => [r.seed, r.won, r.timeSeconds, r.damageTaken, r.logHash])) , results: results.map(({ seed: sd, won, died, timeSeconds, damageTaken: dt, logHash }) => ({ seed: sd, won, died, timeSeconds, damageTaken: dt, logHash })) };
 }
 
+// Skill tiers (additive): bot profiles used by balance(). Existing DEFAULT/ORACLE profiles and simulate() are unchanged.
+export const SKILL_TIERS = {
+  novice: { ...DEFAULT_PROFILE, reactionMs: 520, dodgeSkill: 0.68, weakAwareness: 0.35, attackIntervalMs: 800, dodgeCooldownMs: 1200 },
+  average: { ...DEFAULT_PROFILE, reactionMs: 450, dodgeSkill: 0.72, weakAwareness: 0.6, attackIntervalMs: 700 },
+  expert: { ...DEFAULT_PROFILE, reactionMs: 400, dodgeSkill: 0.8, weakAwareness: 0.85 },
+  oracle: { ...ORACLE_PROFILE },
+};
+export const TIER_BANDS = { novice: [0.1, 0.35], average: [0.4, 0.65], expert: [0.7, 0.9], oracle: [0.85, 1] };
+export function balance(def, { runs = 100, seed = 1, tiers = Object.keys(SKILL_TIERS), bands = {}, maxSeconds = 300, profiles = {} } = {}) {
+  const out = {}; let pass = true;
+  for (const t of tiers) {
+    const prof = { ...SKILL_TIERS[t], ...(profiles[t] || {}) }, band = bands[t] || TIER_BANDS[t] || [0, 1];
+    const rs = []; for (let i = 0; i < runs; i++) rs.push(runFight(def, { seed: seed + i * 7919, profile: prof, maxSeconds }));
+    const wins = rs.filter((r) => r.won), deathsByPhase = {}; for (const r of rs) if (r.died) deathsByPhase[r.finalPhase] = (deathsByPhase[r.finalPhase] || 0) + 1;
+    const winRate = r4(wins.length / runs), inBand = winRate >= band[0] && winRate <= band[1]; if (!inBand) pass = false;
+    out[t] = { winRate, band, pass: inBand, timeToKill: { mean: mean(wins.map((r) => r.timeSeconds)), median: pct(wins.map((r) => r.timeSeconds), 0.5), p90: pct(wins.map((r) => r.timeSeconds), 0.9) },
+      damageTaken: { mean: mean(rs.map((r) => r.damageTaken)), p90: pct(rs.map((r) => r.damageTaken), 0.9) }, deaths: rs.length - wins.length - rs.filter((r) => !r.won && !r.died).length, timeouts: rs.filter((r) => !r.won && !r.died).length, deathsByPhase,
+      hash: hashJSON(rs.map((r) => [r.seed, r.won, r.timeSeconds, r.damageTaken, r.logHash])) };
+  }
+  return { runs, seed, pass, tiers: out };
+}
+
 // ---------------------------------------------------------------- fairness (static + simulated)
 export const DEFAULT_FAIRNESS = { reactionMs: 350, moveSpeed: 6.5, margin: 0.3, maxThreats: 4, oracleRuns: 6, oracleDamageFrac: 0.35, attackHitRate: 0.5, dodge: { distance: 4, iframeMs: 300, cooldownMs: 900, jumpHeight: 1.0 } };
 // Greatest distance anyone standing inside the zone must travel to leave it (numeric; grid and ray step scale with zone size).

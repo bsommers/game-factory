@@ -1,0 +1,14 @@
+{
+  "id": "toxic-sludge",
+  "name": "Sewer sludge",
+  "kind": "sludge",
+  "seed": 11,
+  "field": { "kind": "flow", "flow": [0.4, 0, 0], "dps": 4, "area": { "shape": "box", "center": [0, -0.5, 0], "size": [30, 2, 30] } },
+  "water": { "level": 0, "size": [30, 30], "waves": [
+    { "dir": [1, 0], "wavelength": 7, "amplitude": 0.08, "steepness": 0.15, "speed": 0.8 },
+    { "dir": [0.3, 1], "wavelength": 4, "amplitude": 0.04, "steepness": 0.1, "speed": 0.6 } ] },
+  "visual": { "foam": 0.15, "color": "#6b8f23", "deepColor": "#1d2a07", "foamColor": "#c9d96a", "opacity": 1 },
+  "emitters": [
+    { "id": "bubbles", "rate": 14, "lifetime": [1.2, 2.2], "maxParticles": 80, "shape": { "type": "disc", "radius": 9 }, "direction": [0, 1, 0], "spread": 8, "speed": [0.2, 0.5],
+      "gravity": [0, 0.1, 0], "size": { "start": 0.08, "end": 0.28 }, "blend": "mix", "color": [{ "t": 0, "c": "#b7d84a", "a": 0.9 }, { "t": 0.85, "c": "#d9ee7a", "a": 0.7 }, { "t": 1, "c": "#e8f59a", "a": 0 }] } ]
+}

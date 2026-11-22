@@ -191,3 +191,17 @@ test('vectors file is well-formed', () => {
 test('source has no Math.random', () => {
   for (const f of ['collision3d', 'bvh']) assert.ok(!/Math\.random/.test(readFileSync(new URL(`../../src/lib/${f}.js`, import.meta.url), 'utf8').replace(/\/\/.*$/gm, '')), f);
 });
+
+test('character: ground info (triangle index, material) and moving-platform carry', () => {
+  const floor = [-5, 0, -5, -5, 0, 5, 5, 0, 5, -5, 0, -5, 5, 0, 5, 5, 0, -5];
+  const ch = C.createCharacter({ pos: [0, 1, 0] });
+  for (let i = 0; i < 90; i++) C.moveAndSlide(ch, [0, ch.grounded ? 0 : -3, 0], 1 / 60, { tris: floor, materials: [3, 9] });
+  assert.ok(ch.grounded); assert.ok(ch.groundIndex === 0 || ch.groundIndex === 1); assert.equal(ch.groundMaterial, [3, 9][ch.groundIndex]);
+  C.moveAndSlide(ch, [0, 5, 0], 1 / 60, floor); assert.equal(ch.groundIndex, -1); assert.equal(ch.groundMaterial, null);
+  // platform moving +x carries a grounded character
+  const plat = [-2, -1, -2, -2, 0, 2, 2, 0, 2, -2, -1, -2, 2, 0, 2, 2, 0, -2], c2 = C.createCharacter({ pos: [0, 0, 0] });
+  for (let i = 0; i < 30; i++) C.moveAndSlide(c2, [0, -2, 0], 1 / 60, plat);
+  c2.groundVelocity = [1, 0, 0]; const x0 = c2.pos[0];
+  for (let i = 0; i < 30; i++) { for (let k = 0; k < 18; k += 3) plat[k] += 1 / 60; C.moveAndSlide(c2, [0, -1, 0], 1 / 60, plat); }
+  near(c2.pos[0] - x0, 0.5, 2e-3); assert.ok(c2.grounded);
+});

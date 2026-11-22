@@ -861,11 +861,13 @@ pub struct World<'a> {
     pub tris: &'a [f64],
     pub count: usize,
     pub candidates: Option<&'a dyn Fn(V3, V3) -> Vec<usize>>,
+    /// Optional per-triangle material ids (parallel to the triangles; `None` entries = no material).
+    pub materials: Option<&'a [Option<i64>]>,
 }
 
 impl<'a> World<'a> {
     pub fn new(tris: &'a [f64]) -> World<'a> {
-        World { tris, count: tris.len() / 9, candidates: None }
+        World { tris, count: tris.len() / 9, candidates: None, materials: None }
     }
 }
 
@@ -1095,6 +1097,12 @@ pub struct Character {
     pub vel: V3,
     pub grounded: bool,
     pub ground_normal: V3,
+    /// Index of the triangle the character stands on (-1 when not grounded).
+    pub ground_index: i64,
+    /// Material id of that triangle (`None` without a materials array or when airborne).
+    pub ground_material: Option<i64>,
+    /// Input hint: velocity of the ground the character stands on (moving platform); applied only when grounded.
+    pub ground_velocity: V3,
     pub radius: f64,
     pub height: f64,
     pub step_height: f64,
@@ -1123,6 +1131,9 @@ pub fn create_character(o: &CharacterOpts) -> Character {
         vel: [0.0, 0.0, 0.0],
         grounded: false,
         ground_normal: [0.0, 1.0, 0.0],
+        ground_index: -1,
+        ground_material: None,
+        ground_velocity: [0.0, 0.0, 0.0],
         radius: o.radius.unwrap_or(0.4),
         height: o.height.unwrap_or(1.8),
         step_height: o.step_height.unwrap_or(0.35),
@@ -1167,6 +1178,7 @@ pub fn depenetrate(ch: &mut Character, world: &World, iterations: usize) {
 struct SlideInfo {
     wall: bool,
     floor: Option<V3>,
+    floor_index: i64,
     ceil: bool,
 }
 
@@ -1189,6 +1201,7 @@ fn slide(ch: &Character, w: &World, p0: V3, d0: V3, stick: bool, info: &mut Slid
         let f = hit.face;
         if f[1] >= ch.min_ground_y {
             info.floor = Some(f);
+            info.floor_index = hit.index as i64;
             if stick {
                 break;
             }
@@ -1255,8 +1268,20 @@ fn try_step(ch: &Character, w: &World, start: V3, hd: V3) -> Option<V3> {
 pub fn move_and_slide(ch: &mut Character, vel: V3, dt: f64, world: &World) {
     let was_grounded = ch.grounded;
     let start = ch.pos;
+    let gv = if was_grounded { ch.ground_velocity } else { [0.0, 0.0, 0.0] };
     depenetrate(ch, world, 4);
     let mut cur = ch.pos;
+    // Moving ground: carry by gv*dt (horizontal slide, then upward sweep). The world is the platform at its CURRENT position.
+    if gv[0] != 0.0 || gv[1] != 0.0 || gv[2] != 0.0 {
+        let cd = [gv[0] * dt, 0.0, gv[2] * dt];
+        if len2(cd) > 0.0 {
+            cur = slide(ch, world, cur, cd, false, &mut SlideInfo::default());
+        }
+        if gv[1] > 0.0 {
+            cur = slide(ch, world, cur, [0.0, gv[1] * dt, 0.0], true, &mut SlideInfo::default());
+        }
+        ch.pos = cur;
+    }
     let hd = [vel[0] * dt, 0.0, vel[2] * dt];
     let mut info_h = SlideInfo::default();
     if len2(hd) > 0.0 {
@@ -1276,10 +1301,12 @@ pub fn move_and_slide(ch: &mut Character, vel: V3, dt: f64, world: &World) {
     }
     let mut grounded = false;
     let mut gn = [0.0, 1.0, 0.0];
-    if vel[1] <= 0.0 {
+    let mut gi: i64 = -1;
+    if vel[1] - gv[1] <= 0.0 {
         if let Some(f) = info_v.floor {
             grounded = true;
             gn = f;
+            gi = info_v.floor_index;
         } else {
             let dist = if was_grounded { ch.snap_distance } else { ch.skin * 3.0 };
             let dv = [0.0, -dist, 0.0];
@@ -1288,6 +1315,7 @@ pub fn move_and_slide(ch: &mut Character, vel: V3, dt: f64, world: &World) {
                     cur = madd(madd(cur, dv, hit.t), hit.normal, ch.skin);
                     grounded = true;
                     gn = hit.face;
+                    gi = hit.index as i64;
                 }
             }
         }
@@ -1295,6 +1323,8 @@ pub fn move_and_slide(ch: &mut Character, vel: V3, dt: f64, world: &World) {
     ch.pos = cur;
     ch.grounded = grounded;
     ch.ground_normal = gn;
+    ch.ground_index = if grounded { gi } else { -1 };
+    ch.ground_material = if grounded { world.materials.and_then(|m| m.get(gi as usize).copied().flatten()) } else { None };
     let inv = if dt > 0.0 { 1.0 / dt } else { 0.0 };
     let mut vy_out = vel[1];
     if grounded || (info_v.ceil && vy_out > 0.0) {

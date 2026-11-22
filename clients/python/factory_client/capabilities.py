@@ -42,6 +42,10 @@ class Capabilities:
         """animgraph.validate: Validate an animation-graph JSON (states, blend spaces, transitions, layers, masks, root motion, events) against spec/v4/schemas/anim-graph.schema.json plus semantic checks; with glb, every referenced clip, mask bone and root bone must exist in that model. Returns {valid, schemaErrors, errors, warnings, clips}."""
         return self.call("animgraph.validate", {"glb": glb, "graph": graph, "graphPath": graphPath, "project": project})
 
+    def boss3d_balance(self, *, bands: dict | None = None, boss: dict | None = None, fairness: bool | None = None, file: str | None = None, maxSeconds: float | None = None, project: str | None = None, runs: int | None = None, seed: int | None = None, tiers: list[str] | None = None):
+        """boss3d.balance: Balance report: N seeded headless fights per skill tier (novice/average/expert/oracle) reporting win rate, time-to-kill, damage taken and deaths per phase, checked against target win-rate bands per tier (defaults novice 10-35%, average 40-65%, expert 70-90%, oracle 85-100%), plus the fairness gate. pass=false when any tier is out of band or fairness fails."""
+        return self.call("boss3d.balance", {"bands": bands, "boss": boss, "fairness": fairness, "file": file, "maxSeconds": maxSeconds, "project": project, "runs": runs, "seed": seed, "tiers": tiers})
+
     def boss3d_fairness(self, *, boss: dict | None = None, file: str | None = None, options: dict | None = None, project: str | None = None):
         """boss3d.fairness: Fairness gate for a boss: min telegraph vs human reaction, every attack avoidable under a dodge profile (distance, i-frames, cooldown), a safe zone for every simultaneous danger-zone combination, max simultaneous threats, and a perfect-reaction oracle bot sim. pass=false lists findings."""
         return self.call("boss3d.fairness", {"boss": boss, "file": file, "options": options, "project": project})
@@ -126,6 +130,18 @@ class Capabilities:
         """guide.skills: List the task-oriented skills (optionally filtered by a tag word)."""
         return self.call("guide.skills", {"tag": tag})
 
+    def img2model_build(self, *, image: str, outDir: str, blender: str | None = None, detail: int | None = None, forceDistanceWeights: bool | None = None, heightMeters: float | None = None, name: str | None = None, overwrite: bool | None = None, project: str | None = None, render: bool | None = None, separateCape: bool | None = None, smooth: float | None = None, splitX: int | None = None, tailBones: int | None = None, threshold: float | None = None, timeoutMs: int | None = None, triangleBudget: int | None = None):
+        """img2model.build: Character sheet (front + side view) -> rigged GLB: silhouettes, visual-hull body (lofted super-ellipse slices, tail swept from the side view, optional thin cape sheet), decimated mesh, inferred Mixamo/Meshy-named skeleton with a tail chain, automatic weights (distance fallback), projected texture, .blend, skeleton JSON and preview renders. Needs Blender."""
+        return self.call("img2model.build", {"image": image, "outDir": outDir, "blender": blender, "detail": detail, "forceDistanceWeights": forceDistanceWeights, "heightMeters": heightMeters, "name": name, "overwrite": overwrite, "project": project, "render": render, "separateCape": separateCape, "smooth": smooth, "splitX": splitX, "tailBones": tailBones, "threshold": threshold, "timeoutMs": timeoutMs, "triangleBudget": triangleBudget})
+
+    def img2model_silhouette(self, *, image: str, outDir: str, blender: str | None = None, cleanRadius: int | None = None, closeRadius: int | None = None, heightMeters: float | None = None, name: str | None = None, project: str | None = None, splitX: int | None = None, threshold: float | None = None, timeoutMs: int | None = None):
+        """img2model.silhouette: Segment the front and side figures of a character sheet by background colour (largest components, text labels dropped, holes filled) and report bounds, split column and scale; writes mask and overlay debug PNGs. Needs Blender (bundled numpy)."""
+        return self.call("img2model.silhouette", {"image": image, "outDir": outDir, "blender": blender, "cleanRadius": cleanRadius, "closeRadius": closeRadius, "heightMeters": heightMeters, "name": name, "project": project, "splitX": splitX, "threshold": threshold, "timeoutMs": timeoutMs})
+
+    def img2model_verify(self, *, glb: str, blender: str | None = None, maxTriangles: int | None = None, minJoints: int | None = None, project: str | None = None, timeoutMs: int | None = None):
+        """img2model.verify: Re-import a rigged GLB in Blender and check triangle count, bounds, joints, that every vertex is weighted with weights summing to 1 (max 4 influences), texture/UV presence, and a pose test (rotating arm/leg/tail/head bones moves vertices). Fails with TASK_FAILED listing failed checks."""
+        return self.call("img2model.verify", {"glb": glb, "blender": blender, "maxTriangles": maxTriangles, "minJoints": minJoints, "project": project, "timeoutMs": timeoutMs})
+
     def kits_list(self):
         """kits.list: List the content kits and gameplay engines that `factory new --web` copies into a project."""
         return self.call("kits.list", {})
@@ -141,6 +157,14 @@ class Capabilities:
     def languages_show(self, *, id: str):
         """languages.show: Show one language: kind, toolchain found/version, template, packagers, status."""
         return self.call("languages.show", {"id": id})
+
+    def level3d_bake(self, *, checkAssets: bool | None = None, file: str | None = None, level: dict | None = None, locomotion: dict | None = None, out: str | None = None, overwrite: bool | None = None, project: str | None = None, refs: dict | None = None):
+        """level3d.bake: Bake a level JSON into runtime artifacts under out/ (default assets/levels/baked): <id>.collision.bvh (serialized triangle BVH, spec/v3/bvh.md), <id>.nav.json (walkable-grid nav, ai3d NavProvider) and <id>.bake.json (hash, stats, reachability). Refuses invalid levels; output is byte-identical for the same input."""
+        return self.call("level3d.bake", {"checkAssets": checkAssets, "file": file, "level": level, "locomotion": locomotion, "out": out, "overwrite": overwrite, "project": project, "refs": refs})
+
+    def level3d_validate(self, *, checkAssets: bool | None = None, deep: bool | None = None, file: str | None = None, level: dict | None = None, locomotion: dict | None = None, project: str | None = None, refs: dict | None = None):
+        """level3d.validate: Validate a 3D level JSON: structure and references (spawns, triggers, hazards, checkpoints, arena), spawns standing on ground, every spawn/pickup/checkpoint reachable from a player spawn over the baked nav grid, boss arena bounds closed (except listed gates). Returns errors/warnings with JSON paths plus the deterministic bake hash."""
+        return self.call("level3d.validate", {"checkAssets": checkAssets, "deep": deep, "file": file, "level": level, "locomotion": locomotion, "project": project, "refs": refs})
 
     def library_add(self, *, library: str, allowDuplicate: bool | None = None, author: str | None = None, files: list | None = None, from_: dict | None = None, license: str | None = None, tags: list[str] | None = None, types: list[str] | None = None, update: bool | None = None):
         """library.add: Import assets into a library from a game project (adapter pixbuf-web: sprites, characters, tilesets, fx, sfx, songs, tagged style:<id>) and/or plain files; writes descriptors and previews, regenerates the index. Existing assets with different content need update:true (patch version bump)."""
@@ -185,6 +209,14 @@ class Capabilities:
     def library_verify(self, *, project: str):
         """library.verify: Check installed assets against assets.lock.json: reports modified, missing or tampered files."""
         return self.call("library.verify", {"project": project})
+
+    def limb3d_simulate(self, *, commands: list | None = None, file: str | None = None, full: bool | None = None, limb: dict | None = None, project: str | None = None, sample: int | None = None, seed: int | None = None, severs: list | None = None, steps: int | None = None, targets: list | None = None):
+        """limb3d.simulate: Run a limb headlessly over a scripted path (target keyframes, motion commands, severs): tip trajectory, max segment length error, max bend angle, capsule-list summary (count min/max/mean, damaging frames), event counts, final bone pose and a determinism hash."""
+        return self.call("limb3d.simulate", {"commands": commands, "file": file, "full": full, "limb": limb, "project": project, "sample": sample, "seed": seed, "severs": severs, "steps": steps, "targets": targets})
+
+    def limb3d_validate(self, *, file: str | None = None, limb: dict | None = None, project: str | None = None):
+        """limb3d.validate: Validate a limb3d definition (hydra neck / tentacle): segment count and lengths, radius, solver, bend limits, seek, sway, sever/regrow and motion timings. Returns errors with JSON paths plus warnings and reach."""
+        return self.call("limb3d.validate", {"file": file, "limb": limb, "project": project})
 
     def locomotion3d_report(self, *, config: dict | None = None, file: str | None = None, project: str | None = None):
         """locomotion3d.report: Tuning report for a config: jump apex (analytic and measured, held vs tap), dodge distance and i-frame window (from rest and while running), run/sprint ramp-up and stop times, terminal fall and hard-landing heights, plus warnings."""
@@ -242,6 +274,10 @@ class Capabilities:
         """models.verify: Print-readiness gate: watertight 2-manifold, positive volume (not inside-out), no degenerate faces, fits bed {x,y,z}, optional minimum wall (ray-sampled estimate). Fails with TASK_FAILED and a per-check list."""
         return self.call("models.verify", {"input": input, "bed": bed, "from": from_, "inUnits": inUnits, "inUp": inUp, "minWall": minWall, "project": project, "singleShell": singleShell})
 
+    def nav_bake(self, *, checkAssets: bool | None = None, file: str | None = None, level: dict | None = None, locomotion: dict | None = None, out: str | None = None, overwrite: bool | None = None, project: str | None = None, refs: dict | None = None):
+        """nav.bake: Bake only the navigation grid of a level JSON (slope/step/radius/height from the level or a locomotion3d config) to <id>.nav.json; an ai3d NavProvider (findPath/isClear/walkable) can be rebuilt from it with navFromJSON. Reports node/edge counts and reachability from player spawns."""
+        return self.call("nav.bake", {"checkAssets": checkAssets, "file": file, "level": level, "locomotion": locomotion, "out": out, "overwrite": overwrite, "project": project, "refs": refs})
+
     def package_shells(self, *, project: str | None = None):
         """package.shells: List standalone-app shells (neutralino, tauri, electron, wails, rust, go, godot, python) with project kinds, availability probes on this machine, and honest size/tradeoff notes."""
         return self.call("package.shells", {"project": project})
@@ -249,6 +285,10 @@ class Capabilities:
     def package_standalone(self, *, project: str, dryRun: bool | None = None, network: bool | None = None, out: str | None = None, platform: str | None = None, shell: str | None = None, version: str | None = None):
         """package.standalone: Package a project (web, rust, go, godot, python) as a standalone app with a chosen shell; returns artifacts [{path,sha256,bytes}] and the plan. dryRun only plans. Toolchain missing => plan with status SKIP and reason."""
         return self.call("package.standalone", {"project": project, "dryRun": dryRun, "network": network, "out": out, "platform": platform, "shell": shell, "version": version})
+
+    def parity_run(self, *, module: str, cases: list[str] | None = None, godot: str | None = None, keep: bool | None = None, timeoutMs: int | None = None):
+        """parity.run: Cross-runtime parity: run the JS reference (combat3d / boss3d) and the GDScript mirror in Godot headless on the same example JSON, diff event-log hashes (pinned duel hash 6fedb1fe, boss simulate hash) and key numbers, and return per-case pass/fail. NOT_FOUND when Godot is absent."""
+        return self.call("parity.run", {"module": module, "cases": cases, "godot": godot, "keep": keep, "timeoutMs": timeoutMs})
 
     def project_new(self, *, dir: str, lang: str | None = None, title: str | None = None, web: bool | None = None):
         """project.new: Scaffold a new game repo (web = zero-dep browser game with kits and tracker; otherwise a Godot project). Same as `factory new`."""
@@ -329,3 +369,11 @@ class Capabilities:
     def swarm_track(self, *, agent: str, state: str, message: str | None = None, pct: int | None = None, project: str | None = None):
         """swarm.track: Append a progress event for an agent (start|progress|done|blocked|failed|note), or record a check."""
         return self.call("swarm.track", {"agent": agent, "state": state, "message": message, "pct": pct, "project": project})
+
+    def vfx3d_sample(self, *, effect: dict | None = None, emitter: int | None = None, file: str | None = None, limit: int | None = None, points: list | None = None, project: str | None = None, resisting: bool | None = None, times: list[float] | None = None, what: str | None = None):
+        """vfx3d.sample: Evaluate an effect at points and times: force-field vector and damage (field), Gerstner water height and normal (water), whirlpool surface height incl. funnel (surface), or live seeded particles of one emitter (particles). Same maths the Godot loader and boss3d/locomotion3d use."""
+        return self.call("vfx3d.sample", {"effect": effect, "emitter": emitter, "file": file, "limit": limit, "points": points, "project": project, "resisting": resisting, "times": times, "what": what})
+
+    def vfx3d_validate(self, *, effect: dict | None = None, file: str | None = None, project: str | None = None):
+        """vfx3d.validate: Validate a vfx3d effect definition (whirlpool, flood water, sludge, fire, steam, sparks): force field, Gerstner waves, visual params and particle emitters. Errors carry JSON paths; warnings flag choppy waves or a vortex without ramp."""
+        return self.call("vfx3d.validate", {"effect": effect, "file": file, "project": project})

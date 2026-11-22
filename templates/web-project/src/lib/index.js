@@ -16,3 +16,6 @@ export * as locomotion3d from './locomotion3d.js';
 export * as combat3d from './combat3d.js';
 export * as ai3d from './ai3d.js';
 export * as boss3d from './boss3d.js';
+export * as limb3d from './limb3d.js';
+export * as vfx3d from './vfx3d.js';
+export * as level3d from './level3d.js';

@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/vfx/vfx_preview.gd" id="1"]
+
+[node name="Preview" type="Node3D"]
+script = ExtResource("1")
+def_name = "fire"
+cam_pos = Vector3(0, 1.6, 4.5)
+cam_look = Vector3(0, 1.1, 0)
+fixed_time = 4.0
+ground = true

@@ -119,6 +119,24 @@ func (c *Client) AnimgraphValidate(ctx context.Context, in AnimgraphValidateInpu
 	return c.Call(ctx, "animgraph.validate", in)
 }
 
+// Boss3dBalanceInput is the input of boss3d.balance.
+type Boss3dBalanceInput struct {
+	Bands      map[string]any `json:"bands,omitempty"`    // override win-rate bands: {tier: [min,max]} (fractions 0-1)
+	Boss       map[string]any `json:"boss,omitempty"`     // boss definition (spec/v4/schemas/boss3d.schema.json)
+	Fairness   *bool          `json:"fairness,omitempty"` // also require boss3d.fairness to pass (default true)
+	File       *string        `json:"file,omitempty"`     // path to a boss .json (relative to project)
+	MaxSeconds *float64       `json:"maxSeconds,omitempty"`
+	Project    *string        `json:"project,omitempty"`
+	Runs       *int64         `json:"runs,omitempty"`
+	Seed       *int64         `json:"seed,omitempty"`
+	Tiers      []string       `json:"tiers,omitempty"`
+}
+
+// Boss3dBalance calls boss3d.balance: Balance report: N seeded headless fights per skill tier (novice/average/expert/oracle) reporting win rate, time-to-kill, damage taken and deaths per phase, checked against target win-rate bands per tier (defaults novice 10-35%, average 40-65%, expert 70-90%, oracle 85-100%), plus the fairness gate. pass=false when any tier is out of band or fairness fails.
+func (c *Client) Boss3dBalance(ctx context.Context, in Boss3dBalanceInput) (*Envelope, error) {
+	return c.Call(ctx, "boss3d.balance", in)
+}
+
 // Boss3dFairnessInput is the input of boss3d.fairness.
 type Boss3dFairnessInput struct {
 	Boss    map[string]any `json:"boss,omitempty"` // boss definition (spec/v4/schemas/boss3d.schema.json)
@@ -393,6 +411,67 @@ func (c *Client) GuideSkills(ctx context.Context, in GuideSkillsInput) (*Envelop
 	return c.Call(ctx, "guide.skills", in)
 }
 
+// Img2modelBuildInput is the input of img2model.build.
+type Img2modelBuildInput struct {
+	Image                string   `json:"image"`  // path to the character sheet (front view left, side view right, flat background). Read-only; may be outside the project
+	OutDir               string   `json:"outDir"` // output directory (created)
+	Blender              *string  `json:"blender,omitempty"`
+	Detail               *int64   `json:"detail,omitempty"` // voxels along the height for the carve (default 128)
+	ForceDistanceWeights *bool    `json:"forceDistanceWeights,omitempty"`
+	HeightMeters         *float64 `json:"heightMeters,omitempty"` // model height in metres (default 1.0)
+	Name                 *string  `json:"name,omitempty"`         // file base name (default: image file name)
+	Overwrite            *bool    `json:"overwrite,omitempty"`
+	Project              *string  `json:"project,omitempty"`
+	Render               *bool    `json:"render,omitempty"`       // write front/side/three-quarter/back and skeleton PNGs (default true)
+	SeparateCape         *bool    `json:"separateCape,omitempty"` // detect a saturated cape/cloak by colour and model it as a thin sheet (default true)
+	Smooth               *float64 `json:"smooth,omitempty"`       // gaussian sigma in voxels (default 1.1)
+	SplitX               *int64   `json:"splitX,omitempty"`       // pixel column separating the front and side views (default: auto, widest empty gap in the middle)
+	TailBones            *int64   `json:"tailBones,omitempty"`    // default 6
+	Threshold            *float64 `json:"threshold,omitempty"`    // colour distance from the background that counts as figure (default auto from border noise)
+	TimeoutMs            *int64   `json:"timeoutMs,omitempty"`
+	TriangleBudget       *int64   `json:"triangleBudget,omitempty"` // target triangles (default 10000)
+}
+
+// Img2modelBuild calls img2model.build: Character sheet (front + side view) -> rigged GLB: silhouettes, visual-hull body (lofted super-ellipse slices, tail swept from the side view, optional thin cape sheet), decimated mesh, inferred Mixamo/Meshy-named skeleton with a tail chain, automatic weights (distance fallback), projected texture, .blend, skeleton JSON and preview renders. Needs Blender.
+func (c *Client) Img2modelBuild(ctx context.Context, in Img2modelBuildInput) (*Envelope, error) {
+	return c.Call(ctx, "img2model.build", in)
+}
+
+// Img2modelSilhouetteInput is the input of img2model.silhouette.
+type Img2modelSilhouetteInput struct {
+	Image        string   `json:"image"`  // path to the character sheet (front view left, side view right, flat background). Read-only; may be outside the project
+	OutDir       string   `json:"outDir"` // output directory (created)
+	Blender      *string  `json:"blender,omitempty"`
+	CleanRadius  *int64   `json:"cleanRadius,omitempty"`
+	CloseRadius  *int64   `json:"closeRadius,omitempty"`
+	HeightMeters *float64 `json:"heightMeters,omitempty"` // model height in metres (default 1.0)
+	Name         *string  `json:"name,omitempty"`         // file base name (default: image file name)
+	Project      *string  `json:"project,omitempty"`
+	SplitX       *int64   `json:"splitX,omitempty"`    // pixel column separating the front and side views (default: auto, widest empty gap in the middle)
+	Threshold    *float64 `json:"threshold,omitempty"` // colour distance from the background that counts as figure (default auto from border noise)
+	TimeoutMs    *int64   `json:"timeoutMs,omitempty"`
+}
+
+// Img2modelSilhouette calls img2model.silhouette: Segment the front and side figures of a character sheet by background colour (largest components, text labels dropped, holes filled) and report bounds, split column and scale; writes mask and overlay debug PNGs. Needs Blender (bundled numpy).
+func (c *Client) Img2modelSilhouette(ctx context.Context, in Img2modelSilhouetteInput) (*Envelope, error) {
+	return c.Call(ctx, "img2model.silhouette", in)
+}
+
+// Img2modelVerifyInput is the input of img2model.verify.
+type Img2modelVerifyInput struct {
+	Glb          string  `json:"glb"`
+	Blender      *string `json:"blender,omitempty"`
+	MaxTriangles *int64  `json:"maxTriangles,omitempty"`
+	MinJoints    *int64  `json:"minJoints,omitempty"` // default 10
+	Project      *string `json:"project,omitempty"`
+	TimeoutMs    *int64  `json:"timeoutMs,omitempty"`
+}
+
+// Img2modelVerify calls img2model.verify: Re-import a rigged GLB in Blender and check triangle count, bounds, joints, that every vertex is weighted with weights summing to 1 (max 4 influences), texture/UV presence, and a pose test (rotating arm/leg/tail/head bones moves vertices). Fails with TASK_FAILED listing failed checks.
+func (c *Client) Img2modelVerify(ctx context.Context, in Img2modelVerifyInput) (*Envelope, error) {
+	return c.Call(ctx, "img2model.verify", in)
+}
+
 // KitsListInput is the input of kits.list.
 type KitsListInput struct {
 }
@@ -429,6 +508,39 @@ type LanguagesShowInput struct {
 // LanguagesShow calls languages.show: Show one language: kind, toolchain found/version, template, packagers, status.
 func (c *Client) LanguagesShow(ctx context.Context, in LanguagesShowInput) (*Envelope, error) {
 	return c.Call(ctx, "languages.show", in)
+}
+
+// Level3dBakeInput is the input of level3d.bake.
+type Level3dBakeInput struct {
+	CheckAssets *bool          `json:"checkAssets,omitempty"` // resolve glb piece assets as files under the project dir
+	File        *string        `json:"file,omitempty"`        // path to a level .json (relative to project)
+	Level       map[string]any `json:"level,omitempty"`       // level JSON (spec/v4/level3d.md)
+	Locomotion  map[string]any `json:"locomotion,omitempty"`  // locomotion3d config; body.stepHeight/slopeLimitDeg/radius/height drive the nav bake (overrides level.locomotion)
+	Out         *string        `json:"out,omitempty"`         // directory inside the project (default assets/levels/baked)
+	Overwrite   *bool          `json:"overwrite,omitempty"`
+	Project     *string        `json:"project,omitempty"` // project dir (default .)
+	Refs        map[string]any `json:"refs,omitempty"`    // known ids to resolve references against; only the lists you pass are enforced
+}
+
+// Level3dBake calls level3d.bake: Bake a level JSON into runtime artifacts under out/ (default assets/levels/baked): <id>.collision.bvh (serialized triangle BVH, spec/v3/bvh.md), <id>.nav.json (walkable-grid nav, ai3d NavProvider) and <id>.bake.json (hash, stats, reachability). Refuses invalid levels; output is byte-identical for the same input.
+func (c *Client) Level3dBake(ctx context.Context, in Level3dBakeInput) (*Envelope, error) {
+	return c.Call(ctx, "level3d.bake", in)
+}
+
+// Level3dValidateInput is the input of level3d.validate.
+type Level3dValidateInput struct {
+	CheckAssets *bool          `json:"checkAssets,omitempty"` // resolve glb piece assets as files under the project dir
+	Deep        *bool          `json:"deep,omitempty"`        // false: structure and references only (skip bake, ground, reachability, closure)
+	File        *string        `json:"file,omitempty"`        // path to a level .json (relative to project)
+	Level       map[string]any `json:"level,omitempty"`       // level JSON (spec/v4/level3d.md)
+	Locomotion  map[string]any `json:"locomotion,omitempty"`  // locomotion3d config; body.stepHeight/slopeLimitDeg/radius/height drive the nav bake (overrides level.locomotion)
+	Project     *string        `json:"project,omitempty"`     // project dir (default .)
+	Refs        map[string]any `json:"refs,omitempty"`        // known ids to resolve references against; only the lists you pass are enforced
+}
+
+// Level3dValidate calls level3d.validate: Validate a 3D level JSON: structure and references (spawns, triggers, hazards, checkpoints, arena), spawns standing on ground, every spawn/pickup/checkpoint reachable from a player spawn over the baked nav grid, boss arena bounds closed (except listed gates). Returns errors/warnings with JSON paths plus the deterministic bake hash.
+func (c *Client) Level3dValidate(ctx context.Context, in Level3dValidateInput) (*Envelope, error) {
+	return c.Call(ctx, "level3d.validate", in)
 }
 
 // LibraryAddInput is the input of library.add.
@@ -588,6 +700,37 @@ type LibraryVerifyInput struct {
 // LibraryVerify calls library.verify: Check installed assets against assets.lock.json: reports modified, missing or tampered files.
 func (c *Client) LibraryVerify(ctx context.Context, in LibraryVerifyInput) (*Envelope, error) {
 	return c.Call(ctx, "library.verify", in)
+}
+
+// Limb3dSimulateInput is the input of limb3d.simulate.
+type Limb3dSimulateInput struct {
+	Commands []any          `json:"commands,omitempty"`
+	File     *string        `json:"file,omitempty"` // path to a limb .json (relative to project)
+	Full     *bool          `json:"full,omitempty"` // include the event list and final pose
+	Limb     map[string]any `json:"limb,omitempty"` // limb definition (spec/v4/schemas/limb3d.schema.json)
+	Project  *string        `json:"project,omitempty"`
+	Sample   *int64         `json:"sample,omitempty"` // trajectory sampling interval in steps
+	Seed     *int64         `json:"seed,omitempty"`
+	Severs   []any          `json:"severs,omitempty"`
+	Steps    *int64         `json:"steps,omitempty"`
+	Targets  []any          `json:"targets,omitempty"` // target keyframes, linearly interpolated, sorted by f
+}
+
+// Limb3dSimulate calls limb3d.simulate: Run a limb headlessly over a scripted path (target keyframes, motion commands, severs): tip trajectory, max segment length error, max bend angle, capsule-list summary (count min/max/mean, damaging frames), event counts, final bone pose and a determinism hash.
+func (c *Client) Limb3dSimulate(ctx context.Context, in Limb3dSimulateInput) (*Envelope, error) {
+	return c.Call(ctx, "limb3d.simulate", in)
+}
+
+// Limb3dValidateInput is the input of limb3d.validate.
+type Limb3dValidateInput struct {
+	File    *string        `json:"file,omitempty"` // path to a limb .json (relative to project)
+	Limb    map[string]any `json:"limb,omitempty"` // limb definition (spec/v4/schemas/limb3d.schema.json)
+	Project *string        `json:"project,omitempty"`
+}
+
+// Limb3dValidate calls limb3d.validate: Validate a limb3d definition (hydra neck / tentacle): segment count and lengths, radius, solver, bend limits, seek, sway, sever/regrow and motion timings. Returns errors with JSON paths plus warnings and reach.
+func (c *Client) Limb3dValidate(ctx context.Context, in Limb3dValidateInput) (*Envelope, error) {
+	return c.Call(ctx, "limb3d.validate", in)
 }
 
 // Locomotion3dReportInput is the input of locomotion3d.report.
@@ -809,6 +952,23 @@ func (c *Client) ModelsVerify(ctx context.Context, in ModelsVerifyInput) (*Envel
 	return c.Call(ctx, "models.verify", in)
 }
 
+// NavBakeInput is the input of nav.bake.
+type NavBakeInput struct {
+	CheckAssets *bool          `json:"checkAssets,omitempty"` // resolve glb piece assets as files under the project dir
+	File        *string        `json:"file,omitempty"`        // path to a level .json (relative to project)
+	Level       map[string]any `json:"level,omitempty"`       // level JSON (spec/v4/level3d.md)
+	Locomotion  map[string]any `json:"locomotion,omitempty"`  // locomotion3d config; body.stepHeight/slopeLimitDeg/radius/height drive the nav bake (overrides level.locomotion)
+	Out         *string        `json:"out,omitempty"`         // directory inside the project (default assets/levels/baked)
+	Overwrite   *bool          `json:"overwrite,omitempty"`
+	Project     *string        `json:"project,omitempty"` // project dir (default .)
+	Refs        map[string]any `json:"refs,omitempty"`    // known ids to resolve references against; only the lists you pass are enforced
+}
+
+// NavBake calls nav.bake: Bake only the navigation grid of a level JSON (slope/step/radius/height from the level or a locomotion3d config) to <id>.nav.json; an ai3d NavProvider (findPath/isClear/walkable) can be rebuilt from it with navFromJSON. Reports node/edge counts and reachability from player spawns.
+func (c *Client) NavBake(ctx context.Context, in NavBakeInput) (*Envelope, error) {
+	return c.Call(ctx, "nav.bake", in)
+}
+
 // PackageShellsInput is the input of package.shells.
 type PackageShellsInput struct {
 	Project *string `json:"project,omitempty"` // optional project dir: marks shells applicable to its kind and picks the default
@@ -833,6 +993,20 @@ type PackageStandaloneInput struct {
 // PackageStandalone calls package.standalone: Package a project (web, rust, go, godot, python) as a standalone app with a chosen shell; returns artifacts [{path,sha256,bytes}] and the plan. dryRun only plans. Toolchain missing => plan with status SKIP and reason.
 func (c *Client) PackageStandalone(ctx context.Context, in PackageStandaloneInput) (*Envelope, error) {
 	return c.Call(ctx, "package.standalone", in)
+}
+
+// ParityRunInput is the input of parity.run.
+type ParityRunInput struct {
+	Module    string   `json:"module"`          // one of: combat3d, boss3d
+	Cases     []string `json:"cases,omitempty"` // case names to run (default all; see data.available)
+	Godot     *string  `json:"godot,omitempty"` // explicit Godot binary
+	Keep      *bool    `json:"keep,omitempty"`  // keep the scratch project (path in data.scratch)
+	TimeoutMs *int64   `json:"timeoutMs,omitempty"`
+}
+
+// ParityRun calls parity.run: Cross-runtime parity: run the JS reference (combat3d / boss3d) and the GDScript mirror in Godot headless on the same example JSON, diff event-log hashes (pinned duel hash 6fedb1fe, boss simulate hash) and key numbers, and return per-case pass/fail. NOT_FOUND when Godot is absent.
+func (c *Client) ParityRun(ctx context.Context, in ParityRunInput) (*Envelope, error) {
+	return c.Call(ctx, "parity.run", in)
 }
 
 // ProjectNewInput is the input of project.new.
@@ -1085,4 +1259,34 @@ type SwarmTrackInput struct {
 // SwarmTrack calls swarm.track: Append a progress event for an agent (start|progress|done|blocked|failed|note), or record a check.
 func (c *Client) SwarmTrack(ctx context.Context, in SwarmTrackInput) (*Envelope, error) {
 	return c.Call(ctx, "swarm.track", in)
+}
+
+// Vfx3dSampleInput is the input of vfx3d.sample.
+type Vfx3dSampleInput struct {
+	Effect    map[string]any `json:"effect,omitempty"` // vfx3d definition (spec/v4/schemas/vfx3d.schema.json)
+	Emitter   *int64         `json:"emitter,omitempty"`
+	File      *string        `json:"file,omitempty"`   // path to an effect .json (relative to project)
+	Limit     *int64         `json:"limit,omitempty"`  // max particles returned
+	Points    []any          `json:"points,omitempty"` // [x,y,z] points (water/surface use x,z); default [[0,0,0]]
+	Project   *string        `json:"project,omitempty"`
+	Resisting *bool          `json:"resisting,omitempty"`
+	Times     []float64      `json:"times,omitempty"` // seconds; default [0]
+	What      *string        `json:"what,omitempty"`  // default field
+}
+
+// Vfx3dSample calls vfx3d.sample: Evaluate an effect at points and times: force-field vector and damage (field), Gerstner water height and normal (water), whirlpool surface height incl. funnel (surface), or live seeded particles of one emitter (particles). Same maths the Godot loader and boss3d/locomotion3d use.
+func (c *Client) Vfx3dSample(ctx context.Context, in Vfx3dSampleInput) (*Envelope, error) {
+	return c.Call(ctx, "vfx3d.sample", in)
+}
+
+// Vfx3dValidateInput is the input of vfx3d.validate.
+type Vfx3dValidateInput struct {
+	Effect  map[string]any `json:"effect,omitempty"` // vfx3d definition (spec/v4/schemas/vfx3d.schema.json)
+	File    *string        `json:"file,omitempty"`   // path to an effect .json (relative to project)
+	Project *string        `json:"project,omitempty"`
+}
+
+// Vfx3dValidate calls vfx3d.validate: Validate a vfx3d effect definition (whirlpool, flood water, sludge, fire, steam, sparks): force field, Gerstner waves, visual params and particle emitters. Errors carry JSON paths; warnings flag choppy waves or a vortex without ramp.
+func (c *Client) Vfx3dValidate(ctx context.Context, in Vfx3dValidateInput) (*Envelope, error) {
+	return c.Call(ctx, "vfx3d.validate", in)
 }

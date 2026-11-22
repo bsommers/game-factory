@@ -495,6 +495,10 @@ def run_character(case: Dict[str, Any]) -> Dict[str, Any]:
     ``vy`` starts at 0, one ``move_and_slide`` per step. Gravity mode (no ``vel``) carries ``vy`` across segments."""
     ch = C3.create_character(**snake_keys(case["cfg"]))
     dt = 1 / 60
+    # world = flat soup or {tris, materials}; platform segments translate triangles of a private copy.
+    cw = case["world"]
+    world = {**cw, "tris": list(cw["tris"])} if isinstance(cw, dict) else list(cw)
+    tris = world["tris"] if isinstance(world, dict) else world
     trace = []
     vy = 0
     for seg in case["script"]:
@@ -506,12 +510,22 @@ def run_character(case: Dict[str, Any]) -> Dict[str, Any]:
             else:
                 vy = 0 if (ch["grounded"] and vy <= 0) else vy - 20 * dt
                 vel = [seg.get("dx", 0), vy, seg.get("dz", 0)]
-            C3.move_and_slide(ch, vel, dt, case["world"])
+            pf = seg.get("platform")
+            if pf:
+                for t in range(pf["from"], pf["from"] + pf["count"]):
+                    for q in range(9):
+                        tris[t * 9 + q] += pf["velocity"][q % 3] * dt
+                ch["groundVelocity"] = pf["velocity"]
+            else:
+                ch["groundVelocity"] = [0, 0, 0]
+            C3.move_and_slide(ch, vel, dt, world)
             if "vel" not in seg and ch["grounded"] and vy <= 0:
                 vy = 0
             trace.append([ch["pos"][0], ch["pos"][1], ch["pos"][2], 1 if ch["grounded"] else 0])
-    return {"trace": trace, "final": {"pos": ch["pos"], "vel": ch["vel"], "grounded": ch["grounded"],
-                                      "groundNormal": ch["groundNormal"]}}
+    final = {"pos": ch["pos"], "vel": ch["vel"], "grounded": ch["grounded"], "groundNormal": ch["groundNormal"]}
+    if case.get("reportGround"):
+        final["groundIndex"], final["groundMaterial"] = ch["groundIndex"], ch["groundMaterial"]
+    return {"trace": trace, "final": final}
 
 
 # ---- bvh (spec/v3) -----------------------------------------------------------------------------

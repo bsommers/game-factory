@@ -93,7 +93,7 @@ class VectorsTest(unittest.TestCase):
 
     def test_character_case_count(self):
         self.assertIsNotNone(VDIR)
-        self.assertEqual(len(json.loads((VDIR.parent / "v3" / "vectors" / "character.json").read_text(encoding="utf-8"))["cases"]), 12)
+        self.assertEqual(len(json.loads((VDIR.parent / "v3" / "vectors" / "character.json").read_text(encoding="utf-8"))["cases"]), 22)
 
     def test_v2_v3_vectors_present(self):
         self.assertIsNotNone(VDIR)
