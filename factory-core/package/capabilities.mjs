@@ -131,7 +131,15 @@ export function makeCapabilities(deps = defaultDeps()) {
       }
       writeGenerated(plan);
       for (const s of plan.steps) {
-        if (s.copy) { rmSync(s.copy.to, { recursive: true, force: true }); mkdirSync(dirname(s.copy.to), { recursive: true }); cpSync(s.copy.from, s.copy.to, { recursive: true, filter: (f) => { const r = relative(s.copy.from, f); if (!r) return true; if (/(^|\/)(node_modules|\.git)(\/|$)/.test(r)) return false; return s.copy.from !== project || /^(index\.html|style\.css|src|assets|public)(\/|$)/.test(r); } }); continue; }
+        if (s.copy) {
+          rmSync(s.copy.to, { recursive: true, force: true }); mkdirSync(dirname(s.copy.to), { recursive: true });
+          const skip = /(^|\/)(node_modules|\.git)(\/|$)/;
+          if (s.copy.from === project) { // copy only the web entries one by one: cpSync refuses a destination inside its own source (out defaults to <project>/dist)
+            mkdirSync(s.copy.to, { recursive: true });
+            for (const e of readdirSync(project)) if (/^(index\.html|style\.css|src|assets|public)$/.test(e)) cpSync(join(project, e), join(s.copy.to, e), { recursive: true, filter: (f) => !skip.test(relative(project, f)) });
+          } else cpSync(s.copy.from, s.copy.to, { recursive: true, filter: (f) => !skip.test(relative(s.copy.from, f)) });
+          continue;
+        }
         const r = await deps.exec(s.cmd, s.args, { cwd: s.cwd, env: s.env });
         if (r.code) return fail('FAILED', `${s.id} failed (${s.cmd} exited ${r.code}${r.spawnError ? ', ' + r.spawnError : ''}): ${(r.stderr || r.stdout).trim().slice(-2000)}`, { plan });
       }

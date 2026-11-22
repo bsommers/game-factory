@@ -31,9 +31,9 @@ Full suite: `node --test test/` = 154 pass, 0 fail.
 
 ## Open
 - GPU kit: now run once in headless Chrome (SwiftShader WebGPU): tier webgpu, no errors, WGSL compiles, 4056/4096 pixels lit on cornell. Fixed a frozen `samples` getter (spread in createRaytracer). Still unverified on a real GPU.
-- Tauri/Wails/Electron builds are only stub-tested (no cargo-tauri, wails or electron installed here).
+- Electron: packaged for real (108 MB tarball) and launched under Xvfb. Fixed `package.standalone` self-copy bug (default out dir inside an unbuilt web project). Tauri/Wails still unverified: need `libgtk-3-dev libwebkit2gtk-4.1-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev` (sudo), then `cargo install tauri-cli` and `go install github.com/wailsapp/wails/v2/cmd/wails@v2.9.2` into /datanapps.
 - Guide language code reviewed by hand: no defects; owned test paths (core/world/ui/bot) are for files agents create.
-- Go cgo build still unverified: needs `sudo apt install libxxf86vm-dev libx11-dev libxrandr-dev libxcursor-dev libxinerama-dev libxi-dev libgl1-mesa-dev` (needs the user's password).
+- Go cgo build now VERIFIED here (user installed the X11 dev libs); the dispatch-test skip is dead code on this machine but kept for others.
 - Regenerate clients (`clients.generate`) after any capability schema change; the drift test fails otherwise.
 
 ## Session handoff (refreshed 2026-11-21, before /compact)
