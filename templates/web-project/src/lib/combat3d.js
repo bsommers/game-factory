@@ -474,12 +474,15 @@ export function frameDataMarkdown(def) {
 
 // ---------------- scripted duel ----------------
 // script: { A:[{at, action}|{from,to,block:true}], B:[...] }; keys are fighter ids. `at` is the 1-based world frame.
-export function simulateDuel(defA, defB, { script = {}, frames = 600, distance = 1.6, seed = 1, statuses = {} } = {}) {
+// Optional world settings: friendlyFire, hostility ({team:[teams]}), kbDecay; poses: static { A|B|id: {pos?, yaw?, bones?} } passed to every step; poseFrames: array of such maps, entry i-1 used on world frame i (last entry repeats, null = no poses; overrides poses).
+export function simulateDuel(defA, defB, { script = {}, frames = 600, distance = 1.6, seed = 1, statuses = {}, friendlyFire = false, hostility = null, kbDecay, poses = null, poseFrames = null } = {}) {
   const a = createFighter(defA, { pos: [0, 0, -distance / 2], yaw: 0, team: defA.team ?? 'a' }), b = createFighter(defB, { pos: [0, 0, distance / 2], yaw: Math.PI, team: defB.team ?? 'b' });
   if (a.team === b.team) b.team += '-2';
   if (a.id === b.id) b.id += '-2';
-  const world = createWorld({ fighters: [a, b], seed, statuses, groundY: 0 });
+  const world = createWorld({ fighters: [a, b], seed, statuses, groundY: 0, friendlyFire, hostility, ...(kbDecay !== undefined ? { kbDecay } : {}) });
   const idOf = { A: a.id, B: b.id, [a.id]: a.id, [b.id]: b.id };
+  const byId = (m) => (m ? Object.fromEntries(Object.entries(m).filter(([k]) => idOf[k]).map(([k, v]) => [idOf[k], v])) : null);
+  const posesById = byId(poses), frameById = poseFrames ? poseFrames.map(byId) : null;
   for (let i = 0; i < frames; i++) {
     const fr = world.frame + 1, inputs = {};
     for (const [who, list] of Object.entries(script)) {
@@ -489,7 +492,7 @@ export function simulateDuel(defA, defB, { script = {}, frames = 600, distance =
         if (s.block && fr >= s.from && fr <= s.to) (inputs[id] ||= {}).block = true;
       }
     }
-    step(world, inputs);
+    step(world, inputs, frameById ? (frameById.length ? frameById[Math.min(fr - 1, frameById.length - 1)] : null) : posesById);
     if (world.fighters.some((f) => f.state === 'dead')) break;
   }
   const cnt = (t) => world.events.filter((e) => e.type === t).length;

@@ -5,6 +5,9 @@ export const HERO = 'combat3d/hero.json';
 export const GHOUL = 'combat3d/enemy-swipe.json';
 const DUEL_SCRIPT = { hero: [{ at: 1, action: 'light' }, { at: 2, action: 'light' }, { at: 3, action: 'heavy' }], ghoul: [{ at: 60, action: 'swipe' }, { at: 150, action: 'swipe' }] };
 
+// Animated poses: A's hand bone sweeps across the body, B's root drifts and turns; frames 1-20 null, then 100 entries, last repeats.
+const ANIM_POSES = Array.from({ length: 120 }, (_, i) => (i < 20 ? null : { A: { pos: [0, 0, -0.5], yaw: 0, bones: { hand_r: { pos: [0.4 - 0.008 * i, 1.1 + 0.002 * i, 0.1], quat: [0, Math.sin(i / 40), 0, Math.cos(i / 40)] } } }, B: { pos: [0.003 * i, 0, 0.5], yaw: Math.PI - 0.01 * i } }));
+
 export const COMBAT_CASES = [
   { name: 'duel', summary: 'the shipped duel (hero vs ghoul, seed 7): pinned event-log hash', a: { file: HERO }, b: { file: GHOUL }, frames: 240, distance: 1.4, seed: 7, script: DUEL_SCRIPT, pinned: '6fedb1fe' },
   { name: 'long-combo', summary: '600 frames, chains, cancels, poison rolls (rng)', a: { file: HERO }, b: { file: GHOUL }, frames: 600, distance: 1.4, seed: 7,
@@ -40,6 +43,20 @@ export const COMBAT_CASES = [
     script: { hero: [{ at: 1, action: 'light' }, { at: 40, action: 'light' }], ghoul: [{ at: 90, action: 'swipe' }] } },
   { name: 'unblockable-statusonly', summary: 'unblockable swipe through a held block; statusOnly spit applies status without damage', a: { file: HERO }, b: { file: GHOUL, patch: { 'moves.swipe.unblockable': true, 'moves.swipe.onHit': [{ id: 'burn', chance: 1 }], 'moves.lunge.statusOnly': true, 'moves.lunge.onHit': [{ id: 'poison', chance: 1 }] } }, frames: 260, distance: 1.0, seed: 35,
     script: { hero: [{ from: 1, to: 240, block: true }], ghoul: [{ at: 20, action: 'swipe' }, { at: 120, action: 'lunge' }] } },
+  { name: 'friendly-fire', summary: 'same-team fighters with empty hostility: no hits unless friendlyFire (move hitboxes only)', a: { file: HERO }, b: { file: GHOUL }, hostility: {}, friendlyFire: true, frames: 160, distance: 1.0, seed: 41,
+    script: { hero: [{ at: 1, action: 'light' }, { at: 40, action: 'light' }], ghoul: [{ at: 80, action: 'swipe' }] } },
+  { name: 'hostility-directional', summary: 'one-way hostility: only the hostile team can hurt the other', a: { file: HERO, patch: { team: 'red' } }, b: { file: GHOUL, patch: { team: 'blue' } }, hostility: { red: ['blue'] }, frames: 160, distance: 1.0, seed: 43,
+    script: { hero: [{ at: 1, action: 'light' }, { at: 40, action: 'light' }], ghoul: [{ at: 20, action: 'swipe' }, { at: 80, action: 'swipe' }] } },
+  { name: 'kb-decay', summary: 'knockback decay override changes slide distance and later hits', a: { file: HERO }, b: { file: GHOUL }, kbDecay: 0.95, frames: 260, distance: 1.0, seed: 45,
+    script: { hero: [{ at: 1, action: 'light' }, { at: 2, action: 'light' }, { at: 3, action: 'heavy' }, { at: 120, action: 'light' }], ghoul: [{ at: 90, action: 'swipe' }] } },
+  { name: 'poses-bones', summary: 'external poses: bone-attached hitbox/hurtbox, root pos/yaw overrides, missing bone fallback', a: { file: HERO, patch: { 'moves.light1.hitboxes': [{ id: 'blade', bone: 'hand_r', offset: [0, 0, 0.3], shape: { type: 'sphere', r: 0.3 } }] } },
+    b: { file: GHOUL, patch: { hurtboxes: [{ id: 'body', bone: 'spine', shape: { type: 'capsule', a: [0, -0.5, 0], b: [0, 0.4, 0], r: 0.45 }, mult: 1 }, { id: 'core', bone: 'chest', shape: { type: 'sphere', r: 0.2 }, mult: 2, weak: true }] } },
+    poses: { A: { pos: [0, 0, -0.5], yaw: 0, bones: { hand_r: { pos: [0.1, 1.2, -0.1], quat: [0, 0.2588190451025207, 0, 0.9659258262890683] } } }, B: { pos: [0, 0, 0.5], yaw: 3.14159, bones: { spine: { pos: [0, 1.2, 0.5] } } } },
+    frames: 160, distance: 1.0, seed: 47, script: { hero: [{ at: 1, action: 'light' }, { at: 40, action: 'light' }], ghoul: [{ at: 90, action: 'swipe' }] } },
+  { name: 'poses-animated', summary: 'per-frame poses: attacker hand bone sweeps, victim root drifts and turns, null frames, last entry repeats', a: { file: HERO, patch: { 'moves.light1.hitboxes': [{ id: 'blade', bone: 'hand_r', offset: [0, 0, 0.2], shape: { type: 'capsule', a: [0, 0, 0], b: [0, 0, 0.5], r: 0.2 } }] } },
+    b: { file: GHOUL }, poseFrames: ANIM_POSES, frames: 160, distance: 1.0, seed: 49, script: { hero: [{ at: 1, action: 'light' }, { at: 40, action: 'light' }, { at: 80, action: 'light' }], ghoul: [{ at: 100, action: 'swipe' }] } },
+  { name: 'box-box-overlap', summary: 'box hitbox (heavy slam) against box hurtboxes, victim yawed off-axis by a pose (OBB vs OBB)', a: { file: HERO }, b: { file: GHOUL, patch: { hurtboxes: [{ id: 'body', shape: { type: 'box', h: [0.4, 0.7, 0.3] }, offset: [0, 1, 0], mult: 1 }, { id: 'core', shape: { type: 'box', h: [0.15, 0.15, 0.15] }, offset: [0, 1, 0.3], mult: 2, weak: true }] } },
+    poses: { B: { yaw: 2.4 } }, frames: 140, distance: 1.1, seed: 51, script: { hero: [{ at: 1, action: 'heavy' }, { at: 60, action: 'heavy' }], ghoul: [{ at: 100, action: 'swipe' }] } },
 ];
 
 // Boss cases: simulate() determinism hash + per-run log hashes + summary numbers + the head of run 0's event log.

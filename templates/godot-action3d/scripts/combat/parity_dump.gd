@@ -41,7 +41,7 @@ func _initialize() -> void:
 func _run_combat(c: Dictionary) -> Dictionary:
 	var da: Variant = read_json(c["a"])
 	var db: Variant = read_json(c["b"])
-	var r: Dictionary = Combat.simulate_duel(da, db, {"script": c.get("script", {}), "frames": c.get("frames", 600), "distance": c.get("distance", 1.6), "seed": c.get("seed", 1), "statuses": c.get("statuses")})
+	var r: Dictionary = Combat.simulate_duel(da, db, {"script": c.get("script", {}), "frames": c.get("frames", 600), "distance": c.get("distance", 1.6), "seed": c.get("seed", 1), "statuses": c.get("statuses"), "friendlyFire": c.get("friendlyFire", false), "hostility": c.get("hostility"), "kbDecay": c.get("kbDecay", 0.85), "poses": c.get("poses"), "poseFrames": c.get("poseFrames")})
 	var w: Dictionary = r["world"]
 	return {"name": c["name"], "frames": r["frames"], "winner": r["winner"], "counts": r["counts"], "totals": r["totals"], "hash": r["hash"], "worldHash": Combat.hash_world(w), "eventCount": w["events"].size(), "events": w["events"].slice(0, 2000)}
 

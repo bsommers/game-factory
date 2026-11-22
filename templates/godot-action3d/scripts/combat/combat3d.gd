@@ -814,10 +814,29 @@ static func simulate_duel(def_a: Dictionary, def_b: Dictionary, o: Dictionary = 
 		b["team"] = str(b["team"]) + "-2"
 	if a["id"] == b["id"]:
 		b["id"] = str(b["id"]) + "-2"
-	var world: Dictionary = create_world({"fighters": [a, b], "seed": seed, "statuses": o.get("statuses"), "groundY": 0.0})
+	var world: Dictionary = create_world({"fighters": [a, b], "seed": seed, "statuses": o.get("statuses"), "groundY": 0.0, "friendlyFire": o.get("friendlyFire", false), "hostility": o.get("hostility"), "kbDecay": o.get("kbDecay", 0.85)})
 	var id_of: Dictionary = {"A": a["id"], "B": b["id"]}
 	id_of[a["id"]] = a["id"]
 	id_of[b["id"]] = b["id"]
+	var poses_by_id = null
+	var poses_in = o.get("poses")
+	if poses_in != null:
+		poses_by_id = {}
+		for k in poses_in.keys():
+			if id_of.has(k):
+				poses_by_id[id_of[k]] = poses_in[k]
+	var pose_frames = null
+	var pf_in = o.get("poseFrames")
+	if pf_in != null:
+		pose_frames = []
+		for m in pf_in:
+			var mm = null
+			if m != null:
+				mm = {}
+				for k in m.keys():
+					if id_of.has(k):
+						mm[id_of[k]] = m[k]
+			pose_frames.append(mm)
 	for i in frames:
 		var fr: int = world["frame"] + 1
 		var inputs: Dictionary = {}
@@ -834,7 +853,10 @@ static func simulate_duel(def_a: Dictionary, def_b: Dictionary, o: Dictionary = 
 					if not inputs.has(id):
 						inputs[id] = {}
 					inputs[id]["block"] = true
-		step(world, inputs)
+		var step_poses = poses_by_id
+		if pose_frames != null:
+			step_poses = pose_frames[mini(fr - 1, pose_frames.size() - 1)] if pose_frames.size() > 0 else null
+		step(world, inputs, step_poses)
 		var any_dead: bool = false
 		for f in world["fighters"]:
 			if f["state"] == "dead":

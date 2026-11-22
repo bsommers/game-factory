@@ -34,9 +34,10 @@ function loadDef(spec, dir, tag) { // returns {def, path}: patched defs are writ
 const firstDiff = (a, b) => { const n = Math.max(a.length, b.length); for (let i = 0; i < n; i++) if (J(a[i]) !== J(b[i])) return { index: i, js: a[i] ?? null, godot: b[i] ?? null }; return null; };
 function compare(checks, name, js, gd, extra) { const pass = J(js) === J(gd); checks.push({ name, pass, ...(pass ? {} : { js, godot: gd, ...(extra || {}) }) }); }
 
+const duelOpts = (c) => Object.fromEntries(['friendlyFire', 'hostility', 'kbDecay', 'poses', 'poseFrames'].filter((k) => c[k] !== undefined).map((k) => [k, c[k]]));
 function jsCombat(c, dir) {
   const A = loadDef(c.a, dir, `${c.name}-a`), B = loadDef(c.b, dir, `${c.name}-b`);
-  const r = Combat.simulateDuel(clone(A.def), clone(B.def), { script: c.script || {}, frames: c.frames, distance: c.distance, seed: c.seed, statuses: c.statuses || {} });
+  const r = Combat.simulateDuel(clone(A.def), clone(B.def), { script: c.script || {}, frames: c.frames, distance: c.distance, seed: c.seed, statuses: c.statuses || {}, ...duelOpts(c) });
   const events = clone(r.world.events);
   return { files: { a: A.path, b: B.path }, res: { name: c.name, frames: r.frames, winner: r.winner, counts: r.counts, totals: clone(r.totals), hash: r.hash, worldHash: Combat.hashWorld(r.world), eventCount: events.length, events: events.slice(0, 2000) } };
 }
@@ -84,7 +85,7 @@ export function registerParity(r) {
         let jsRes, spec;
         if (i.module === 'combat3d') {
           const made = cases.map((c) => ({ c, ...jsCombat(c, defs) })); jsRes = made.map((m) => m.res);
-          spec = { cases: made.map((m) => ({ name: m.c.name, a: m.files.a, b: m.files.b, script: m.c.script || {}, frames: m.c.frames, distance: m.c.distance, seed: m.c.seed, statuses: m.c.statuses || null })) };
+          spec = { cases: made.map((m) => ({ name: m.c.name, a: m.files.a, b: m.files.b, script: m.c.script || {}, frames: m.c.frames, distance: m.c.distance, seed: m.c.seed, statuses: m.c.statuses || null, ...duelOpts(m.c) })) };
         } else {
           jsRes = cases.map((c) => jsBoss(c));
           spec = { cases: cases.map((c) => ({ name: c.name, file: join(EXAMPLES, c.file), runs: c.runs ?? 3, seed: c.seed ?? 1, profile: c.profile || null, maxSeconds: c.maxSeconds ?? 300, head: 300 })) };
