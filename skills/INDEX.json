@@ -1,6 +1,6 @@
 {
   "formatVersion": 1,
-  "count": 17,
+  "count": 23,
   "skills": [
     {
       "name": "add-fx",
@@ -210,6 +210,56 @@
         "skeleton",
         "skinn",
         "walk"
+      ]
+    },
+    {
+      "name": "asset-library-blobs",
+      "description": "Pack, publish and fetch large asset blobs (models, textures, audio) for the shared asset library with integrity hashes, keeping the git index small.",
+      "triggers": [
+        "asset blobs",
+        "library blobs",
+        "pack blobs",
+        "publish blobs",
+        "fetch blobs",
+        "large assets",
+        "blob store",
+        "asset library storage"
+      ],
+      "needs": [
+        "Node 22+"
+      ],
+      "outputs": [
+        "library blobs",
+        "blobs manifest"
+      ],
+      "model": "haiku",
+      "cost": "low",
+      "capabilities": [
+        "library.blobs-pack",
+        "library.blobs-publish",
+        "library.blobs-fetch",
+        "library.verify",
+        "library.install"
+      ],
+      "kits": [],
+      "file": "asset-library-blobs.md",
+      "commands": [],
+      "steps": [
+        "`library.blobs-pack {library}` hashes large files into blobs and writes the manifest.",
+        "`library.blobs-publish` uploads them to the configured store.",
+        "`library.blobs-fetch {project}` restores missing blobs; errors with BLOB_MISSING if absent.",
+        "`library.verify {project}` proves integrity."
+      ],
+      "keywords": [
+        "asset",
+        "blob",
+        "fetch",
+        "large",
+        "library",
+        "pack",
+        "publish",
+        "storage",
+        "store"
       ]
     },
     {
@@ -616,6 +666,246 @@
       ]
     },
     {
+      "name": "gameplay-3d-core",
+      "description": "Build the 3D action gameplay core: camera, animation graph, locomotion, combat, enemy AI and boss fights, with balance and fairness simulation.",
+      "triggers": [
+        "3d action game",
+        "boss fight",
+        "boss balance",
+        "third person camera",
+        "locomotion",
+        "combat system",
+        "enemy ai",
+        "animation graph",
+        "dodge roll",
+        "souls-like",
+        "action rpg",
+        "3d gameplay"
+      ],
+      "needs": [
+        "Node 22+"
+      ],
+      "outputs": [
+        "src/gameplay/*.json",
+        "reports"
+      ],
+      "model": "sonnet",
+      "cost": "medium",
+      "capabilities": [
+        "camera3d.validate",
+        "camera3d.simulate",
+        "animgraph.validate",
+        "animgraph.simulate",
+        "locomotion3d.validate",
+        "locomotion3d.simulate",
+        "locomotion3d.report",
+        "combat3d.validate",
+        "combat3d.simulate",
+        "ai3d.validate",
+        "ai3d.simulate",
+        "boss3d.validate",
+        "boss3d.simulate",
+        "boss3d.fairness",
+        "boss3d.balance"
+      ],
+      "kits": [],
+      "file": "gameplay-3d-core.md",
+      "commands": [],
+      "steps": [
+        "Write data configs per module (camera, animgraph, locomotion, combat, ai, boss).",
+        "`<module>.validate {config}` for each, then `<module>.simulate` for deterministic runs.",
+        "Boss: `boss3d.fairness` checks telegraphs and punish windows; `boss3d.balance` searches player skill levels for a target win rate.",
+        "`locomotion3d.report` summarises speeds, jump arcs and slopes.",
+        "Wire into the engine only after simulations are green."
+      ],
+      "keywords": [
+        "3d",
+        "action",
+        "ai",
+        "animation",
+        "balance",
+        "boss",
+        "camera",
+        "combat",
+        "core",
+        "dodge",
+        "enemy",
+        "fight",
+        "game",
+        "gameplay",
+        "graph",
+        "like",
+        "locomotion",
+        "person",
+        "roll",
+        "rpg",
+        "soul",
+        "system",
+        "third"
+      ]
+    },
+    {
+      "name": "godot-runtime",
+      "description": "Run, test, screenshot and export a Godot 4 project headlessly; detect the engine, import-check assets, run GUT/parity tests and build export templates.",
+      "triggers": [
+        "godot",
+        "godot 4",
+        "gdscript",
+        "headless godot",
+        "godot export",
+        "export preset",
+        "godot screenshot",
+        "godot test",
+        "godot project",
+        "3d action game godot"
+      ],
+      "needs": [
+        "Node 22+"
+      ],
+      "outputs": [
+        "export/*",
+        "out/shots/*.png"
+      ],
+      "model": "sonnet",
+      "cost": "medium",
+      "capabilities": [
+        "godot.detect",
+        "godot.import-check",
+        "godot.test",
+        "godot.shot",
+        "godot.export",
+        "godot.export-templates",
+        "parity.run",
+        "nav.bake"
+      ],
+      "kits": [],
+      "file": "godot-runtime.md",
+      "commands": [],
+      "steps": [
+        "`godot.detect {}`: finds the binary and version; stop here if missing and report it.",
+        "`godot.import-check {project}`: headless import; fix every reported asset error before anything else.",
+        "`godot.test {project}`: run the project tests; `parity.run` compares the Godot sim against the JS reference sim for the same seed.",
+        "`nav.bake` bakes navigation data from level3d output when AI needs it.",
+        "`godot.shot {project}` for a screenshot to eyeball, then `godot.export-templates` and `godot.export {project, preset}` for a build."
+      ],
+      "keywords": [
+        "3d",
+        "4",
+        "action",
+        "export",
+        "game",
+        "gdscript",
+        "godot",
+        "headless",
+        "preset",
+        "project",
+        "runtime",
+        "screenshot",
+        "test"
+      ]
+    },
+    {
+      "name": "img2model-rig",
+      "description": "Rig a model from an image: silhouette extraction, procedural model build and verification against the source image.",
+      "triggers": [
+        "rig model from image",
+        "img2model",
+        "image to model",
+        "silhouette",
+        "image to 3d model",
+        "procedural model",
+        "rig from picture"
+      ],
+      "needs": [
+        "Node 22+"
+      ],
+      "outputs": [
+        "assets/models/*.glb"
+      ],
+      "model": "sonnet",
+      "cost": "medium",
+      "capabilities": [
+        "img2model.silhouette",
+        "img2model.build",
+        "img2model.verify"
+      ],
+      "kits": [],
+      "file": "img2model-rig.md",
+      "commands": [],
+      "steps": [
+        "`img2model.silhouette {image}` extracts the outline and reports quality.",
+        "`img2model.build {image, out}` builds the rigged model from it.",
+        "`img2model.verify` compares the render silhouette to the source."
+      ],
+      "keywords": [
+        "3d",
+        "image",
+        "img2model",
+        "model",
+        "picture",
+        "procedural",
+        "rig",
+        "silhouette"
+      ]
+    },
+    {
+      "name": "limb-vfx-level-3d",
+      "description": "Author 3D limb damage and dismemberment rules, VFX presets and level layouts: validate, simulate or sample, and bake level data.",
+      "triggers": [
+        "limb damage",
+        "dismemberment",
+        "vfx",
+        "3d vfx",
+        "particle effects 3d",
+        "level layout",
+        "level bake",
+        "arena level",
+        "3d level",
+        "hit effects"
+      ],
+      "needs": [
+        "Node 22+"
+      ],
+      "outputs": [
+        "src/limb/*.json",
+        "src/vfx/*.json",
+        "src/levels/*.json"
+      ],
+      "model": "sonnet",
+      "cost": "medium",
+      "capabilities": [
+        "limb3d.validate",
+        "limb3d.simulate",
+        "vfx3d.validate",
+        "vfx3d.sample",
+        "level3d.validate",
+        "level3d.bake",
+        "nav.bake"
+      ],
+      "kits": [],
+      "file": "limb-vfx-level-3d.md",
+      "commands": [],
+      "steps": [
+        "`limb3d.validate {config}` then `limb3d.simulate` for hit and sever outcomes.",
+        "`vfx3d.validate {config}` then `vfx3d.sample {config, t}` to inspect particles over time.",
+        "`level3d.validate {config}` then `level3d.bake` to produce level data; `nav.bake` for navigation."
+      ],
+      "keywords": [
+        "3d",
+        "arena",
+        "bake",
+        "damage",
+        "dismemberment",
+        "effect",
+        "hit",
+        "layout",
+        "level",
+        "limb",
+        "particle",
+        "vfx"
+      ]
+    },
+    {
       "name": "make-sprites-characters",
       "description": "Make pixel-art sprites, tiles and animated characters with art-kit and character-kit, palette locked and viewed at x6.",
       "triggers": [
@@ -686,6 +976,62 @@
         "style",
         "tile",
         "tileset"
+      ]
+    },
+    {
+      "name": "meshy-intake-generate",
+      "description": "Bring Meshy models into a project: generate from text or image, poll status, import, split, map rigs and verify the resulting .glb files.",
+      "triggers": [
+        "meshy",
+        "import meshy model",
+        "meshy generate",
+        "text to 3d",
+        "image to 3d",
+        "meshy rig",
+        "rig map",
+        "meshy status",
+        "meshy glb"
+      ],
+      "needs": [
+        "Node 22+"
+      ],
+      "outputs": [
+        "assets/models/*.glb"
+      ],
+      "model": "sonnet",
+      "cost": "medium",
+      "capabilities": [
+        "meshy.generate",
+        "meshy.status",
+        "meshy.import",
+        "meshy.split",
+        "meshy.rig-map",
+        "meshy.verify",
+        "anim.inspect",
+        "anim.merge"
+      ],
+      "kits": [],
+      "file": "meshy-intake-generate.md",
+      "commands": [],
+      "steps": [
+        "`meshy.generate {prompt|image}` starts a job (needs MESHY_API_KEY; offline/dry-run otherwise); `meshy.status {id}` polls it.",
+        "`meshy.import {inputs}` copies downloaded files into assets/models with provenance.",
+        "`meshy.split` separates parts; `meshy.rig-map` maps Meshy bones to the game skeleton.",
+        "`meshy.verify` checks the result, then use animated-models for clips."
+      ],
+      "keywords": [
+        "3d",
+        "generate",
+        "glb",
+        "image",
+        "import",
+        "intake",
+        "map",
+        "meshy",
+        "model",
+        "rig",
+        "statu",
+        "text"
       ]
     },
     {

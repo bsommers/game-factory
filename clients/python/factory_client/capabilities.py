@@ -86,6 +86,14 @@ class Capabilities:
         """godot.detect: Find a Godot 4 binary (GODOT_BIN, PATH, /datanapps/tools/godot/*, ~/.local/share/godot) and report version, path, and whether xvfb-run / a display exist for screenshots."""
         return self.call("godot.detect", {"godot": godot})
 
+    def godot_export(self, *, debug: bool | None = None, godot: str | None = None, out: str | None = None, preset: str | None = None, project: str | None = None, timeoutMs: int | None = None):
+        """godot.export: Export a Godot project with a preset from its export_presets.cfg ("Linux x86_64" or "Web") using --headless --export-release. Fails NOT_FOUND (with next steps) when export templates are missing; run godot.export-templates first."""
+        return self.call("godot.export", {"debug": debug, "godot": godot, "out": out, "preset": preset, "project": project, "timeoutMs": timeoutMs})
+
+    def godot_export_templates(self, *, fromFile: str | None = None, godot: str | None = None, install: bool | None = None, templatesDir: str | None = None, version: str | None = None):
+        """godot.export-templates: Report whether Godot export templates for the matching engine version exist (~/.local/share/godot/export_templates/<ver>). With the explicit fetch flag, download the official .tpz from the Godot GitHub release (or unpack fromFile) into that directory. Never downloads unless asked."""
+        return self.call("godot.export-templates", {"fromFile": fromFile, "godot": godot, "install": install, "templatesDir": templatesDir, "version": version})
+
     def godot_import_check(self, *, glb: str, godot: str | None = None, project: str | None = None, timeoutMs: int | None = None):
         """godot.import-check: Headless-import a .glb with Godot and report what the engine actually sees: skeletons (bone count/names), animations (name, length, tracks, loop) and mesh count. Complements anim.inspect (which reads the file without the engine)."""
         return self.call("godot.import-check", {"glb": glb, "godot": godot, "project": project, "timeoutMs": timeoutMs})
@@ -174,6 +182,18 @@ class Capabilities:
         """library.attribution: Generate ATTRIBUTION.md (library) or CREDITS.md (installed project, from assets.lock.json) for assets that require attribution; deterministic."""
         return self.call("library.attribution", {"format": format, "library": library, "project": project, "write": write})
 
+    def library_blobs_fetch(self, *, library: str, dryRun: bool | None = None, paths: list[str] | None = None, repo: str | None = None, source: str | None = None, tag: str | None = None, yes: bool | None = None):
+        """library.blobs-fetch: Restore manifest blobs into a library by sha256 from a local directory / file:// store (or a GitHub release via gh when repo+tag are given), verifying size and hash before writing."""
+        return self.call("library.blobs-fetch", {"library": library, "dryRun": dryRun, "paths": paths, "repo": repo, "source": source, "tag": tag, "yes": yes})
+
+    def library_blobs_pack(self, *, library: str, paths: list[str] | None = None, store: str | None = None):
+        """library.blobs-pack: Hash a library's binary files (glb, png, ogg, ...) and write the text manifest blobs/MANIFEST.txt (sha256, size, content-type, path). store optionally copies blobs into a local content-addressed dir. No network."""
+        return self.call("library.blobs-pack", {"library": library, "paths": paths, "store": store})
+
+    def library_blobs_publish(self, *, library: str, dryRun: bool | None = None, repo: str | None = None, tag: str | None = None, visibility: str | None = None):
+        """library.blobs-publish: Upload manifest blobs as GitHub Release assets named by sha256 via gh. dryRun defaults to true (plan only, no gh call). A public publish runs the license/IP gate and fails LICENSE_BLOCKED when any asset is blocked or ipReview is flagged/unresolved."""
+        return self.call("library.blobs-publish", {"library": library, "dryRun": dryRun, "repo": repo, "tag": tag, "visibility": visibility})
+
     def library_index(self, *, library: str, check: bool | None = None):
         """library.index: Regenerate INDEX.json and INDEX.md (deterministic, no timestamps), or with check:true only report staleness."""
         return self.call("library.index", {"library": library, "check": check})
@@ -230,6 +250,10 @@ class Capabilities:
         """locomotion3d.validate: Validate a locomotion3d movement config (schema ranges plus cross-field rules such as walk<=run<=sprint, i-frames inside the dodge duration). Returns the fully merged config."""
         return self.call("locomotion3d.validate", {"config": config, "file": file, "project": project})
 
+    def meshy_generate(self, *, task: str, actionId: int | None = None, actionIds: list[int] | None = None, aiModel: str | None = None, baseUrl: str | None = None, dryRun: bool | None = None, fps: str | None = None, heightMeters: float | None = None, imagePath: str | None = None, imageUrl: str | None = None, includeFingers: bool | None = None, inputTaskId: str | None = None, keyEnv: str | None = None, maxCredits: float | None = None, mode: str | None = None, modelUrl: str | None = None, out: str | None = None, plan: str | None = None, pollMs: int | None = None, previewTaskId: str | None = None, project: str | None = None, prompt: str | None = None, rigTaskId: str | None = None, skeletonTemplate: str | None = None, targetPolycount: int | None = None, timeoutSec: float | None = None, topology: str | None = None, wait: bool | None = None):
+        """meshy.generate: Submit ONE Meshy job (text-to-3d preview/refine, image-to-3d, rig, animate). dryRun defaults to true: returns the request and an estimated credit cost, no network. A real run needs dryRun:false, maxCredits (refused if the estimate exceeds it) and the API key in an env var (default MESHY_API_KEY; name via keyEnv; the key is never an input or output). Polls, downloads the GLB to out and writes <jobId>.meshy.json provenance. Prices/paths are unverified (see docs/MESHY-GENERATE.md)."""
+        return self.call("meshy.generate", {"task": task, "actionId": actionId, "actionIds": actionIds, "aiModel": aiModel, "baseUrl": baseUrl, "dryRun": dryRun, "fps": fps, "heightMeters": heightMeters, "imagePath": imagePath, "imageUrl": imageUrl, "includeFingers": includeFingers, "inputTaskId": inputTaskId, "keyEnv": keyEnv, "maxCredits": maxCredits, "mode": mode, "modelUrl": modelUrl, "out": out, "plan": plan, "pollMs": pollMs, "previewTaskId": previewTaskId, "project": project, "prompt": prompt, "rigTaskId": rigTaskId, "skeletonTemplate": skeletonTemplate, "targetPolycount": targetPolycount, "timeoutSec": timeoutSec, "topology": topology, "wait": wait})
+
     def meshy_import(self, *, input: str, clips: dict | None = None, height: float | None = None, id: str | None = None, out: str | None = None, overwrite: bool | None = None, project: str | None = None, provenance: dict | None = None, units: str | None = None):
         """meshy.import: Normalise and import a Meshy (or Blender-style) animated .glb into assets/models: detect units and bake centimetres to metres (no node scale left behind), check facing, tidy clip names ("Armature|walking_man|baselayer" -> "walking_man"), write the GLB and a manifest entry with provenance (plan, visibility, jobId stay "unknown" unless supplied). Deterministic: no timestamps unless createdAt is given."""
         return self.call("meshy.import", {"input": input, "clips": clips, "height": height, "id": id, "out": out, "overwrite": overwrite, "project": project, "provenance": provenance, "units": units})
@@ -241,6 +265,10 @@ class Capabilities:
     def meshy_split(self, *, input: str, out: str, ranges: list, clip: str | None = None, fps: float | None = None, keepOriginal: bool | None = None, only: bool | None = None, overwrite: bool | None = None, project: str | None = None, unit: str | None = None):
         """meshy.split: Split or trim a merged clip by time ranges into new named clips, written to a new .glb (boundary keys are interpolated, times restart at 0). The source clip is replaced unless keepOriginal; other clips are kept unless only:true. Unused data is compacted away."""
         return self.call("meshy.split", {"input": input, "out": out, "ranges": ranges, "clip": clip, "fps": fps, "keepOriginal": keepOriginal, "only": only, "overwrite": overwrite, "project": project, "unit": unit})
+
+    def meshy_status(self, *, task: str, taskId: str, baseUrl: str | None = None, keyEnv: str | None = None):
+        """meshy.status: Read one Meshy task status (GET). Needs the API key in an env var (keyEnv, default MESHY_API_KEY); never returns the key or signed urls."""
+        return self.call("meshy.status", {"task": task, "taskId": taskId, "baseUrl": baseUrl, "keyEnv": keyEnv})
 
     def meshy_verify(self, *, input: str, budget: dict | None = None, expect: dict | None = None, project: str | None = None):
         """meshy.verify: Check an animated .glb is game-ready: uncompressed, skin and joint count, weights, bind height (catches cm), facing, clips and a missing idle, per-clip root drift, scale tracks, pose stability, size budget, textures. Returns pass/warn/fail/info checks; pass is false when any check fails."""

@@ -128,3 +128,11 @@ Merge steps after all report: check index.mjs has all registrations; regenerate 
 - img2model: SuperColby proxy in colbdysseus/assets/generated/img2model/ (10k tris, 28 joints). Best next improvement: add a back-view sheet (docs/IMG2MODEL.md).
 - Gate unchanged: nothing pushed or public until licence audit clean, IP blocks resolved (Superman/Green Lantern marks, Cujo name, real likenesses) and Meshy ToS read. The SuperColby proxy GLB carries the Superman-style logo.
 - Next (wave 3, awaiting user go): skills/INDEX.json entries (godot, meshy, wave-1/2 modules, boss3d.balance, img2model), Godot export templates, meshy.generate (env-var key, maxCredits, dryRun), library.blobs.pack|publish|fetch, swarm presets, guide routing for "3D action game".
+
+## Wave 3 MERGED (local, not pushed)
+- `library.blobs-pack|publish|fetch` (sha256 manifest `blobs/MANIFEST.txt`; publish dry-run by default, runs the licence/IP gate; `library.attribution` and `library.ip-review` already existed).
+- `meshy.generate|status` (key from env var only, `dryRun` default, mandatory `maxCredits`; prices and paths unverified, tested against a local mock only).
+- `godot.export|export-templates` plus `templates/godot-action3d/export_presets.cfg`. Real Linux export verified; Web export verified by hand only.
+- 7 new skills, `guide.route` ranking for 3D action goals, 6 3D swarm roles, edit-distance tie-break for NOT_FOUND suggestions.
+- Suite: 306/306. Push gate still closed (licence audit, Green Lantern/Superman IP blocks, Meshy ToS unread).
+- Still open: parity ports of fairness/balance/validateFighter, wall/ramp parity, img2model back-view sheet, colbdysseus story questions.

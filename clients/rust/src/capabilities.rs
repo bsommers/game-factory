@@ -610,6 +610,72 @@ impl Client {
     }
 }
 
+/// Input of `godot.export`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct GodotExportInput {
+    pub debug: Option<bool>,
+    pub godot: Option<String>,
+    /// output file (default per preset export_path, else <project>/build/<preset>/game)
+    pub out: Option<String>,
+    /// preset name (default "Linux x86_64")
+    pub preset: Option<String>,
+    pub project: Option<String>,
+    pub timeout_ms: Option<i64>,
+}
+
+impl GodotExportInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.debug { m.insert("debug".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.godot { m.insert("godot".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.out { m.insert("out".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.preset { m.insert("preset".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.timeout_ms { m.insert("timeoutMs".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// godot.export: Export a Godot project with a preset from its export_presets.cfg ("Linux x86_64" or "Web") using --headless --export-release. Fails NOT_FOUND (with next steps) when export templates are missing; run godot.export-templates first.
+    pub fn godot_export(&self, input: &GodotExportInput) -> Result<Envelope, Error> {
+        self.call("godot.export", &input.to_json())
+    }
+}
+
+/// Input of `godot.export-templates`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct GodotExportTemplatesInput {
+    /// local .tpz to unpack instead of downloading
+    pub from_file: Option<String>,
+    pub godot: Option<String>,
+    /// actually download/unpack (default false: report only)
+    pub install: Option<bool>,
+    /// override templates root (default ~/.local/share/godot/export_templates)
+    pub templates_dir: Option<String>,
+    /// template version dir, e.g. 4.7.2.stable (default: from installed godot)
+    pub version: Option<String>,
+}
+
+impl GodotExportTemplatesInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.from_file { m.insert("fromFile".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.godot { m.insert("godot".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.install { m.insert("install".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.templates_dir { m.insert("templatesDir".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.version { m.insert("version".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// godot.export-templates: Report whether Godot export templates for the matching engine version exist (~/.local/share/godot/export_templates/<ver>). With the explicit fetch flag, download the official .tpz from the Godot GitHub release (or unpack fromFile) into that directory. Never downloads unless asked.
+    pub fn godot_export_templates(&self, input: &GodotExportTemplatesInput) -> Result<Envelope, Error> {
+        self.call("godot.export-templates", &input.to_json())
+    }
+}
+
 /// Input of `godot.import-check`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct GodotImportCheckInput {
@@ -1312,6 +1378,108 @@ impl Client {
     }
 }
 
+/// Input of `library.blobs-fetch`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct LibraryBlobsFetchInput {
+    /// library directory
+    pub library: String,
+    /// verify only, write nothing
+    pub dry_run: Option<bool>,
+    /// only these manifest paths
+    pub paths: Option<Vec<String>>,
+    /// owner/name of a release holding the blobs (alternative to source)
+    pub repo: Option<String>,
+    /// blob store: directory path or file:// URL (files named <sha256>)
+    pub source: Option<String>,
+    /// release tag (with repo)
+    pub tag: Option<String>,
+    /// overwrite files whose content differs
+    pub yes: Option<bool>,
+}
+
+impl LibraryBlobsFetchInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("library".to_string(), serde_json::to_value(&self.library).unwrap_or(Value::Null));
+        if let Some(v) = &self.dry_run { m.insert("dryRun".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.paths { m.insert("paths".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.repo { m.insert("repo".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.source { m.insert("source".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.tag { m.insert("tag".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.yes { m.insert("yes".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// library.blobs-fetch: Restore manifest blobs into a library by sha256 from a local directory / file:// store (or a GitHub release via gh when repo+tag are given), verifying size and hash before writing.
+    pub fn library_blobs_fetch(&self, input: &LibraryBlobsFetchInput) -> Result<Envelope, Error> {
+        self.call("library.blobs-fetch", &input.to_json())
+    }
+}
+
+/// Input of `library.blobs-pack`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct LibraryBlobsPackInput {
+    /// library directory
+    pub library: String,
+    /// library-relative files to pack (default: every binary under assets/)
+    pub paths: Option<Vec<String>>,
+    /// local blob store directory; files are copied as <sha256>
+    pub store: Option<String>,
+}
+
+impl LibraryBlobsPackInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("library".to_string(), serde_json::to_value(&self.library).unwrap_or(Value::Null));
+        if let Some(v) = &self.paths { m.insert("paths".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.store { m.insert("store".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// library.blobs-pack: Hash a library's binary files (glb, png, ogg, ...) and write the text manifest blobs/MANIFEST.txt (sha256, size, content-type, path). store optionally copies blobs into a local content-addressed dir. No network.
+    pub fn library_blobs_pack(&self, input: &LibraryBlobsPackInput) -> Result<Envelope, Error> {
+        self.call("library.blobs-pack", &input.to_json())
+    }
+}
+
+/// Input of `library.blobs-publish`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct LibraryBlobsPublishInput {
+    /// library directory
+    pub library: String,
+    /// default true; set false to really upload (explicit user instruction only)
+    pub dry_run: Option<bool>,
+    /// owner/name (required unless dryRun)
+    pub repo: Option<String>,
+    /// release tag (default blobs-<manifest hash>)
+    pub tag: Option<String>,
+    /// default private
+    pub visibility: Option<String>,
+}
+
+impl LibraryBlobsPublishInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("library".to_string(), serde_json::to_value(&self.library).unwrap_or(Value::Null));
+        if let Some(v) = &self.dry_run { m.insert("dryRun".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.repo { m.insert("repo".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.tag { m.insert("tag".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.visibility { m.insert("visibility".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// library.blobs-publish: Upload manifest blobs as GitHub Release assets named by sha256 via gh. dryRun defaults to true (plan only, no gh call). A public publish runs the license/IP gate and fails LICENSE_BLOCKED when any asset is blocked or ipReview is flagged/unresolved.
+    pub fn library_blobs_publish(&self, input: &LibraryBlobsPublishInput) -> Result<Envelope, Error> {
+        self.call("library.blobs-publish", &input.to_json())
+    }
+}
+
 /// Input of `library.index`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct LibraryIndexInput {
@@ -1780,6 +1948,93 @@ impl Client {
     }
 }
 
+/// Input of `meshy.generate`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct MeshyGenerateInput {
+    /// one of: text-to-3d, image-to-3d, rig, animate
+    pub task: String,
+    pub action_id: Option<i64>,
+    pub action_ids: Option<Vec<i64>>,
+    pub ai_model: Option<String>,
+    /// API base url (tests use a 127.0.0.1 mock)
+    pub base_url: Option<String>,
+    /// default true
+    pub dry_run: Option<bool>,
+    /// one of: 24, 25, 30, 60
+    pub fps: Option<String>,
+    pub height_meters: Option<f64>,
+    /// local png/jpg inside the project, sent as a data URI
+    pub image_path: Option<String>,
+    pub image_url: Option<String>,
+    pub include_fingers: Option<bool>,
+    pub input_task_id: Option<String>,
+    /// NAME of the env var holding the key (default MESHY_API_KEY)
+    pub key_env: Option<String>,
+    /// required for a real run
+    pub max_credits: Option<f64>,
+    /// text-to-3d only (default preview)
+    pub mode: Option<String>,
+    pub model_url: Option<String>,
+    /// download dir inside the project (default assets/meshy)
+    pub out: Option<String>,
+    /// your Meshy plan, recorded in provenance only
+    pub plan: Option<String>,
+    pub poll_ms: Option<i64>,
+    pub preview_task_id: Option<String>,
+    pub project: Option<String>,
+    pub prompt: Option<String>,
+    pub rig_task_id: Option<String>,
+    pub skeleton_template: Option<String>,
+    pub target_polycount: Option<i64>,
+    pub timeout_sec: Option<f64>,
+    /// one of: triangle, quad
+    pub topology: Option<String>,
+    /// poll and download (default true)
+    pub wait: Option<bool>,
+}
+
+impl MeshyGenerateInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("task".to_string(), serde_json::to_value(&self.task).unwrap_or(Value::Null));
+        if let Some(v) = &self.action_id { m.insert("actionId".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.action_ids { m.insert("actionIds".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.ai_model { m.insert("aiModel".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.base_url { m.insert("baseUrl".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.dry_run { m.insert("dryRun".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.fps { m.insert("fps".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.height_meters { m.insert("heightMeters".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.image_path { m.insert("imagePath".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.image_url { m.insert("imageUrl".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.include_fingers { m.insert("includeFingers".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.input_task_id { m.insert("inputTaskId".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.key_env { m.insert("keyEnv".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.max_credits { m.insert("maxCredits".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.mode { m.insert("mode".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.model_url { m.insert("modelUrl".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.out { m.insert("out".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.plan { m.insert("plan".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.poll_ms { m.insert("pollMs".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.preview_task_id { m.insert("previewTaskId".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.prompt { m.insert("prompt".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.rig_task_id { m.insert("rigTaskId".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.skeleton_template { m.insert("skeletonTemplate".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.target_polycount { m.insert("targetPolycount".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.timeout_sec { m.insert("timeoutSec".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.topology { m.insert("topology".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.wait { m.insert("wait".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// meshy.generate: Submit ONE Meshy job (text-to-3d preview/refine, image-to-3d, rig, animate). dryRun defaults to true: returns the request and an estimated credit cost, no network. A real run needs dryRun:false, maxCredits (refused if the estimate exceeds it) and the API key in an env var (default MESHY_API_KEY; name via keyEnv; the key is never an input or output). Polls, downloads the GLB to out and writes <jobId>.meshy.json provenance. Prices/paths are unverified (see docs/MESHY-GENERATE.md).
+    pub fn meshy_generate(&self, input: &MeshyGenerateInput) -> Result<Envelope, Error> {
+        self.call("meshy.generate", &input.to_json())
+    }
+}
+
 /// Input of `meshy.import`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct MeshyImportInput {
@@ -1895,6 +2150,34 @@ impl Client {
     /// meshy.split: Split or trim a merged clip by time ranges into new named clips, written to a new .glb (boundary keys are interpolated, times restart at 0). The source clip is replaced unless keepOriginal; other clips are kept unless only:true. Unused data is compacted away.
     pub fn meshy_split(&self, input: &MeshySplitInput) -> Result<Envelope, Error> {
         self.call("meshy.split", &input.to_json())
+    }
+}
+
+/// Input of `meshy.status`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct MeshyStatusInput {
+    /// one of: text-to-3d, image-to-3d, rig, animate
+    pub task: String,
+    pub task_id: String,
+    pub base_url: Option<String>,
+    pub key_env: Option<String>,
+}
+
+impl MeshyStatusInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("task".to_string(), serde_json::to_value(&self.task).unwrap_or(Value::Null));
+        m.insert("taskId".to_string(), serde_json::to_value(&self.task_id).unwrap_or(Value::Null));
+        if let Some(v) = &self.base_url { m.insert("baseUrl".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.key_env { m.insert("keyEnv".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// meshy.status: Read one Meshy task status (GET). Needs the API key in an env var (keyEnv, default MESHY_API_KEY); never returns the key or signed urls.
+    pub fn meshy_status(&self, input: &MeshyStatusInput) -> Result<Envelope, Error> {
+        self.call("meshy.status", &input.to_json())
     }
 }
 

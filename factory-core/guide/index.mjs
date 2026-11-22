@@ -282,6 +282,13 @@ const ROLE_BANK = [
   { id: 'ui', name: 'Render, HUD and screens', words: ['ui', 'hud', 'render', 'menu', 'screen', 'title', 'interface'], model: 'sonnet', phase: 'p2', owns: ['src/ui/', 'src/main.js', 'test/ui.test.mjs'], task: 'Canvas renderer, HUD, title and game-over screens; integrate the other modules.' },
   { id: 'bot', name: 'Autopilot and QA', words: ['bot', 'qa', 'autopilot', 'test', 'playtest'], model: 'sonnet', phase: 'p3', owns: ['src/bot/', 'test/bot.test.mjs'], task: 'Autopilot with look-ahead and watchdog; run over many seeds; mutation checks.' },
   { id: 'docs', name: 'Docs and site', words: ['docs', 'documentation', 'site', 'readme', 'pages'], model: 'haiku', phase: 'p3', owns: ['README.md', 'docs/HOW-TO-PLAY.md', 'docs/HOW-IT-WAS-MADE.md', 'docs/index.html'], task: 'Generate README, HOW-TO-PLAY, HOW-IT-WAS-MADE and the Pages site with docs-kit.' },
+  // 3D action game preset (disjoint owns); selected when the goal mentions 3d + action/boss/souls-like etc.
+  { id: 'camera3d', name: '3D camera and locomotion', words: ['camera3d', 'locomotion', 'third-person'], model: 'sonnet', phase: 'p1', owns: ['src/gameplay/camera/', 'src/gameplay/locomotion/', 'test/camera-loco.test.mjs'], task: 'Camera3d and locomotion3d configs per the contract; validate and simulate (camera3d.*, locomotion3d.*).', preset: '3d-action' },
+  { id: 'combat3d', name: 'Combat and animation graph', words: ['combat3d', 'combat', 'animgraph'], model: 'sonnet', phase: 'p1', owns: ['src/gameplay/combat/', 'src/gameplay/animgraph/', 'test/combat.test.mjs'], task: 'Combat3d moves, hitboxes and the animation graph; combat3d.* and animgraph.* validate and simulate.', preset: '3d-action' },
+  { id: 'ai3d', name: 'Enemy AI and navigation', words: ['ai3d', 'enemy', 'nav'], model: 'sonnet', phase: 'p1', owns: ['src/gameplay/ai/', 'src/gameplay/nav/', 'test/ai.test.mjs'], task: 'Enemy behaviours with ai3d.validate/simulate and nav.bake against the level.', preset: '3d-action' },
+  { id: 'boss3d', name: 'Boss fight and balance', words: ['boss3d', 'boss'], model: 'sonnet', phase: 'p2', owns: ['src/gameplay/boss/', 'test/boss.test.mjs'], task: 'Boss phases and attacks; boss3d.validate, fairness and balance must pass; never loosen thresholds.', preset: '3d-action' },
+  { id: 'level3d', name: 'Levels, limbs and VFX', words: ['level3d', 'limb', 'vfx3d'], model: 'sonnet', phase: 'p2', owns: ['src/levels/', 'src/gameplay/limb/', 'src/vfx/', 'test/level-vfx.test.mjs'], task: 'Level layout bake, limb3d rules and vfx3d presets; validate each and bake levels.', preset: '3d-action' },
+  { id: 'models3d', name: 'Models and Godot build', words: ['meshy', 'godot', 'img2model', 'models3d'], model: 'haiku', phase: 'p2', owns: ['assets/models/', 'godot/', 'test/godot.test.mjs'], task: 'Import Meshy or img2model models (meshy.*, img2model.*, anim.*), then godot.import-check, godot.test, parity.run and godot.export.', preset: '3d-action' },
 ];
 const defaultPreamble = () => {
   try { const t = readFileSync(join(FACTORY_ROOT, 'swarm/templates/SWARM.md'), 'utf8'); const m = /## @preamble\n([\s\S]*?)\n## /.exec(t); if (m) return m[1].trim(); } catch { /* fallback */ }
@@ -318,8 +325,9 @@ export function plan(input = {}, opts = {}) {
   let agents;
   if (Array.isArray(input.agents) && input.agents.length) agents = input.agents.map((a) => ({ role: 'worker', phase: 'p1', model: 'sonnet', task: 'TODO: describe the task against the contract.', ...a }));
   else {
-    const picked = ROLE_BANK.filter((r) => r.words.some((w) => gT.has(stem(w))));
-    const base = isNonWeb(lang) ? ['core', 'levels', 'ui'] : ['core', 'art', 'audio', 'ui'];
+    const is3dAction = gT.has('3d') && ['action', 'boss', 'souls', 'combat', 'adventure', 'godot', 'meshy'].some((w) => gT.has(stem(w)));
+    const picked = ROLE_BANK.filter((r) => (!r.preset || is3dAction) && r.words.some((w) => gT.has(stem(w))));
+    const base = is3dAction ? ['core', 'camera3d', 'combat3d', 'ai3d', 'boss3d', 'level3d', 'models3d', 'ui'] : isNonWeb(lang) ? ['core', 'levels', 'ui'] : ['core', 'art', 'audio', 'ui'];
     const set = new Set([...base, ...picked.map((r) => r.id), 'bot', 'docs']);
     agents = ROLE_BANK.filter((r) => set.has(r.id)).map(r => adaptRole(r, lang)).map((r) => ({ id: r.id, name: r.name, model: r.model, phase: r.phase, role: 'worker', owns: [...r.owns], task: r.task }));
     if (input.budget === 'low') agents = agents.map((a) => ({ ...a, model: a.model === 'sonnet' && ['fx', 'docs'].includes(a.id) ? 'haiku' : a.model }));
@@ -395,8 +403,15 @@ export function explain(input = {}, opts = {}) {
   if (sk) return ok({ kind: 'skill', name: sk.name, summary: sk.description, model: sk.model, cost: sk.cost, capabilities: sk.capabilities, kits: sk.kits, commands: sk.commands, text: `${sk.name}: ${sk.description}\nModel ${sk.model}, cost ${sk.cost}. Run guide.show {name: "${sk.name}"} for the full text.` }, [`guide.show {name: "${sk.name}"}`]);
   const kit = index.skills.filter((s) => s.kits.includes(q));
   if (kit.length) return ok({ kind: 'kit', name: q, skills: kit.map((s) => s.name), doc: 'docs/KITS.md', text: `Kit ${q}: see docs/KITS.md. Used by skills: ${kit.map((s) => s.name).join(', ')}.` }, [`guide.show {name: "${kit[0].name}"}`]);
-  const qt = tokens(q.replace(/[._-]/g, ' ')), cand = [...catalog.map((c) => c.name), ...index.skills.map((s) => s.name)].map((n) => ({ n, h: tokens(n.replace(/[._-]/g, ' ')).filter((t) => qt.includes(t)).length })).filter((x) => x.h).sort((a, b) => b.h - a.h || (a.n < b.n ? -1 : 1)).slice(0, 5).map((x) => x.n);
+  const qt = tokens(q.replace(/[._-]/g, ' ')), cand = [...catalog.map((c) => c.name), ...index.skills.map((s) => s.name)].map((n) => ({ n, h: tokens(n.replace(/[._-]/g, ' ')).filter((t) => qt.includes(t)).length, d: editDistance(n, q) })).filter((x) => x.h).sort((a, b) => b.h - a.h || a.d - b.d || (a.n < b.n ? -1 : 1)).slice(0, 5).map((x) => x.n);
   return fail('NOT_FOUND', `no capability, skill or kit named "${q}"`, { suggestions: cand }, cand.map((n) => `guide.explain {capability: "${n}"}`));
+}
+
+// Levenshtein distance: breaks token-overlap ties in favour of near-typos of the query.
+function editDistance(a, b) {
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) { const cur = [i]; for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = cur; }
+  return prev[b.length];
 }
 
 export function listSkills(input = {}, opts = {}) {

@@ -3,6 +3,7 @@ import { createRegistry } from './registry.mjs';
 import { fileURLToPath } from 'node:url';
 import { registerStyles } from './styles/capabilities.mjs';
 import { registerLibrary } from './library/capabilities.mjs';
+import { registerBlobs } from './library/blobs-capabilities.mjs';
 import { registerGuide } from './guide/capabilities.mjs';
 import { registerCore } from './capabilities/core.mjs';
 import { registerLanguages } from './languages/capabilities.mjs';
@@ -14,7 +15,8 @@ import { registerAnim } from './anim/index.mjs';
 import { registerAi3d } from './ai3d/index.mjs';
 import { registerAnimGraph } from './anim-graph/index.mjs';
 import { registerMeshy } from './meshy/index.mjs';
-import { registerGodot } from './godot/index.mjs';
+import { registerMeshyGenerate } from './meshy/generate-capabilities.mjs';
+import { registerGodot, registerGodotExport } from './godot/index.mjs';
 import { registerBoss3d } from './boss3d/index.mjs';
 import { registerCombat3d } from './combat3d/index.mjs';
 import { registerLocomotion3d } from './locomotion3d/index.mjs';
@@ -28,8 +30,8 @@ export * from './registry.mjs';
 export { validate } from './schema.mjs';
 export function buildRegistry() {
   const r = createRegistry();
-  registerStyles(r); registerLibrary(r); registerGuide(r); registerCore(r);
-  registerLanguages(r); registerPackage(r); registerClients(r); registerRendering(r); registerModels(r); registerAnim(r); registerAi3d(r); registerAnimGraph(r); registerMeshy(r); registerCombat3d(r); registerGodot(r); registerLocomotion3d(r); registerCamera3d(r); registerParity(r);
+  registerStyles(r); registerLibrary(r); registerBlobs(r); registerGuide(r); registerCore(r);
+  registerLanguages(r); registerPackage(r); registerClients(r); registerRendering(r); registerModels(r); registerAnim(r); registerAi3d(r); registerAnimGraph(r); registerMeshy(r); registerMeshyGenerate(r); registerCombat3d(r); registerGodot(r); registerGodotExport(r); registerLocomotion3d(r); registerCamera3d(r); registerParity(r);
   registerVfx3d(r); registerBoss3d(r); registerLimb3d(r); registerLevel3d(r); registerImg2model(r);
   return r;
 }

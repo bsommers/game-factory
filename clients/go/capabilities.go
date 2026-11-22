@@ -269,6 +269,35 @@ func (c *Client) GodotDetect(ctx context.Context, in GodotDetectInput) (*Envelop
 	return c.Call(ctx, "godot.detect", in)
 }
 
+// GodotExportInput is the input of godot.export.
+type GodotExportInput struct {
+	Debug     *bool   `json:"debug,omitempty"`
+	Godot     *string `json:"godot,omitempty"`
+	Out       *string `json:"out,omitempty"`    // output file (default per preset export_path, else <project>/build/<preset>/game)
+	Preset    *string `json:"preset,omitempty"` // preset name (default "Linux x86_64")
+	Project   *string `json:"project,omitempty"`
+	TimeoutMs *int64  `json:"timeoutMs,omitempty"`
+}
+
+// GodotExport calls godot.export: Export a Godot project with a preset from its export_presets.cfg ("Linux x86_64" or "Web") using --headless --export-release. Fails NOT_FOUND (with next steps) when export templates are missing; run godot.export-templates first.
+func (c *Client) GodotExport(ctx context.Context, in GodotExportInput) (*Envelope, error) {
+	return c.Call(ctx, "godot.export", in)
+}
+
+// GodotExportTemplatesInput is the input of godot.export-templates.
+type GodotExportTemplatesInput struct {
+	FromFile     *string `json:"fromFile,omitempty"` // local .tpz to unpack instead of downloading
+	Godot        *string `json:"godot,omitempty"`
+	Install      *bool   `json:"install,omitempty"`      // actually download/unpack (default false: report only)
+	TemplatesDir *string `json:"templatesDir,omitempty"` // override templates root (default ~/.local/share/godot/export_templates)
+	Version      *string `json:"version,omitempty"`      // template version dir, e.g. 4.7.2.stable (default: from installed godot)
+}
+
+// GodotExportTemplates calls godot.export-templates: Report whether Godot export templates for the matching engine version exist (~/.local/share/godot/export_templates/<ver>). With the explicit fetch flag, download the official .tpz from the Godot GitHub release (or unpack fromFile) into that directory. Never downloads unless asked.
+func (c *Client) GodotExportTemplates(ctx context.Context, in GodotExportTemplatesInput) (*Envelope, error) {
+	return c.Call(ctx, "godot.export-templates", in)
+}
+
 // GodotImportCheckInput is the input of godot.import-check.
 type GodotImportCheckInput struct {
 	Glb       string  `json:"glb"` // .glb path (absolute, or relative to project when project is given)
@@ -574,6 +603,48 @@ func (c *Client) LibraryAttribution(ctx context.Context, in LibraryAttributionIn
 	return c.Call(ctx, "library.attribution", in)
 }
 
+// LibraryBlobsFetchInput is the input of library.blobs-fetch.
+type LibraryBlobsFetchInput struct {
+	Library string   `json:"library"`          // library directory
+	DryRun  *bool    `json:"dryRun,omitempty"` // verify only, write nothing
+	Paths   []string `json:"paths,omitempty"`  // only these manifest paths
+	Repo    *string  `json:"repo,omitempty"`   // owner/name of a release holding the blobs (alternative to source)
+	Source  *string  `json:"source,omitempty"` // blob store: directory path or file:// URL (files named <sha256>)
+	Tag     *string  `json:"tag,omitempty"`    // release tag (with repo)
+	Yes     *bool    `json:"yes,omitempty"`    // overwrite files whose content differs
+}
+
+// LibraryBlobsFetch calls library.blobs-fetch: Restore manifest blobs into a library by sha256 from a local directory / file:// store (or a GitHub release via gh when repo+tag are given), verifying size and hash before writing.
+func (c *Client) LibraryBlobsFetch(ctx context.Context, in LibraryBlobsFetchInput) (*Envelope, error) {
+	return c.Call(ctx, "library.blobs-fetch", in)
+}
+
+// LibraryBlobsPackInput is the input of library.blobs-pack.
+type LibraryBlobsPackInput struct {
+	Library string   `json:"library"`         // library directory
+	Paths   []string `json:"paths,omitempty"` // library-relative files to pack (default: every binary under assets/)
+	Store   *string  `json:"store,omitempty"` // local blob store directory; files are copied as <sha256>
+}
+
+// LibraryBlobsPack calls library.blobs-pack: Hash a library's binary files (glb, png, ogg, ...) and write the text manifest blobs/MANIFEST.txt (sha256, size, content-type, path). store optionally copies blobs into a local content-addressed dir. No network.
+func (c *Client) LibraryBlobsPack(ctx context.Context, in LibraryBlobsPackInput) (*Envelope, error) {
+	return c.Call(ctx, "library.blobs-pack", in)
+}
+
+// LibraryBlobsPublishInput is the input of library.blobs-publish.
+type LibraryBlobsPublishInput struct {
+	Library    string  `json:"library"`              // library directory
+	DryRun     *bool   `json:"dryRun,omitempty"`     // default true; set false to really upload (explicit user instruction only)
+	Repo       *string `json:"repo,omitempty"`       // owner/name (required unless dryRun)
+	Tag        *string `json:"tag,omitempty"`        // release tag (default blobs-<manifest hash>)
+	Visibility *string `json:"visibility,omitempty"` // default private
+}
+
+// LibraryBlobsPublish calls library.blobs-publish: Upload manifest blobs as GitHub Release assets named by sha256 via gh. dryRun defaults to true (plan only, no gh call). A public publish runs the license/IP gate and fails LICENSE_BLOCKED when any asset is blocked or ipReview is flagged/unresolved.
+func (c *Client) LibraryBlobsPublish(ctx context.Context, in LibraryBlobsPublishInput) (*Envelope, error) {
+	return c.Call(ctx, "library.blobs-publish", in)
+}
+
 // LibraryIndexInput is the input of library.index.
 type LibraryIndexInput struct {
 	Library string `json:"library"` // library directory
@@ -774,6 +845,43 @@ func (c *Client) Locomotion3dValidate(ctx context.Context, in Locomotion3dValida
 	return c.Call(ctx, "locomotion3d.validate", in)
 }
 
+// MeshyGenerateInput is the input of meshy.generate.
+type MeshyGenerateInput struct {
+	Task             string   `json:"task"` // one of: text-to-3d, image-to-3d, rig, animate
+	ActionId         *int64   `json:"actionId,omitempty"`
+	ActionIds        []int64  `json:"actionIds,omitempty"`
+	AiModel          *string  `json:"aiModel,omitempty"`
+	BaseUrl          *string  `json:"baseUrl,omitempty"` // API base url (tests use a 127.0.0.1 mock)
+	DryRun           *bool    `json:"dryRun,omitempty"`  // default true
+	Fps              *string  `json:"fps,omitempty"`     // one of: 24, 25, 30, 60
+	HeightMeters     *float64 `json:"heightMeters,omitempty"`
+	ImagePath        *string  `json:"imagePath,omitempty"` // local png/jpg inside the project, sent as a data URI
+	ImageUrl         *string  `json:"imageUrl,omitempty"`
+	IncludeFingers   *bool    `json:"includeFingers,omitempty"`
+	InputTaskId      *string  `json:"inputTaskId,omitempty"`
+	KeyEnv           *string  `json:"keyEnv,omitempty"`     // NAME of the env var holding the key (default MESHY_API_KEY)
+	MaxCredits       *float64 `json:"maxCredits,omitempty"` // required for a real run
+	Mode             *string  `json:"mode,omitempty"`       // text-to-3d only (default preview)
+	ModelUrl         *string  `json:"modelUrl,omitempty"`
+	Out              *string  `json:"out,omitempty"`  // download dir inside the project (default assets/meshy)
+	Plan             *string  `json:"plan,omitempty"` // your Meshy plan, recorded in provenance only
+	PollMs           *int64   `json:"pollMs,omitempty"`
+	PreviewTaskId    *string  `json:"previewTaskId,omitempty"`
+	Project          *string  `json:"project,omitempty"`
+	Prompt           *string  `json:"prompt,omitempty"`
+	RigTaskId        *string  `json:"rigTaskId,omitempty"`
+	SkeletonTemplate *string  `json:"skeletonTemplate,omitempty"`
+	TargetPolycount  *int64   `json:"targetPolycount,omitempty"`
+	TimeoutSec       *float64 `json:"timeoutSec,omitempty"`
+	Topology         *string  `json:"topology,omitempty"` // one of: triangle, quad
+	Wait             *bool    `json:"wait,omitempty"`     // poll and download (default true)
+}
+
+// MeshyGenerate calls meshy.generate: Submit ONE Meshy job (text-to-3d preview/refine, image-to-3d, rig, animate). dryRun defaults to true: returns the request and an estimated credit cost, no network. A real run needs dryRun:false, maxCredits (refused if the estimate exceeds it) and the API key in an env var (default MESHY_API_KEY; name via keyEnv; the key is never an input or output). Polls, downloads the GLB to out and writes <jobId>.meshy.json provenance. Prices/paths are unverified (see docs/MESHY-GENERATE.md).
+func (c *Client) MeshyGenerate(ctx context.Context, in MeshyGenerateInput) (*Envelope, error) {
+	return c.Call(ctx, "meshy.generate", in)
+}
+
 // MeshyImportInput is the input of meshy.import.
 type MeshyImportInput struct {
 	Input      string         `json:"input"` // .glb path (project-relative or absolute)
@@ -823,6 +931,19 @@ type MeshySplitInput struct {
 // MeshySplit calls meshy.split: Split or trim a merged clip by time ranges into new named clips, written to a new .glb (boundary keys are interpolated, times restart at 0). The source clip is replaced unless keepOriginal; other clips are kept unless only:true. Unused data is compacted away.
 func (c *Client) MeshySplit(ctx context.Context, in MeshySplitInput) (*Envelope, error) {
 	return c.Call(ctx, "meshy.split", in)
+}
+
+// MeshyStatusInput is the input of meshy.status.
+type MeshyStatusInput struct {
+	Task    string  `json:"task"` // one of: text-to-3d, image-to-3d, rig, animate
+	TaskId  string  `json:"taskId"`
+	BaseUrl *string `json:"baseUrl,omitempty"`
+	KeyEnv  *string `json:"keyEnv,omitempty"`
+}
+
+// MeshyStatus calls meshy.status: Read one Meshy task status (GET). Needs the API key in an env var (keyEnv, default MESHY_API_KEY); never returns the key or signed urls.
+func (c *Client) MeshyStatus(ctx context.Context, in MeshyStatusInput) (*Envelope, error) {
+	return c.Call(ctx, "meshy.status", in)
 }
 
 // MeshyVerifyInput is the input of meshy.verify.

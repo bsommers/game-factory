@@ -22,3 +22,8 @@ CLI: `bin/factory godot test --project <dir> --json` (same on HTTP `POST /api/go
 
 ## Template
 `templates/godot-action3d/`: project.godot (Jolt, 60 Hz, WASD+jump), `scenes/{main,player,camera_rig}.tscn`, `scripts/`, `assets/README.md`, `tests/run_all.gd` (runner) + `test_*.gd` (extend `res://tests/test_base.gd`; no class_name so no editor import needed). Replace `__NAME__` in project.godot when copying.
+
+## Export (`godot.export-templates`, `godot.export`)
+- `godot.export-templates` reports whether templates for the installed version exist (`~/.local/share/godot/export_templates/4.7.2.stable`; override root with `GODOT_TEMPLATES_DIR`). Report-only by default. `install:true` downloads the official `Godot_v4.7.2-stable_export_templates.tpz` (~1.2 GB) from the GitHub release and unpacks it; `fromFile:<.tpz>` unpacks a local archive instead (no network; used by tests). The download itself is never exercised by tests. Keep the big files off `/` and `/tmp` (symlink the directory to `/datanapps`). The archive's `version.txt` must match.
+- `godot.export {project, preset}` runs `--headless --export-release <preset>`; returns `NOT_FOUND` with next steps when templates are missing. `templates/godot-action3d/export_presets.cfg` ships presets `Linux x86_64` (embedded PCK, to `build/linux/game.x86_64`) and `Web` (single-thread, no extensions; `build/web/index.html`); tests/ and *.md are excluded.
+- Status (2026-11-22): templates 4.7.2.stable were present on this machine; a real Linux export of the template succeeded (`test/godot-export.test.mjs`) and the binary boots headless. The test skips (not fails) when templates are absent. The Web preset also exported manually via the CLI (not in the suite).
