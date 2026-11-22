@@ -1,0 +1,347 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "anim-graph.schema.json",
+  "title": "game-factory anim-graph v1",
+  "description": "Data-driven animation state machine. See spec/v4/anim-graph.md. Subset-validator friendly: no $ref.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "parameters",
+    "layers"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "name": {
+      "type": "string"
+    },
+    "parameters": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "enum": [
+              "bool",
+              "float",
+              "trigger"
+            ]
+          },
+          "default": {}
+        }
+      }
+    },
+    "clips": {
+      "type": "object",
+      "description": "per-clip metadata keyed by clip name",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rootMotion": {
+            "enum": [
+              "none",
+              "extract",
+              "inplace"
+            ]
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "name"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]*$"
+                },
+                "at": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "normalised position 0..1 (use <1 for loops)"
+                },
+                "time": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "seconds into the clip"
+                },
+                "data": {
+                  "description": "opaque JSON payload copied into the emitted event"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "rootMotion": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "enum": [
+            "none",
+            "extract",
+            "inplace"
+          ],
+          "description": "default per-clip mode"
+        },
+        "bone": {
+          "type": "string"
+        },
+        "axes": {
+          "enum": [
+            "xz",
+            "xyz"
+          ]
+        },
+        "yaw": {
+          "type": "boolean"
+        },
+        "layer": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "layers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "entry",
+          "states"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "entry": {
+            "type": "string",
+            "minLength": 1
+          },
+          "weight": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "weightParam": {
+            "type": "string",
+            "minLength": 1
+          },
+          "blend": {
+            "enum": [
+              "override",
+              "additive"
+            ]
+          },
+          "mask": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "bones"
+            ],
+            "properties": {
+              "bones": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "exclude": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "descendants": {
+                "type": "boolean"
+              },
+              "excludeDescendants": {
+                "type": "boolean"
+              }
+            }
+          },
+          "states": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "clip": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "blend": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "param",
+                    "points"
+                  ],
+                  "properties": {
+                    "param": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "points": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "at",
+                          "clip"
+                        ],
+                        "properties": {
+                          "at": {
+                            "type": "number"
+                          },
+                          "clip": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "empty": {
+                  "type": "boolean"
+                },
+                "loop": {
+                  "type": "boolean"
+                },
+                "speed": {
+                  "type": "number"
+                },
+                "speedParam": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "events": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "name"
+                    ],
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_]*$"
+                      },
+                      "at": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1,
+                        "description": "normalised position 0..1 (use <1 for loops)"
+                      },
+                      "time": {
+                        "type": "number",
+                        "minimum": 0,
+                        "description": "seconds into the clip"
+                      },
+                      "data": {
+                        "description": "opaque JSON payload copied into the emitted event"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "transitions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "from",
+                "to"
+              ],
+              "properties": {
+                "from": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "state name or \"*\" (any state)"
+                },
+                "to": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "conditions": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "param"
+                    ],
+                    "properties": {
+                      "param": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "op": {
+                        "enum": [
+                          "==",
+                          "!=",
+                          "<",
+                          "<=",
+                          ">",
+                          ">="
+                        ]
+                      },
+                      "value": {}
+                    }
+                  }
+                },
+                "exitTime": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "duration": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "crossfade seconds"
+                },
+                "offset": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "normalised start phase in the target"
+                },
+                "interrupt": {
+                  "type": "boolean"
+                },
+                "self": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

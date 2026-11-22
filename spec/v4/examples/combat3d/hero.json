@@ -1,0 +1,34 @@
+{
+  "id": "hero", "team": "player", "maxHp": 120, "maxPoise": 60, "bufferFrames": 8, "staggerFrames": 60,
+  "resist": { "fire": 0.1 },
+  "hurtboxes": [
+    { "id": "head", "shape": { "type": "sphere", "r": 0.18 }, "offset": [0, 1.65, 0], "mult": 1.5 },
+    { "id": "torso", "shape": { "type": "capsule", "a": [0, 0.9, 0], "b": [0, 1.4, 0], "r": 0.3 }, "mult": 1 },
+    { "id": "legs", "shape": { "type": "capsule", "a": [0, 0.15, 0], "b": [0, 0.8, 0], "r": 0.25 }, "mult": 0.8 }
+  ],
+  "block": { "arc": 120, "parryWindow": 6, "parryStun": 50, "chip": 0.1, "poiseMult": 0.5 },
+  "actions": { "light": "light1", "heavy": "heavy1", "dodge": "roll" },
+  "moves": {
+    "light1": {
+      "startup": 5, "active": 3, "recovery": 9, "damage": 10, "hitstun": 16, "blockstun": 10, "hitstop": 4, "poiseDamage": 12, "knockback": [0, 0, 2.5],
+      "hitboxes": [{ "id": "blade", "offset": [0, 1, 0.3], "shape": { "type": "capsule", "a": [0, 0, 0], "b": [0, 0, 0.9], "r": 0.15 } }],
+      "cancels": [{ "into": "light2", "action": "light", "from": 6, "to": 17, "on": "contact" }, { "into": "heavy1", "action": "heavy", "from": 6, "to": 17, "on": "contact" }, { "into": "roll", "action": "dodge", "from": 9, "to": 17, "on": "any" }]
+    },
+    "light2": {
+      "startup": 6, "active": 3, "recovery": 11, "damage": 12, "hitstun": 18, "blockstun": 11, "hitstop": 5, "poiseDamage": 14, "knockback": [0, 0, 3],
+      "hitboxes": [{ "id": "blade", "offset": [0, 1, 0.6], "shape": { "type": "sphere", "r": 0.5 }, "keys": [{ "frame": 7, "offset": [0.6, 1, 0.5] }, { "frame": 9, "offset": [-0.6, 1, 0.7] }] }],
+      "cancels": [{ "into": "heavy1", "action": "heavy", "from": 8, "to": 20, "on": "contact" }, { "into": "roll", "action": "dodge", "from": 11, "to": 20, "on": "any" }]
+    },
+    "heavy1": {
+      "startup": 14, "active": 4, "recovery": 20, "damage": 28, "hitstun": 26, "blockstun": 16, "hitstop": 9, "poiseDamage": 40, "knockback": [0, 0, 5],
+      "armor": { "from": 8, "to": 17, "threshold": 15 },
+      "hitboxes": [{ "id": "slam", "offset": [0, 0.9, 0.9], "shape": { "type": "box", "h": [0.5, 0.5, 0.6] } }],
+      "motion": [{ "from": 8, "to": 17, "vel": [0, 0, 2] }]
+    },
+    "roll": {
+      "startup": 2, "active": 1, "recovery": 18, "damage": 0, "iframes": { "from": 3, "to": 14 }, "statusOnly": true,
+      "motion": [{ "from": 1, "to": 14, "vel": [0, 0, -4] }],
+      "hitboxes": []
+    }
+  }
+}

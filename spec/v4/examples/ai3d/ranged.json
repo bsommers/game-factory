@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "duration": 10,
+  "seed": 3,
+  "configs": {
+    "archer": {
+      "version": 1, "id": "archer", "role": "ranged",
+      "stats": { "moveSpeed": 3, "turnRate": 10 },
+      "perception": { "sightRange": 22, "fovDeg": 120, "hearRadius": 6, "memorySec": 4 },
+      "moves": { "shoot": { "range": { "min": 4, "max": 18 }, "cooldown": 1.6, "duration": 0.5, "needsLos": true } },
+      "tree": { "type": "selector", "children": [
+        { "type": "sequence", "children": [
+          { "type": "condition", "test": "canSee" },
+          { "type": "selector", "children": [
+            { "type": "sequence", "children": [
+              { "type": "condition", "test": "inRange", "max": 4 },
+              { "type": "action", "do": "keepDistance", "min": 8, "max": 14, "speed": 1 } ] },
+            { "type": "action", "do": "attack", "move": "shoot" },
+            { "type": "action", "do": "keepDistance", "min": 8, "max": 14 },
+            { "type": "action", "do": "orbit", "radius": 11, "dir": "random", "speed": 0.5, "duration": 2 } ] } ] },
+        { "type": "sequence", "children": [
+          { "type": "condition", "test": "remembers" },
+          { "type": "action", "do": "path", "to": "lastKnown", "stop": 1 } ] },
+        { "type": "action", "do": "idle" } ] }
+    }
+  },
+  "agents": [ { "id": "archer1", "config": "archer", "pos": [0, 0, 0], "facing": [0, 0, 1] } ],
+  "target": { "id": "player", "noise": 0, "path": [ { "t": 0, "pos": [0, 0, 20] }, { "t": 5, "pos": [0, 0, 3] }, { "t": 10, "pos": [0, 0, 12] } ] }
+}

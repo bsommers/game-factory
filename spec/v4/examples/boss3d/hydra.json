@@ -1,0 +1,41 @@
+{
+  "id": "hydra-three-head",
+  "name": "Marsh Hydra",
+  "pos": [0, 0, 0],
+  "arena": { "radius": 14, "platforms": [] },
+  "core": { "hp": 240, "pos": [0, 0, 0], "radius": 2, "exposedWhen": { "partsDownAtLeast": 2 }, "stunMult": 1.5 },
+  "parts": [
+    { "id": "head_a", "hp": 60, "pos": [5, 2, 0], "radius": 1.2, "weakPoint": { "multiplier": 2, "open": ["recovery", "stun"] }, "armor": 0.25,
+      "stagger": { "threshold": 30, "duration": 3, "decayPerSec": 5 }, "regrow": { "time": 18, "hpFrac": 0.6, "blockedBy": "sealed" }, "onDeath": { "coreDamageFrac": 0.08, "stagger": 1.5 } },
+    { "id": "head_b", "hp": 60, "pos": [-2.5, 2, 4.3], "radius": 1.2, "weakPoint": { "multiplier": 2, "open": ["recovery", "stun"] }, "armor": 0.25,
+      "stagger": { "threshold": 30, "duration": 3, "decayPerSec": 5 }, "regrow": { "time": 18, "hpFrac": 0.6, "blockedBy": "sealed" }, "onDeath": { "coreDamageFrac": 0.08, "stagger": 1.5 } },
+    { "id": "head_c", "hp": 60, "pos": [-2.5, 2, -4.3], "radius": 1.2, "weakPoint": { "multiplier": 2, "open": ["recovery", "stun"] }, "armor": 0.25,
+      "stagger": { "threshold": 30, "duration": 3, "decayPerSec": 5 }, "regrow": { "time": 18, "hpFrac": 0.6, "blockedBy": "sealed" }, "onDeath": { "coreDamageFrac": 0.08, "stagger": 1.5, "enrageSpeed": 1.1 } }
+  ],
+  "phases": [
+    { "id": "p1", "openingDelay": 1.5, "gap": [1.6, 2.4], "maxConcurrent": 1,
+      "attacks": [
+        { "id": "a_bite", "part": "head_a", "weight": 2, "cooldown": 4, "windup": 1.0, "active": 0.2, "recovery": 1.4, "damage": 14, "zone": { "shape": "line", "length": 10, "width": 2.2 }, "warning": { "vfx": "throat_glow", "sfx": "hiss_rise", "decal": "lane" } },
+        { "id": "b_spit", "part": "head_b", "weight": 2, "cooldown": 4, "windup": 1.5, "active": 0.25, "recovery": 1.2, "damage": 12, "zone": { "shape": "circle", "at": "target", "r": 3, "lockFrac": 0.4 }, "warning": { "vfx": "ground_circle", "sfx": "gurgle", "decal": "circle" } },
+        { "id": "c_sweep", "part": "head_c", "weight": 1, "cooldown": 7, "windup": 1.1, "active": 1.2, "recovery": 1.6, "damage": 16, "zone": { "shape": "sweep", "r": 8, "width": 1.6, "arc": [-90, 90], "maxY": 0.8 }, "warning": { "vfx": "neck_rear", "sfx": "whoosh_rise", "decal": "arc" } }
+      ] },
+    { "id": "p2", "enter": { "totalHpBelow": 0.62 }, "transition": { "invuln": 1.5, "clearAttacks": true }, "reviveParts": ["head_a", "head_b", "head_c"], "gap": [1.2, 1.8], "maxConcurrent": 2,
+      "adds": [{ "at": 8, "kind": "hatchling", "count": 3, "radius": 9 }],
+      "attacks": [
+        { "id": "a_bite", "part": "head_a", "weight": 2, "cooldown": 3.5, "windup": 0.9, "active": 0.2, "recovery": 1.2, "damage": 14, "zone": { "shape": "line", "length": 10, "width": 2.2 }, "warning": { "vfx": "throat_glow", "sfx": "hiss_rise", "decal": "lane" } },
+        { "id": "b_spit", "part": "head_b", "weight": 2, "cooldown": 3.5, "windup": 1.3, "active": 0.25, "recovery": 1.1, "damage": 12, "zone": { "shape": "circle", "at": "target", "r": 3, "lockFrac": 0.4 }, "warning": { "vfx": "ground_circle", "sfx": "gurgle", "decal": "circle" } },
+        { "id": "c_sweep", "part": "head_c", "weight": 1, "cooldown": 6, "windup": 1.0, "active": 1.1, "recovery": 1.4, "damage": 16, "zone": { "shape": "sweep", "r": 8, "width": 1.6, "arc": [-90, 90], "maxY": 0.8 }, "warning": { "vfx": "neck_rear", "sfx": "whoosh_rise", "decal": "arc" } },
+        { "id": "roar_ring", "weight": 1, "cooldown": 9, "windup": 1.2, "active": 0.25, "recovery": 1.8, "damage": 12, "requires": { "partsAlive": ["head_a"] }, "zone": { "shape": "ring", "rInner": 4, "rOuter": 6.5, "maxY": 0.9 }, "warning": { "vfx": "shock_ring", "sfx": "roar_rise", "decal": "ring" } }
+      ] },
+    { "id": "p3", "enter": { "hpBelow": 0.35 }, "transition": { "invuln": 2, "heal": 0.05 }, "gap": [1.0, 1.5], "maxConcurrent": 2,
+      "attacks": [
+        { "id": "a_bite", "part": "head_a", "weight": 2, "cooldown": 3, "windup": 0.85, "active": 0.2, "recovery": 1.0, "damage": 15, "zone": { "shape": "line", "length": 10, "width": 2.2 }, "warning": { "vfx": "throat_glow", "sfx": "hiss_rise", "decal": "lane" } },
+        { "id": "b_spit", "part": "head_b", "weight": 2, "cooldown": 3, "windup": 1.2, "active": 0.25, "recovery": 1.0, "damage": 13, "zone": { "shape": "circle", "at": "target", "r": 3.2, "lockFrac": 0.4 }, "warning": { "vfx": "ground_circle", "sfx": "gurgle", "decal": "circle" } },
+        { "id": "beam_trace", "weight": 1, "cooldown": 8, "windup": 1.4, "active": 2.2, "recovery": 1.8, "damage": 20, "zone": { "shape": "sweep", "r": 12, "width": 1.4, "arc": [-160, 160], "maxY": 0.8 }, "warning": { "vfx": "beam_line", "sfx": "charge_rise", "decal": "arc" } }
+      ] }
+  ],
+  "hazards": [
+    { "id": "gas_vents", "kind": "gas", "phase": "p3", "start": 6, "windup": 2, "radius": 3, "growTo": 4.5, "grow": 10, "dps": 6, "center": [8, 0, 8], "warning": { "vfx": "green_haze", "sfx": "vent_hiss" } }
+  ],
+  "enrage": { "afterSeconds": 150, "speedMult": 1.2, "damageMult": 1.15, "windupMult": 1 }
+}

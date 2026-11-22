@@ -1,0 +1,79 @@
+{
+  "$schema": "../../schemas/locomotion3d.schema.json",
+  "name": "hero",
+  "body": {
+    "radius": 0.4,
+    "height": 1.8,
+    "stepHeight": 0.35,
+    "slopeLimitDeg": 50
+  },
+  "ground": {
+    "walkSpeed": 2.2,
+    "runSpeed": 5.2,
+    "sprintSpeed": 8,
+    "runThreshold": 0.6,
+    "accel": 40,
+    "decel": 50,
+    "turnRateDeg": 720
+  },
+  "air": {
+    "accel": 14,
+    "decel": 3,
+    "turnRateDeg": 360,
+    "gravity": 28,
+    "fallGravityMul": 1.25,
+    "maxFallSpeed": 40
+  },
+  "jump": {
+    "speed": 9,
+    "coyoteTime": 0.1,
+    "bufferTime": 0.12,
+    "cutMultiplier": 0.45,
+    "airJumps": 0,
+    "airJumpSpeed": 8,
+    "inheritPlatform": true
+  },
+  "land": {
+    "minSpeed": 3,
+    "time": 0.08,
+    "hardSpeed": 14,
+    "hardTime": 0.45,
+    "hardMoveMul": 0.2
+  },
+  "dodge": {
+    "distance": 4,
+    "duration": 0.5,
+    "iframeStart": 0.05,
+    "iframeEnd": 0.3,
+    "cooldown": 0.25,
+    "exitSpeed": 2,
+    "airDodges": 0,
+    "curve": "easeOut",
+    "turnToDir": true
+  },
+  "swim": {
+    "wadeDepth": 0.25,
+    "swimDepth": 1.2,
+    "wadeSpeedMul": 0.7,
+    "speed": 3,
+    "accel": 10,
+    "floatOffset": 1.4,
+    "buoyancy": 4,
+    "maxVerticalSpeed": 3,
+    "verticalDamp": 8,
+    "exitJumpMul": 0.8,
+    "exitJumpWindow": 0.4
+  },
+  "slide": {
+    "minAngleDeg": 38,
+    "accel": 18,
+    "maxSpeed": 12,
+    "control": 0.25
+  },
+  "knockback": {
+    "groundDecel": 14,
+    "airDecel": 1.5,
+    "stunDefault": 0.35
+  },
+  "description": "Balanced third-person hero: responsive, one i-frame roll."
+}

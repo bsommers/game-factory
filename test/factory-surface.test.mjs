@@ -19,7 +19,7 @@ test('registry: every capability is well formed and schemas are valid', () => {
   const reg = buildRegistry(); const names = reg.list().map((c) => c.name);
   for (const need of ['styles.list', 'library.add', 'registry.search', 'guide.route', 'project.new', 'kits.list', 'swarm.track']) assert.ok(names.includes(need), need);
   for (const c of reg.list()) {
-    assert.match(c.name, /^[a-z]+\.[a-z-]+$/); assert.ok(c.summary.length > 10, c.name);
+    assert.match(c.name, /^[a-z][a-z0-9]*\.[a-z-]+$/); assert.ok(c.summary.length > 10, c.name);
     assert.equal(c.inputSchema.type, 'object', c.name); assert.equal(typeof c.handler, 'function');
     assert.ok(c.outputSchema.properties.ok, c.name);
     const walk = (s) => { if (!s || typeof s !== 'object') return; if (s.type) for (const t of [].concat(s.type)) assert.ok(['object', 'string', 'integer', 'number', 'boolean', 'array', 'null'].includes(t), `${c.name} type ${t}`); Object.values(s.properties || {}).forEach(walk); walk(s.items); (s.anyOf || []).forEach(walk); };
@@ -101,7 +101,7 @@ test('MCP smoke: initialize, tools/list, tools/call, resources', async (t) => {
   assert.equal(init.result.serverInfo.name, 'game-factory'); assert.ok(init.result.capabilities.tools);
   const tools = (await s.rpc('tools/list', {})).result.tools;
   const reg = buildRegistry(); assert.equal(tools.length, reg.list().length);
-  for (const x of tools) { assert.ok(x.name && x.description && x.inputSchema.type === 'object'); assert.match(x.name, /^[a-z]+_[a-z-]+$/); }
+  for (const x of tools) { assert.ok(x.name && x.description && x.inputSchema.type === 'object'); assert.match(x.name, /^[a-z][a-z0-9]*_[a-z-]+$/); }
   const r = await s.call('kits_show', { name: 'art-kit' }); assert.equal(r.isError, false); assert.equal(r.structuredContent.data.name, 'art-kit');
   const bad = await s.call('kits_show', {}); assert.equal(bad.isError, true);
   const res = (await s.rpc('resources/list', {})).result.resources; assert.ok(res.some((x) => x.uri === 'factory://kits'));

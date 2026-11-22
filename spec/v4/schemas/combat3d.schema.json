@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "combat3d.schema.json",
+  "title": "combat3d fighter definition",
+  "description": "A fighter: hurtboxes, block/parry, resistances, moves (frame data), action map and status definitions. Validate with combat3d.validate (schema + semantic checks).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "moves"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "team": { "type": "string" },
+    "maxHp": { "type": "number", "minimum": 1 },
+    "maxPoise": { "type": "number", "minimum": 0 },
+    "poiseRegenDelay": { "type": "integer", "minimum": 0 },
+    "poiseRegenRate": { "type": "number", "minimum": 0 },
+    "staggerFrames": { "type": "integer", "minimum": 1 },
+    "bufferFrames": { "type": "integer", "minimum": 0, "maximum": 30 },
+    "chipMult": { "type": "number", "minimum": 0 },
+    "comboScaling": { "type": "array", "items": { "type": "number", "minimum": 0 } },
+    "resist": { "type": "object", "additionalProperties": false, "properties": { "physical": { "type": "number", "maximum": 1 }, "fire": { "type": "number", "maximum": 1 }, "water": { "type": "number", "maximum": 1 }, "toxic": { "type": "number", "maximum": 1 } } },
+    "hurtboxes": { "type": "array", "items": { "$ref": "#/$defs/hurtbox" } },
+    "block": { "$ref": "#/$defs/block" },
+    "actions": { "type": "object", "additionalProperties": { "type": "string" }, "description": "input action name -> move id that starts from idle" },
+    "moves": { "type": "object", "additionalProperties": { "$ref": "#/$defs/move" } },
+    "statuses": { "type": "object", "additionalProperties": { "$ref": "#/$defs/status" } }
+  },
+  "$defs": {
+    "vec3": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "type": "number" } },
+    "window": { "type": "object", "additionalProperties": false, "required": ["from", "to"], "properties": { "from": { "type": "integer", "minimum": 1 }, "to": { "type": "integer", "minimum": 1 } } },
+    "shape": {
+      "type": "object", "required": ["type"],
+      "properties": {
+        "type": { "enum": ["sphere", "capsule", "box"] },
+        "r": { "type": "number", "minimum": 0 },
+        "a": { "$ref": "#/$defs/vec3" },
+        "b": { "$ref": "#/$defs/vec3" },
+        "h": { "$ref": "#/$defs/vec3" }
+      },
+      "additionalProperties": false
+    },
+    "hurtbox": {
+      "type": "object", "additionalProperties": false, "required": ["id", "shape"],
+      "properties": { "id": { "type": "string" }, "bone": { "type": "string" }, "offset": { "$ref": "#/$defs/vec3" }, "shape": { "$ref": "#/$defs/shape" }, "mult": { "type": "number", "minimum": 0, "description": "damage multiplier for this body part" }, "weak": { "type": "boolean", "description": "weak point: flagged in events, poise damage x1.5" } }
+    },
+    "block": {
+      "type": "object", "additionalProperties": false,
+      "properties": { "arc": { "type": "number", "minimum": 0, "maximum": 360, "description": "degrees in front that can be blocked" }, "parryWindow": { "type": "integer", "minimum": 0 }, "parryStun": { "type": "integer", "minimum": 0 }, "chip": { "type": "number", "minimum": 0, "maximum": 1 }, "poiseMult": { "type": "number", "minimum": 0 }, "kbMult": { "type": "number", "minimum": 0 } }
+    },
+    "hitbox": {
+      "type": "object", "additionalProperties": false, "required": ["shape"],
+      "properties": {
+        "id": { "type": "string" }, "bone": { "type": "string", "description": "skeleton bone supplied by the caller in poses; omitted = fighter root (yaw only)" },
+        "offset": { "$ref": "#/$defs/vec3" }, "shape": { "$ref": "#/$defs/shape" },
+        "from": { "type": "integer", "minimum": 1 }, "to": { "type": "integer", "minimum": 1 },
+        "keys": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["frame", "offset"], "properties": { "frame": { "type": "integer", "minimum": 1 }, "offset": { "$ref": "#/$defs/vec3" } } } }
+      }
+    },
+    "cancel": {
+      "type": "object", "additionalProperties": false, "required": ["into", "action", "from", "to"],
+      "properties": { "into": { "type": "string" }, "action": { "type": "string" }, "from": { "type": "integer", "minimum": 1 }, "to": { "type": "integer", "minimum": 1 }, "on": { "enum": ["hit", "block", "contact", "whiff", "any"] } }
+    },
+    "projectile": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "kind": { "enum": ["straight", "arc", "homing"] }, "dir": { "$ref": "#/$defs/vec3" }, "speed": { "type": "number", "minimum": 0 }, "radius": { "type": "number", "minimum": 0 }, "life": { "type": "integer", "minimum": 1 },
+        "gravity": { "type": "number" }, "pierce": { "type": "integer", "minimum": 0 }, "turn": { "type": "number", "minimum": 0, "description": "homing turn rate, radians per frame" },
+        "hit": { "type": "object", "additionalProperties": false, "properties": { "damage": { "type": "number", "minimum": 0 }, "damageType": { "enum": ["physical", "fire", "water", "toxic"] }, "hitstun": { "type": "integer", "minimum": 0 }, "blockstun": { "type": "integer", "minimum": 0 }, "knockback": { "$ref": "#/$defs/vec3" }, "hitstop": { "type": "integer", "minimum": 0 }, "poiseDamage": { "type": "number", "minimum": 0 }, "guardBreak": { "type": "boolean" }, "unblockable": { "type": "boolean" }, "status": { "type": "array", "items": { "$ref": "#/$defs/statusHit" } } } }
+      }
+    },
+    "statusHit": { "type": "object", "additionalProperties": false, "required": ["id"], "properties": { "id": { "type": "string" }, "chance": { "type": "number", "minimum": 0, "maximum": 1 }, "duration": { "type": "integer", "minimum": 1 } } },
+    "move": {
+      "type": "object", "additionalProperties": false, "required": ["startup", "active", "recovery"],
+      "properties": {
+        "startup": { "type": "integer", "minimum": 0 }, "active": { "type": "integer", "minimum": 1 }, "recovery": { "type": "integer", "minimum": 0 },
+        "damage": { "type": "number", "minimum": 0 }, "damageType": { "enum": ["physical", "fire", "water", "toxic"] },
+        "hitstun": { "type": "integer", "minimum": 0 }, "blockstun": { "type": "integer", "minimum": 0 }, "hitstop": { "type": "integer", "minimum": 0 },
+        "knockback": { "$ref": "#/$defs/vec3" }, "poiseDamage": { "type": "number", "minimum": 0 }, "guardBreak": { "type": "boolean" }, "unblockable": { "type": "boolean" },
+        "multihit": { "type": "object", "additionalProperties": false, "required": ["every"], "properties": { "every": { "type": "integer", "minimum": 1 } } },
+        "statusOnly": { "type": "boolean" },
+        "hitboxes": { "type": "array", "items": { "$ref": "#/$defs/hitbox" } },
+        "cancels": { "type": "array", "items": { "$ref": "#/$defs/cancel" } },
+        "armor": { "type": "object", "additionalProperties": false, "required": ["from", "to"], "properties": { "from": { "type": "integer", "minimum": 1 }, "to": { "type": "integer", "minimum": 1 }, "threshold": { "type": "number", "minimum": 0, "description": "armor holds against hits with poiseDamage <= threshold" } } },
+        "iframes": { "$ref": "#/$defs/window" },
+        "motion": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["from", "to", "vel"], "properties": { "from": { "type": "integer", "minimum": 1 }, "to": { "type": "integer", "minimum": 1 }, "vel": { "$ref": "#/$defs/vec3" } } } },
+        "onHit": { "type": "array", "items": { "$ref": "#/$defs/statusHit" } },
+        "spawns": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["frame", "projectile"], "properties": { "frame": { "type": "integer", "minimum": 1 }, "offset": { "$ref": "#/$defs/vec3" }, "projectile": { "$ref": "#/$defs/projectile" } } } }
+      }
+    },
+    "status": {
+      "type": "object", "additionalProperties": false,
+      "properties": { "duration": { "type": "integer", "minimum": 1 }, "tickEvery": { "type": "integer", "minimum": 1 }, "damage": { "type": "number", "minimum": 0 }, "damageType": { "enum": ["physical", "fire", "water", "toxic"] }, "speedMult": { "type": "number", "minimum": 0 }, "maxStacks": { "type": "integer", "minimum": 1 }, "stackMode": { "enum": ["refresh", "stack", "ignore"] }, "extinguishedBy": { "type": "array", "items": { "enum": ["physical", "fire", "water", "toxic"] } } }
+    }
+  }
+}

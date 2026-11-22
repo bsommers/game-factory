@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-factory/spec/v4/schemas/ai3d.schema.json",
+  "title": "ai3d config and scenario",
+  "description": "An enemy AI config (behaviour tree + perception + moves) or a headless simulation scenario that bundles configs. Semantic checks (unknown conditions/actions/moves) are done by ai3d.validate; this schema covers shape.",
+  "oneOf": [ { "$ref": "#/$defs/config" }, { "$ref": "#/$defs/scenario" } ],
+  "$defs": {
+    "vec3": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 },
+    "num0": { "type": "number", "minimum": 0 },
+    "config": {
+      "type": "object", "required": ["tree"], "additionalProperties": true,
+      "properties": {
+        "version": { "const": 1 }, "id": { "type": "string" },
+        "role": { "enum": ["melee", "ranged", "charger", "support"] },
+        "stats": { "type": "object", "properties": { "moveSpeed": { "$ref": "#/$defs/num0" }, "turnRate": { "$ref": "#/$defs/num0" }, "radius": { "$ref": "#/$defs/num0" }, "eyeHeight": { "$ref": "#/$defs/num0" } } },
+        "perception": { "type": "object", "properties": { "sightRange": { "$ref": "#/$defs/num0" }, "fovDeg": { "type": "number", "minimum": 0, "maximum": 360 }, "awareness": { "$ref": "#/$defs/num0" }, "hearRadius": { "$ref": "#/$defs/num0" }, "memorySec": { "$ref": "#/$defs/num0" }, "targetEyeHeight": { "$ref": "#/$defs/num0" } } },
+        "threat": { "type": "object", "properties": { "sightGain": { "$ref": "#/$defs/num0" }, "hearGain": { "$ref": "#/$defs/num0" }, "damageGain": { "$ref": "#/$defs/num0" }, "decay": { "$ref": "#/$defs/num0" }, "switchRatio": { "type": "number", "minimum": 1 } } },
+        "steering": { "type": "object", "properties": { "separation": { "type": "object", "properties": { "radius": { "$ref": "#/$defs/num0" }, "weight": { "$ref": "#/$defs/num0" } } } } },
+        "leash": { "type": "object", "properties": { "radius": { "$ref": "#/$defs/num0" } } },
+        "moves": { "type": "object", "additionalProperties": { "$ref": "#/$defs/move" } },
+        "tree": { "$ref": "#/$defs/node" }
+      }
+    },
+    "move": {
+      "type": "object",
+      "properties": { "range": { "type": "object", "properties": { "min": { "$ref": "#/$defs/num0" }, "max": { "$ref": "#/$defs/num0" } } }, "cooldown": { "$ref": "#/$defs/num0" }, "duration": { "$ref": "#/$defs/num0" }, "tokens": { "type": "integer", "minimum": 0 }, "needsLos": { "type": "boolean" } }
+    },
+    "node": {
+      "type": "object", "required": ["type"],
+      "properties": {
+        "type": { "enum": ["selector", "sequence", "invert", "succeeder", "condition", "action", "cooldown", "weighted", "utility"] },
+        "children": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/node" } },
+        "child": { "$ref": "#/$defs/node" },
+        "memory": { "type": "boolean" },
+        "test": { "enum": ["always", "never", "hasTarget", "canSee", "remembers", "heard", "inRange", "healthBelow", "outsideLeash", "nearSpawn", "hasToken", "tokenAvailable", "moveReady", "roll", "timeSinceSeen", "hasSlot", "role"] },
+        "not": { "type": "boolean" },
+        "do": { "enum": ["idle", "wander", "seek", "arrive", "path", "flee", "keepDistance", "orbit", "surround", "face", "attack", "charge", "dropAggro"] },
+        "seconds": { "$ref": "#/$defs/num0" }, "on": { "enum": ["success", "done"] }, "id": { "type": "string" },
+        "weights": { "type": "array", "items": { "$ref": "#/$defs/num0" } }, "hold": { "$ref": "#/$defs/num0" }, "weight": { "$ref": "#/$defs/num0" },
+        "stickiness": { "type": "number", "minimum": 1 },
+        "options": { "type": "array", "minItems": 1, "items": { "type": "object", "required": ["node"], "properties": { "name": { "type": "string" }, "weight": { "$ref": "#/$defs/num0" }, "node": { "$ref": "#/$defs/node" }, "consider": { "type": "array", "items": { "type": "object", "required": ["input"], "properties": { "input": { "enum": ["dist", "healthPct", "visible", "hasToken", "tokenFree", "timeSinceSeen", "threat", "hasTarget"] }, "min": { "type": "number" }, "max": { "type": "number" }, "invert": { "type": "boolean" }, "power": { "type": "number", "minimum": 0 } } } } } } }
+      }
+    },
+    "scenario": {
+      "type": "object", "required": ["configs", "agents", "duration"],
+      "properties": {
+        "version": { "const": 1 }, "duration": { "type": "number", "minimum": 0 }, "seed": { "type": "integer" }, "dt": { "type": "number", "minimum": 0 },
+        "configs": { "type": "object", "additionalProperties": { "$ref": "#/$defs/config" } },
+        "agents": { "type": "array", "items": { "type": "object", "required": ["id", "config", "pos"], "properties": { "id": { "type": "string" }, "config": { "type": "string" }, "pos": { "$ref": "#/$defs/vec3" }, "facing": { "$ref": "#/$defs/vec3" }, "role": { "type": "string" }, "hp": { "type": "number" }, "seed": { "type": "integer" } } } },
+        "group": { "type": "object", "properties": { "id": { "type": "string" }, "maxAttackers": { "type": "integer", "minimum": 0 }, "ttl": { "$ref": "#/$defs/num0" } } },
+        "world": { "type": "object", "properties": { "walls": { "type": "array", "items": { "type": "object", "required": ["min", "max"], "properties": { "min": { "$ref": "#/$defs/vec3" }, "max": { "$ref": "#/$defs/vec3" } } } }, "grid": { "type": "object", "required": ["width", "height"] }, "waypoints": { "type": "object", "required": ["nodes", "edges"] } } },
+        "target": { "type": "object", "required": ["id", "path"], "properties": { "id": { "type": "string" }, "noise": { "type": "number", "minimum": 0 }, "path": { "type": "array", "items": { "type": "object", "required": ["t", "pos"], "properties": { "t": { "type": "number" }, "pos": { "$ref": "#/$defs/vec3" } } } } } },
+        "sounds": { "type": "array", "items": { "type": "object", "required": ["t", "pos"], "properties": { "t": { "type": "number" }, "pos": { "$ref": "#/$defs/vec3" }, "loudness": { "type": "number" }, "source": { "type": "string" } } } },
+        "events": { "type": "array", "items": { "type": "object", "required": ["t", "type"], "properties": { "t": { "type": "number" }, "type": { "const": "damage" }, "source": { "type": "string" }, "target": { "type": "string" }, "amount": { "type": "number" } } } }
+      }
+    }
+  }
+}

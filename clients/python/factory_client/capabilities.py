@@ -10,6 +10,14 @@ class Capabilities:
     def call(self, name: str, input: dict | None = None):  # implemented by Client
         raise NotImplementedError
 
+    def ai3d_simulate(self, *, config: dict | None = None, duration: float | None = None, file: str | None = None, limit: int | None = None, project: str | None = None, scenario: dict | None = None, seed: int | None = None):
+        """ai3d.simulate: Run enemy AI headlessly in a scripted world (walls for line of sight, grid/waypoint nav, a target walking a timed path, sounds, damage events) and return the decision timeline, attack counts, token stats and a determinism hash."""
+        return self.call("ai3d.simulate", {"config": config, "duration": duration, "file": file, "limit": limit, "project": project, "scenario": scenario, "seed": seed})
+
+    def ai3d_validate(self, *, config: dict | None = None, file: str | None = None, project: str | None = None, scenario: dict | None = None):
+        """ai3d.validate: Validate an enemy AI config (behaviour tree, perception, moves) or a simulation scenario: unknown conditions/actions/moves, bad ranges, tree depth, agent/config references. Errors and warnings carry JSON paths."""
+        return self.call("ai3d.validate", {"config": config, "file": file, "project": project, "scenario": scenario})
+
     def anim_import(self, *, inputs: list[str], ids: dict | None = None, out: str | None = None, overwrite: bool | None = None, project: str | None = None):
         """anim.import: Copy one or more animated .glb files into the project (assets/models/), inspect each, and write assets/models/manifest.json + models.js listing id, file, clips, guessed state map and rig groups. Files that share a rig are flagged so their clips can be combined with anim.merge."""
         return self.call("anim.import", {"inputs": inputs, "ids": ids, "out": out, "overwrite": overwrite, "project": project})
@@ -26,9 +34,45 @@ class Capabilities:
         """anim.sample: Pose a .glb at a clip and time (no rendering): returns the posed bounding box and the world position of every joint, to verify an animation or script against it. time is seconds; loop wraps, otherwise clamps."""
         return self.call("anim.sample", {"input": input, "clip": clip, "loop": loop, "project": project, "time": time})
 
+    def animgraph_simulate(self, *, clips: dict | None = None, duration: float | None = None, glb: str | None = None, graph: dict | None = None, graphPath: str | None = None, project: str | None = None, sampleEvery: float | None = None, script: list | None = None):
+        """animgraph.simulate: Run an animation graph headlessly at the fixed 1/60 step with scripted parameters and return a deterministic timeline: transitions, animation events (hit_start, footstep, i_frame_on, ...), periodic state samples and total root motion. Clip lengths come from glb, or from clips {name: seconds}."""
+        return self.call("animgraph.simulate", {"clips": clips, "duration": duration, "glb": glb, "graph": graph, "graphPath": graphPath, "project": project, "sampleEvery": sampleEvery, "script": script})
+
+    def animgraph_validate(self, *, glb: str | None = None, graph: dict | None = None, graphPath: str | None = None, project: str | None = None):
+        """animgraph.validate: Validate an animation-graph JSON (states, blend spaces, transitions, layers, masks, root motion, events) against spec/v4/schemas/anim-graph.schema.json plus semantic checks; with glb, every referenced clip, mask bone and root bone must exist in that model. Returns {valid, schemaErrors, errors, warnings, clips}."""
+        return self.call("animgraph.validate", {"glb": glb, "graph": graph, "graphPath": graphPath, "project": project})
+
+    def boss3d_fairness(self, *, boss: dict | None = None, file: str | None = None, options: dict | None = None, project: str | None = None):
+        """boss3d.fairness: Fairness gate for a boss: min telegraph vs human reaction, every attack avoidable under a dodge profile (distance, i-frames, cooldown), a safe zone for every simultaneous danger-zone combination, max simultaneous threats, and a perfect-reaction oracle bot sim. pass=false lists findings."""
+        return self.call("boss3d.fairness", {"boss": boss, "file": file, "options": options, "project": project})
+
+    def boss3d_simulate(self, *, boss: dict | None = None, file: str | None = None, full: bool | None = None, maxSeconds: float | None = None, profile: dict | None = None, project: str | None = None, runs: int | None = None, seed: int | None = None):
+        """boss3d.simulate: Headless seeded fights: a bot with a skill profile fights the boss N times; reports win rate, time-to-kill (mean/median/p90), damage taken, per-phase seconds, attack hit counts and a determinism hash."""
+        return self.call("boss3d.simulate", {"boss": boss, "file": file, "full": full, "maxSeconds": maxSeconds, "profile": profile, "project": project, "runs": runs, "seed": seed})
+
+    def boss3d_validate(self, *, boss: dict | None = None, file: str | None = None, project: str | None = None):
+        """boss3d.validate: Validate a boss3d definition: structure (ids, parts, phases, enter conditions, attack timings, zone shapes, hazards) plus warnings. Returns errors with JSON paths."""
+        return self.call("boss3d.validate", {"boss": boss, "file": file, "project": project})
+
+    def camera3d_simulate(self, *, path: dict, aim: bool | None = None, config: dict | None = None, fovKick: list | None = None, lock: list[float] | None = None, sampleEvery: int | None = None, trauma: list | None = None, world: dict | None = None, yawRate: float | None = None):
+        """camera3d.simulate: Run a scripted target path through the camera rig at dt=1/60 and return sampled camera positions plus a collision summary (frames shortened by geometry, min/max boom length, final pose). World = boxes [{min,max}] and/or flat triangle arrays."""
+        return self.call("camera3d.simulate", {"path": path, "aim": aim, "config": config, "fovKick": fovKick, "lock": lock, "sampleEvery": sampleEvery, "trauma": trauma, "world": world, "yawRate": yawRate})
+
+    def camera3d_validate(self, *, config: dict):
+        """camera3d.validate: Validate a camera3d config (third-person rig: follow, lock-on, aim, fov, shake) against spec/v4/schemas/camera3d.schema.json plus semantic rules (pitch range, min distance). Returns the config with defaults filled."""
+        return self.call("camera3d.validate", {"config": config})
+
     def clients_generate(self, *, check: bool | None = None, lang: str | None = None, out: str | None = None):
         """clients.generate: Generate typed thin HTTP clients (Go, Rust, Python) from the registry OpenAPI document into <out>/<lang>/. With check=true nothing is written and drift against <out> returns CONFLICT."""
         return self.call("clients.generate", {"check": check, "lang": lang, "out": out})
+
+    def combat3d_simulate(self, *, distance: float | None = None, events: int | None = None, fighters: list | None = None, frames: int | None = None, input: str | None = None, project: str | None = None, script: dict | None = None, seed: int | None = None, statuses: dict | None = None):
+        """combat3d.simulate: Run a scripted duel between two combat3d fighters on the deterministic frame-data sim: returns the event log (hit, block, parry, stagger, death, ...), damage totals, winner, an event-log hash, and a frame-data table per fighter."""
+        return self.call("combat3d.simulate", {"distance": distance, "events": events, "fighters": fighters, "frames": frames, "input": input, "project": project, "script": script, "seed": seed, "statuses": statuses})
+
+    def combat3d_validate(self, *, fighters: list | None = None, input: str | None = None, project: str | None = None):
+        """combat3d.validate: Validate combat3d fighter definitions (moves, hitboxes, hurtboxes, block, statuses): JSON-schema shape plus semantic checks (frame ordering, windows inside the move, cancel targets exist, status ids known, reachability warnings)."""
+        return self.call("combat3d.validate", {"fighters": fighters, "input": input, "project": project})
 
     def docs_learnings(self, *, game: str | None = None):
         """docs.learnings: Return docs/LEARNINGS*.md (mistakes and fixes from past games), optionally one game."""
@@ -141,6 +185,18 @@ class Capabilities:
     def library_verify(self, *, project: str):
         """library.verify: Check installed assets against assets.lock.json: reports modified, missing or tampered files."""
         return self.call("library.verify", {"project": project})
+
+    def locomotion3d_report(self, *, config: dict | None = None, file: str | None = None, project: str | None = None):
+        """locomotion3d.report: Tuning report for a config: jump apex (analytic and measured, held vs tap), dodge distance and i-frame window (from rest and while running), run/sprint ramp-up and stop times, terminal fall and hard-landing heights, plus warnings."""
+        return self.call("locomotion3d.report", {"config": config, "file": file, "project": project})
+
+    def locomotion3d_simulate(self, *, script: list, config: dict | None = None, file: str | None = None, project: str | None = None, sampleEvery: int | None = None, start: list[float] | None = None, world: Any | None = None, yaw: float | None = None):
+        """locomotion3d.simulate: Run scripted input through the locomotion controller on a built-in test world (flat, wall, ramp, ice, conveyor, river, platform) and return the state timeline, per-state frame counts, events and a determinism hash."""
+        return self.call("locomotion3d.simulate", {"script": script, "config": config, "file": file, "project": project, "sampleEvery": sampleEvery, "start": start, "world": world, "yaw": yaw})
+
+    def locomotion3d_validate(self, *, config: dict | None = None, file: str | None = None, project: str | None = None):
+        """locomotion3d.validate: Validate a locomotion3d movement config (schema ranges plus cross-field rules such as walk<=run<=sprint, i-frames inside the dodge duration). Returns the fully merged config."""
+        return self.call("locomotion3d.validate", {"config": config, "file": file, "project": project})
 
     def meshy_import(self, *, input: str, clips: dict | None = None, height: float | None = None, id: str | None = None, out: str | None = None, overwrite: bool | None = None, project: str | None = None, provenance: dict | None = None, units: str | None = None):
         """meshy.import: Normalise and import a Meshy (or Blender-style) animated .glb into assets/models: detect units and bake centimetres to metres (no node scale left behind), check facing, tidy clip names ("Armature|walking_man|baselayer" -> "walking_man"), write the GLB and a manifest entry with provenance (plan, visibility, jobId stay "unknown" unless supplied). Deterministic: no timestamps unless createdAt is given."""

@@ -3,6 +3,75 @@
 use crate::{Client, Envelope, Error};
 use serde_json::{Map, Value};
 
+/// Input of `ai3d.simulate`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Ai3dSimulateInput {
+    /// one AI config (spec/v4/ai3d.md)
+    pub config: Option<serde_json::Value>,
+    /// override scenario duration (seconds)
+    pub duration: Option<f64>,
+    /// path to a JSON config or scenario (relative to project)
+    pub file: Option<String>,
+    /// max timeline entries returned (default 500)
+    pub limit: Option<i64>,
+    pub project: Option<String>,
+    /// simulation scenario bundling configs, agents, world, target
+    pub scenario: Option<serde_json::Value>,
+    /// override scenario seed
+    pub seed: Option<i64>,
+}
+
+impl Ai3dSimulateInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.config { m.insert("config".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.duration { m.insert("duration".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.file { m.insert("file".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.limit { m.insert("limit".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.scenario { m.insert("scenario".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.seed { m.insert("seed".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// ai3d.simulate: Run enemy AI headlessly in a scripted world (walls for line of sight, grid/waypoint nav, a target walking a timed path, sounds, damage events) and return the decision timeline, attack counts, token stats and a determinism hash.
+    pub fn ai3d_simulate(&self, input: &Ai3dSimulateInput) -> Result<Envelope, Error> {
+        self.call("ai3d.simulate", &input.to_json())
+    }
+}
+
+/// Input of `ai3d.validate`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Ai3dValidateInput {
+    /// one AI config (spec/v4/ai3d.md)
+    pub config: Option<serde_json::Value>,
+    /// path to a JSON config or scenario (relative to project)
+    pub file: Option<String>,
+    pub project: Option<String>,
+    /// simulation scenario bundling configs, agents, world, target
+    pub scenario: Option<serde_json::Value>,
+}
+
+impl Ai3dValidateInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.config { m.insert("config".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.file { m.insert("file".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.scenario { m.insert("scenario".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// ai3d.validate: Validate an enemy AI config (behaviour tree, perception, moves) or a simulation scenario: unknown conditions/actions/moves, bad ranges, tree depth, agent/config references. Errors and warnings carry JSON paths.
+    pub fn ai3d_validate(&self, input: &Ai3dValidateInput) -> Result<Envelope, Error> {
+        self.call("ai3d.validate", &input.to_json())
+    }
+}
+
 /// Input of `anim.import`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct AnimImportInput {
@@ -130,6 +199,235 @@ impl Client {
     }
 }
 
+/// Input of `animgraph.simulate`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct AnimgraphSimulateInput {
+    /// clip durations in seconds when no glb is given
+    pub clips: Option<serde_json::Value>,
+    /// seconds to simulate (default 3)
+    pub duration: Option<f64>,
+    /// animated .glb whose clips and bones the graph must reference
+    pub glb: Option<String>,
+    /// anim-graph JSON (inline)
+    pub graph: Option<serde_json::Value>,
+    /// path to an anim-graph .json (relative to project)
+    pub graph_path: Option<String>,
+    pub project: Option<String>,
+    /// seconds between state samples (default 0.25)
+    pub sample_every: Option<f64>,
+    /// scripted inputs applied at the start of the frame nearest `at` seconds
+    pub script: Option<Vec<serde_json::Value>>,
+}
+
+impl AnimgraphSimulateInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.clips { m.insert("clips".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.duration { m.insert("duration".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.glb { m.insert("glb".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.graph { m.insert("graph".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.graph_path { m.insert("graphPath".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.sample_every { m.insert("sampleEvery".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.script { m.insert("script".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// animgraph.simulate: Run an animation graph headlessly at the fixed 1/60 step with scripted parameters and return a deterministic timeline: transitions, animation events (hit_start, footstep, i_frame_on, ...), periodic state samples and total root motion. Clip lengths come from glb, or from clips {name: seconds}.
+    pub fn animgraph_simulate(&self, input: &AnimgraphSimulateInput) -> Result<Envelope, Error> {
+        self.call("animgraph.simulate", &input.to_json())
+    }
+}
+
+/// Input of `animgraph.validate`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct AnimgraphValidateInput {
+    /// animated .glb whose clips and bones the graph must reference
+    pub glb: Option<String>,
+    /// anim-graph JSON (inline)
+    pub graph: Option<serde_json::Value>,
+    /// path to an anim-graph .json (relative to project)
+    pub graph_path: Option<String>,
+    pub project: Option<String>,
+}
+
+impl AnimgraphValidateInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.glb { m.insert("glb".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.graph { m.insert("graph".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.graph_path { m.insert("graphPath".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// animgraph.validate: Validate an animation-graph JSON (states, blend spaces, transitions, layers, masks, root motion, events) against spec/v4/schemas/anim-graph.schema.json plus semantic checks; with glb, every referenced clip, mask bone and root bone must exist in that model. Returns {valid, schemaErrors, errors, warnings, clips}.
+    pub fn animgraph_validate(&self, input: &AnimgraphValidateInput) -> Result<Envelope, Error> {
+        self.call("animgraph.validate", &input.to_json())
+    }
+}
+
+/// Input of `boss3d.fairness`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Boss3dFairnessInput {
+    /// boss definition (spec/v4/schemas/boss3d.schema.json)
+    pub boss: Option<serde_json::Value>,
+    /// path to a boss .json (relative to project)
+    pub file: Option<String>,
+    pub options: Option<serde_json::Value>,
+    pub project: Option<String>,
+}
+
+impl Boss3dFairnessInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.boss { m.insert("boss".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.file { m.insert("file".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.options { m.insert("options".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// boss3d.fairness: Fairness gate for a boss: min telegraph vs human reaction, every attack avoidable under a dodge profile (distance, i-frames, cooldown), a safe zone for every simultaneous danger-zone combination, max simultaneous threats, and a perfect-reaction oracle bot sim. pass=false lists findings.
+    pub fn boss3d_fairness(&self, input: &Boss3dFairnessInput) -> Result<Envelope, Error> {
+        self.call("boss3d.fairness", &input.to_json())
+    }
+}
+
+/// Input of `boss3d.simulate`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Boss3dSimulateInput {
+    /// boss definition (spec/v4/schemas/boss3d.schema.json)
+    pub boss: Option<serde_json::Value>,
+    /// path to a boss .json (relative to project)
+    pub file: Option<String>,
+    /// include per-run results
+    pub full: Option<bool>,
+    pub max_seconds: Option<f64>,
+    /// bot skill profile: hp, moveSpeed, reactionMs, dodgeDistance, iframeMs, dodgeCooldownMs, dodgeSkill (0-1), attackDamage, attackIntervalMs, range, weakAwareness (0-1)
+    pub profile: Option<serde_json::Value>,
+    pub project: Option<String>,
+    pub runs: Option<i64>,
+    pub seed: Option<i64>,
+}
+
+impl Boss3dSimulateInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.boss { m.insert("boss".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.file { m.insert("file".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.full { m.insert("full".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.max_seconds { m.insert("maxSeconds".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.profile { m.insert("profile".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.runs { m.insert("runs".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.seed { m.insert("seed".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// boss3d.simulate: Headless seeded fights: a bot with a skill profile fights the boss N times; reports win rate, time-to-kill (mean/median/p90), damage taken, per-phase seconds, attack hit counts and a determinism hash.
+    pub fn boss3d_simulate(&self, input: &Boss3dSimulateInput) -> Result<Envelope, Error> {
+        self.call("boss3d.simulate", &input.to_json())
+    }
+}
+
+/// Input of `boss3d.validate`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Boss3dValidateInput {
+    /// boss definition (spec/v4/schemas/boss3d.schema.json)
+    pub boss: Option<serde_json::Value>,
+    /// path to a boss .json (relative to project)
+    pub file: Option<String>,
+    pub project: Option<String>,
+}
+
+impl Boss3dValidateInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.boss { m.insert("boss".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.file { m.insert("file".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// boss3d.validate: Validate a boss3d definition: structure (ids, parts, phases, enter conditions, attack timings, zone shapes, hazards) plus warnings. Returns errors with JSON paths.
+    pub fn boss3d_validate(&self, input: &Boss3dValidateInput) -> Result<Envelope, Error> {
+        self.call("boss3d.validate", &input.to_json())
+    }
+}
+
+/// Input of `camera3d.simulate`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Camera3dSimulateInput {
+    pub path: serde_json::Value,
+    pub aim: Option<bool>,
+    pub config: Option<serde_json::Value>,
+    pub fov_kick: Option<Vec<serde_json::Value>>,
+    /// fixed lock-on target point
+    pub lock: Option<Vec<f64>>,
+    /// return every Nth frame (default 30)
+    pub sample_every: Option<i64>,
+    pub trauma: Option<Vec<serde_json::Value>>,
+    pub world: Option<serde_json::Value>,
+    /// camera yaw input in rad/s (ignored while locked)
+    pub yaw_rate: Option<f64>,
+}
+
+impl Camera3dSimulateInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("path".to_string(), serde_json::to_value(&self.path).unwrap_or(Value::Null));
+        if let Some(v) = &self.aim { m.insert("aim".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.config { m.insert("config".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.fov_kick { m.insert("fovKick".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.lock { m.insert("lock".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.sample_every { m.insert("sampleEvery".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.trauma { m.insert("trauma".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.world { m.insert("world".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.yaw_rate { m.insert("yawRate".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// camera3d.simulate: Run a scripted target path through the camera rig at dt=1/60 and return sampled camera positions plus a collision summary (frames shortened by geometry, min/max boom length, final pose). World = boxes [{min,max}] and/or flat triangle arrays.
+    pub fn camera3d_simulate(&self, input: &Camera3dSimulateInput) -> Result<Envelope, Error> {
+        self.call("camera3d.simulate", &input.to_json())
+    }
+}
+
+/// Input of `camera3d.validate`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Camera3dValidateInput {
+    /// camera3d config JSON (all keys optional)
+    pub config: serde_json::Value,
+}
+
+impl Camera3dValidateInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("config".to_string(), serde_json::to_value(&self.config).unwrap_or(Value::Null));
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// camera3d.validate: Validate a camera3d config (third-person rig: follow, lock-on, aim, fov, shake) against spec/v4/schemas/camera3d.schema.json plus semantic rules (pitch range, min distance). Returns the config with defaults filled.
+    pub fn camera3d_validate(&self, input: &Camera3dValidateInput) -> Result<Envelope, Error> {
+        self.call("camera3d.validate", &input.to_json())
+    }
+}
+
 /// Input of `clients.generate`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ClientsGenerateInput {
@@ -155,6 +453,75 @@ impl Client {
     /// clients.generate: Generate typed thin HTTP clients (Go, Rust, Python) from the registry OpenAPI document into <out>/<lang>/. With check=true nothing is written and drift against <out> returns CONFLICT.
     pub fn clients_generate(&self, input: &ClientsGenerateInput) -> Result<Envelope, Error> {
         self.call("clients.generate", &input.to_json())
+    }
+}
+
+/// Input of `combat3d.simulate`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Combat3dSimulateInput {
+    pub distance: Option<f64>,
+    /// max events to return (default 200; hash always covers all)
+    pub events: Option<i64>,
+    /// two fighter objects or paths (override input.fighters)
+    pub fighters: Option<Vec<serde_json::Value>>,
+    pub frames: Option<i64>,
+    /// duel JSON ({fighters:[path,path], script, frames, distance, seed}); fighter paths resolve next to it
+    pub input: Option<String>,
+    pub project: Option<String>,
+    /// { <fighterId or A|B>: [{at, action} | {from, to, block:true}] } with 1-based world frames
+    pub script: Option<serde_json::Value>,
+    pub seed: Option<i64>,
+    /// extra/overriding status definitions {id: {...}}
+    pub statuses: Option<serde_json::Value>,
+}
+
+impl Combat3dSimulateInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.distance { m.insert("distance".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.events { m.insert("events".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.fighters { m.insert("fighters".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.frames { m.insert("frames".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.input { m.insert("input".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.script { m.insert("script".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.seed { m.insert("seed".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.statuses { m.insert("statuses".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// combat3d.simulate: Run a scripted duel between two combat3d fighters on the deterministic frame-data sim: returns the event log (hit, block, parry, stagger, death, ...), damage totals, winner, an event-log hash, and a frame-data table per fighter.
+    pub fn combat3d_simulate(&self, input: &Combat3dSimulateInput) -> Result<Envelope, Error> {
+        self.call("combat3d.simulate", &input.to_json())
+    }
+}
+
+/// Input of `combat3d.validate`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Combat3dValidateInput {
+    /// fighter objects or paths
+    pub fighters: Option<Vec<serde_json::Value>>,
+    /// path to a fighter JSON file (relative to project)
+    pub input: Option<String>,
+    pub project: Option<String>,
+}
+
+impl Combat3dValidateInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.fighters { m.insert("fighters".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.input { m.insert("input".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// combat3d.validate: Validate combat3d fighter definitions (moves, hitboxes, hurtboxes, block, statuses): JSON-schema shape plus semantic checks (frame ordering, windows inside the move, cancel targets exist, status ids known, reachability warnings).
+    pub fn combat3d_validate(&self, input: &Combat3dValidateInput) -> Result<Envelope, Error> {
+        self.call("combat3d.validate", &input.to_json())
     }
 }
 
@@ -980,6 +1347,98 @@ impl Client {
     /// library.verify: Check installed assets against assets.lock.json: reports modified, missing or tampered files.
     pub fn library_verify(&self, input: &LibraryVerifyInput) -> Result<Envelope, Error> {
         self.call("library.verify", &input.to_json())
+    }
+}
+
+/// Input of `locomotion3d.report`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Locomotion3dReportInput {
+    /// locomotion3d config object (partial ok; missing keys default)
+    pub config: Option<serde_json::Value>,
+    /// path to a config .json (relative to project)
+    pub file: Option<String>,
+    pub project: Option<String>,
+}
+
+impl Locomotion3dReportInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.config { m.insert("config".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.file { m.insert("file".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// locomotion3d.report: Tuning report for a config: jump apex (analytic and measured, held vs tap), dodge distance and i-frame window (from rest and while running), run/sprint ramp-up and stop times, terminal fall and hard-landing heights, plus warnings.
+    pub fn locomotion3d_report(&self, input: &Locomotion3dReportInput) -> Result<Envelope, Error> {
+        self.call("locomotion3d.report", &input.to_json())
+    }
+}
+
+/// Input of `locomotion3d.simulate`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Locomotion3dSimulateInput {
+    /// segments of input; each runs for frames or seconds (default 1s)
+    pub script: Vec<serde_json::Value>,
+    /// locomotion3d config object (partial ok; missing keys default)
+    pub config: Option<serde_json::Value>,
+    /// path to a config .json (relative to project)
+    pub file: Option<String>,
+    pub project: Option<String>,
+    pub sample_every: Option<i64>,
+    pub start: Option<Vec<f64>>,
+    pub world: Option<serde_json::Value>,
+    pub yaw: Option<f64>,
+}
+
+impl Locomotion3dSimulateInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("script".to_string(), serde_json::to_value(&self.script).unwrap_or(Value::Null));
+        if let Some(v) = &self.config { m.insert("config".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.file { m.insert("file".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.sample_every { m.insert("sampleEvery".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.start { m.insert("start".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.world { m.insert("world".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.yaw { m.insert("yaw".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// locomotion3d.simulate: Run scripted input through the locomotion controller on a built-in test world (flat, wall, ramp, ice, conveyor, river, platform) and return the state timeline, per-state frame counts, events and a determinism hash.
+    pub fn locomotion3d_simulate(&self, input: &Locomotion3dSimulateInput) -> Result<Envelope, Error> {
+        self.call("locomotion3d.simulate", &input.to_json())
+    }
+}
+
+/// Input of `locomotion3d.validate`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Locomotion3dValidateInput {
+    /// locomotion3d config object (partial ok; missing keys default)
+    pub config: Option<serde_json::Value>,
+    /// path to a config .json (relative to project)
+    pub file: Option<String>,
+    pub project: Option<String>,
+}
+
+impl Locomotion3dValidateInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.config { m.insert("config".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.file { m.insert("file".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// locomotion3d.validate: Validate a locomotion3d movement config (schema ranges plus cross-field rules such as walk<=run<=sprint, i-frames inside the dodge duration). Returns the fully merged config.
+    pub fn locomotion3d_validate(&self, input: &Locomotion3dValidateInput) -> Result<Envelope, Error> {
+        self.call("locomotion3d.validate", &input.to_json())
     }
 }
 

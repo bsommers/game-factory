@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "camera3d config",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "integer", "const": 1 },
+    "follow": { "type": "object", "additionalProperties": false, "properties": {
+      "distance": { "type": "number", "minimum": 0.2, "maximum": 100 },
+      "minDistance": { "type": "number", "minimum": 0, "maximum": 100 },
+      "height": { "type": "number", "minimum": -10, "maximum": 20 },
+      "shoulder": { "type": "number", "minimum": -5, "maximum": 5 },
+      "pitch": { "type": "number", "minimum": -1.5, "maximum": 1.5 },
+      "minPitch": { "type": "number", "minimum": -1.5, "maximum": 1.5 },
+      "maxPitch": { "type": "number", "minimum": -1.5, "maximum": 1.5 },
+      "positionLag": { "type": "number", "minimum": 0, "maximum": 5 },
+      "rotationLag": { "type": "number", "minimum": 0, "maximum": 5 },
+      "probeRadius": { "type": "number", "minimum": 0.01, "maximum": 2 },
+      "collisionRecoverLag": { "type": "number", "minimum": 0, "maximum": 5 } } },
+    "lockOn": { "type": "object", "additionalProperties": false, "properties": {
+      "maxRange": { "type": "number", "minimum": 0 },
+      "maxAngle": { "type": "number", "minimum": 0, "maximum": 3.1416 },
+      "rotationLag": { "type": "number", "minimum": 0, "maximum": 5 },
+      "blendLag": { "type": "number", "minimum": 0, "maximum": 5 },
+      "framing": { "type": "number", "minimum": 0, "maximum": 1 },
+      "framingDistancePerMetre": { "type": "number", "minimum": 0, "maximum": 2 },
+      "maxExtraDistance": { "type": "number", "minimum": 0, "maximum": 50 },
+      "pitch": { "type": "number", "minimum": -1.5, "maximum": 1.5 },
+      "angleWeight": { "type": "number", "minimum": 0 },
+      "distanceWeight": { "type": "number", "minimum": 0 } } },
+    "aim": { "type": "object", "additionalProperties": false, "properties": {
+      "distance": { "type": "number", "minimum": 0.2, "maximum": 100 },
+      "shoulder": { "type": "number", "minimum": -5, "maximum": 5 },
+      "offset": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number" } },
+      "fov": { "type": "number", "minimum": 1, "maximum": 170 },
+      "blendLag": { "type": "number", "minimum": 0, "maximum": 5 } } },
+    "fov": { "type": "object", "additionalProperties": false, "properties": {
+      "base": { "type": "number", "minimum": 1, "maximum": 170 },
+      "kickDecay": { "type": "number", "minimum": 0.001, "maximum": 5 },
+      "max": { "type": "number", "minimum": 1, "maximum": 170 } } },
+    "shake": { "type": "object", "additionalProperties": false, "properties": {
+      "maxYaw": { "type": "number", "minimum": 0, "maximum": 1 },
+      "maxPitch": { "type": "number", "minimum": 0, "maximum": 1 },
+      "maxRoll": { "type": "number", "minimum": 0, "maximum": 1 },
+      "maxOffset": { "type": "number", "minimum": 0, "maximum": 2 },
+      "frequency": { "type": "number", "minimum": 0.1, "maximum": 100 },
+      "decay": { "type": "number", "minimum": 0, "maximum": 20 },
+      "power": { "type": "number", "minimum": 1, "maximum": 5 },
+      "seed": { "type": "integer" } } }
+  }
+}

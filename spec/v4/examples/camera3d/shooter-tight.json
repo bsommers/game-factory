@@ -1,0 +1,4 @@
+{ "version": 1,
+  "follow": { "distance": 3, "minDistance": 0.5, "height": 1.5, "shoulder": 0.5, "positionLag": 0.04, "rotationLag": 0.02 },
+  "aim": { "distance": 1.6, "shoulder": 0.7, "offset": [0.15, 0.05], "fov": 45, "blendLag": 0.05 },
+  "fov": { "base": 78, "max": 100 } }

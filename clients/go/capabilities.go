@@ -4,6 +4,35 @@ package factoryclient
 
 import "context"
 
+// Ai3dSimulateInput is the input of ai3d.simulate.
+type Ai3dSimulateInput struct {
+	Config   map[string]any `json:"config,omitempty"`   // one AI config (spec/v4/ai3d.md)
+	Duration *float64       `json:"duration,omitempty"` // override scenario duration (seconds)
+	File     *string        `json:"file,omitempty"`     // path to a JSON config or scenario (relative to project)
+	Limit    *int64         `json:"limit,omitempty"`    // max timeline entries returned (default 500)
+	Project  *string        `json:"project,omitempty"`
+	Scenario map[string]any `json:"scenario,omitempty"` // simulation scenario bundling configs, agents, world, target
+	Seed     *int64         `json:"seed,omitempty"`     // override scenario seed
+}
+
+// Ai3dSimulate calls ai3d.simulate: Run enemy AI headlessly in a scripted world (walls for line of sight, grid/waypoint nav, a target walking a timed path, sounds, damage events) and return the decision timeline, attack counts, token stats and a determinism hash.
+func (c *Client) Ai3dSimulate(ctx context.Context, in Ai3dSimulateInput) (*Envelope, error) {
+	return c.Call(ctx, "ai3d.simulate", in)
+}
+
+// Ai3dValidateInput is the input of ai3d.validate.
+type Ai3dValidateInput struct {
+	Config   map[string]any `json:"config,omitempty"` // one AI config (spec/v4/ai3d.md)
+	File     *string        `json:"file,omitempty"`   // path to a JSON config or scenario (relative to project)
+	Project  *string        `json:"project,omitempty"`
+	Scenario map[string]any `json:"scenario,omitempty"` // simulation scenario bundling configs, agents, world, target
+}
+
+// Ai3dValidate calls ai3d.validate: Validate an enemy AI config (behaviour tree, perception, moves) or a simulation scenario: unknown conditions/actions/moves, bad ranges, tree depth, agent/config references. Errors and warnings carry JSON paths.
+func (c *Client) Ai3dValidate(ctx context.Context, in Ai3dValidateInput) (*Envelope, error) {
+	return c.Call(ctx, "ai3d.validate", in)
+}
+
 // AnimImportInput is the input of anim.import.
 type AnimImportInput struct {
 	Inputs    []string       `json:"inputs"`        // .glb paths (relative to project or absolute)
@@ -60,6 +89,106 @@ func (c *Client) AnimSample(ctx context.Context, in AnimSampleInput) (*Envelope,
 	return c.Call(ctx, "anim.sample", in)
 }
 
+// AnimgraphSimulateInput is the input of animgraph.simulate.
+type AnimgraphSimulateInput struct {
+	Clips       map[string]any `json:"clips,omitempty"`     // clip durations in seconds when no glb is given
+	Duration    *float64       `json:"duration,omitempty"`  // seconds to simulate (default 3)
+	Glb         *string        `json:"glb,omitempty"`       // animated .glb whose clips and bones the graph must reference
+	Graph       map[string]any `json:"graph,omitempty"`     // anim-graph JSON (inline)
+	GraphPath   *string        `json:"graphPath,omitempty"` // path to an anim-graph .json (relative to project)
+	Project     *string        `json:"project,omitempty"`
+	SampleEvery *float64       `json:"sampleEvery,omitempty"` // seconds between state samples (default 0.25)
+	Script      []any          `json:"script,omitempty"`      // scripted inputs applied at the start of the frame nearest `at` seconds
+}
+
+// AnimgraphSimulate calls animgraph.simulate: Run an animation graph headlessly at the fixed 1/60 step with scripted parameters and return a deterministic timeline: transitions, animation events (hit_start, footstep, i_frame_on, ...), periodic state samples and total root motion. Clip lengths come from glb, or from clips {name: seconds}.
+func (c *Client) AnimgraphSimulate(ctx context.Context, in AnimgraphSimulateInput) (*Envelope, error) {
+	return c.Call(ctx, "animgraph.simulate", in)
+}
+
+// AnimgraphValidateInput is the input of animgraph.validate.
+type AnimgraphValidateInput struct {
+	Glb       *string        `json:"glb,omitempty"`       // animated .glb whose clips and bones the graph must reference
+	Graph     map[string]any `json:"graph,omitempty"`     // anim-graph JSON (inline)
+	GraphPath *string        `json:"graphPath,omitempty"` // path to an anim-graph .json (relative to project)
+	Project   *string        `json:"project,omitempty"`
+}
+
+// AnimgraphValidate calls animgraph.validate: Validate an animation-graph JSON (states, blend spaces, transitions, layers, masks, root motion, events) against spec/v4/schemas/anim-graph.schema.json plus semantic checks; with glb, every referenced clip, mask bone and root bone must exist in that model. Returns {valid, schemaErrors, errors, warnings, clips}.
+func (c *Client) AnimgraphValidate(ctx context.Context, in AnimgraphValidateInput) (*Envelope, error) {
+	return c.Call(ctx, "animgraph.validate", in)
+}
+
+// Boss3dFairnessInput is the input of boss3d.fairness.
+type Boss3dFairnessInput struct {
+	Boss    map[string]any `json:"boss,omitempty"` // boss definition (spec/v4/schemas/boss3d.schema.json)
+	File    *string        `json:"file,omitempty"` // path to a boss .json (relative to project)
+	Options map[string]any `json:"options,omitempty"`
+	Project *string        `json:"project,omitempty"`
+}
+
+// Boss3dFairness calls boss3d.fairness: Fairness gate for a boss: min telegraph vs human reaction, every attack avoidable under a dodge profile (distance, i-frames, cooldown), a safe zone for every simultaneous danger-zone combination, max simultaneous threats, and a perfect-reaction oracle bot sim. pass=false lists findings.
+func (c *Client) Boss3dFairness(ctx context.Context, in Boss3dFairnessInput) (*Envelope, error) {
+	return c.Call(ctx, "boss3d.fairness", in)
+}
+
+// Boss3dSimulateInput is the input of boss3d.simulate.
+type Boss3dSimulateInput struct {
+	Boss       map[string]any `json:"boss,omitempty"` // boss definition (spec/v4/schemas/boss3d.schema.json)
+	File       *string        `json:"file,omitempty"` // path to a boss .json (relative to project)
+	Full       *bool          `json:"full,omitempty"` // include per-run results
+	MaxSeconds *float64       `json:"maxSeconds,omitempty"`
+	Profile    map[string]any `json:"profile,omitempty"` // bot skill profile: hp, moveSpeed, reactionMs, dodgeDistance, iframeMs, dodgeCooldownMs, dodgeSkill (0-1), attackDamage, attackIntervalMs, range, weakAwareness (0-1)
+	Project    *string        `json:"project,omitempty"`
+	Runs       *int64         `json:"runs,omitempty"`
+	Seed       *int64         `json:"seed,omitempty"`
+}
+
+// Boss3dSimulate calls boss3d.simulate: Headless seeded fights: a bot with a skill profile fights the boss N times; reports win rate, time-to-kill (mean/median/p90), damage taken, per-phase seconds, attack hit counts and a determinism hash.
+func (c *Client) Boss3dSimulate(ctx context.Context, in Boss3dSimulateInput) (*Envelope, error) {
+	return c.Call(ctx, "boss3d.simulate", in)
+}
+
+// Boss3dValidateInput is the input of boss3d.validate.
+type Boss3dValidateInput struct {
+	Boss    map[string]any `json:"boss,omitempty"` // boss definition (spec/v4/schemas/boss3d.schema.json)
+	File    *string        `json:"file,omitempty"` // path to a boss .json (relative to project)
+	Project *string        `json:"project,omitempty"`
+}
+
+// Boss3dValidate calls boss3d.validate: Validate a boss3d definition: structure (ids, parts, phases, enter conditions, attack timings, zone shapes, hazards) plus warnings. Returns errors with JSON paths.
+func (c *Client) Boss3dValidate(ctx context.Context, in Boss3dValidateInput) (*Envelope, error) {
+	return c.Call(ctx, "boss3d.validate", in)
+}
+
+// Camera3dSimulateInput is the input of camera3d.simulate.
+type Camera3dSimulateInput struct {
+	Path        map[string]any `json:"path"`
+	Aim         *bool          `json:"aim,omitempty"`
+	Config      map[string]any `json:"config,omitempty"`
+	FovKick     []any          `json:"fovKick,omitempty"`
+	Lock        []float64      `json:"lock,omitempty"`        // fixed lock-on target point
+	SampleEvery *int64         `json:"sampleEvery,omitempty"` // return every Nth frame (default 30)
+	Trauma      []any          `json:"trauma,omitempty"`
+	World       map[string]any `json:"world,omitempty"`
+	YawRate     *float64       `json:"yawRate,omitempty"` // camera yaw input in rad/s (ignored while locked)
+}
+
+// Camera3dSimulate calls camera3d.simulate: Run a scripted target path through the camera rig at dt=1/60 and return sampled camera positions plus a collision summary (frames shortened by geometry, min/max boom length, final pose). World = boxes [{min,max}] and/or flat triangle arrays.
+func (c *Client) Camera3dSimulate(ctx context.Context, in Camera3dSimulateInput) (*Envelope, error) {
+	return c.Call(ctx, "camera3d.simulate", in)
+}
+
+// Camera3dValidateInput is the input of camera3d.validate.
+type Camera3dValidateInput struct {
+	Config map[string]any `json:"config"` // camera3d config JSON (all keys optional)
+}
+
+// Camera3dValidate calls camera3d.validate: Validate a camera3d config (third-person rig: follow, lock-on, aim, fov, shake) against spec/v4/schemas/camera3d.schema.json plus semantic rules (pitch range, min distance). Returns the config with defaults filled.
+func (c *Client) Camera3dValidate(ctx context.Context, in Camera3dValidateInput) (*Envelope, error) {
+	return c.Call(ctx, "camera3d.validate", in)
+}
+
 // ClientsGenerateInput is the input of clients.generate.
 type ClientsGenerateInput struct {
 	Check *bool   `json:"check,omitempty"` // diff only; CONFLICT on drift
@@ -70,6 +199,36 @@ type ClientsGenerateInput struct {
 // ClientsGenerate calls clients.generate: Generate typed thin HTTP clients (Go, Rust, Python) from the registry OpenAPI document into <out>/<lang>/. With check=true nothing is written and drift against <out> returns CONFLICT.
 func (c *Client) ClientsGenerate(ctx context.Context, in ClientsGenerateInput) (*Envelope, error) {
 	return c.Call(ctx, "clients.generate", in)
+}
+
+// Combat3dSimulateInput is the input of combat3d.simulate.
+type Combat3dSimulateInput struct {
+	Distance *float64       `json:"distance,omitempty"`
+	Events   *int64         `json:"events,omitempty"`   // max events to return (default 200; hash always covers all)
+	Fighters []any          `json:"fighters,omitempty"` // two fighter objects or paths (override input.fighters)
+	Frames   *int64         `json:"frames,omitempty"`
+	Input    *string        `json:"input,omitempty"` // duel JSON ({fighters:[path,path], script, frames, distance, seed}); fighter paths resolve next to it
+	Project  *string        `json:"project,omitempty"`
+	Script   map[string]any `json:"script,omitempty"` // { <fighterId or A|B>: [{at, action} | {from, to, block:true}] } with 1-based world frames
+	Seed     *int64         `json:"seed,omitempty"`
+	Statuses map[string]any `json:"statuses,omitempty"` // extra/overriding status definitions {id: {...}}
+}
+
+// Combat3dSimulate calls combat3d.simulate: Run a scripted duel between two combat3d fighters on the deterministic frame-data sim: returns the event log (hit, block, parry, stagger, death, ...), damage totals, winner, an event-log hash, and a frame-data table per fighter.
+func (c *Client) Combat3dSimulate(ctx context.Context, in Combat3dSimulateInput) (*Envelope, error) {
+	return c.Call(ctx, "combat3d.simulate", in)
+}
+
+// Combat3dValidateInput is the input of combat3d.validate.
+type Combat3dValidateInput struct {
+	Fighters []any   `json:"fighters,omitempty"` // fighter objects or paths
+	Input    *string `json:"input,omitempty"`    // path to a fighter JSON file (relative to project)
+	Project  *string `json:"project,omitempty"`
+}
+
+// Combat3dValidate calls combat3d.validate: Validate combat3d fighter definitions (moves, hitboxes, hurtboxes, block, statuses): JSON-schema shape plus semantic checks (frame ordering, windows inside the move, cancel targets exist, status ids known, reachability warnings).
+func (c *Client) Combat3dValidate(ctx context.Context, in Combat3dValidateInput) (*Envelope, error) {
+	return c.Call(ctx, "combat3d.validate", in)
 }
 
 // DocsLearningsInput is the input of docs.learnings.
@@ -429,6 +588,47 @@ type LibraryVerifyInput struct {
 // LibraryVerify calls library.verify: Check installed assets against assets.lock.json: reports modified, missing or tampered files.
 func (c *Client) LibraryVerify(ctx context.Context, in LibraryVerifyInput) (*Envelope, error) {
 	return c.Call(ctx, "library.verify", in)
+}
+
+// Locomotion3dReportInput is the input of locomotion3d.report.
+type Locomotion3dReportInput struct {
+	Config  map[string]any `json:"config,omitempty"` // locomotion3d config object (partial ok; missing keys default)
+	File    *string        `json:"file,omitempty"`   // path to a config .json (relative to project)
+	Project *string        `json:"project,omitempty"`
+}
+
+// Locomotion3dReport calls locomotion3d.report: Tuning report for a config: jump apex (analytic and measured, held vs tap), dodge distance and i-frame window (from rest and while running), run/sprint ramp-up and stop times, terminal fall and hard-landing heights, plus warnings.
+func (c *Client) Locomotion3dReport(ctx context.Context, in Locomotion3dReportInput) (*Envelope, error) {
+	return c.Call(ctx, "locomotion3d.report", in)
+}
+
+// Locomotion3dSimulateInput is the input of locomotion3d.simulate.
+type Locomotion3dSimulateInput struct {
+	Script      []any          `json:"script"`           // segments of input; each runs for frames or seconds (default 1s)
+	Config      map[string]any `json:"config,omitempty"` // locomotion3d config object (partial ok; missing keys default)
+	File        *string        `json:"file,omitempty"`   // path to a config .json (relative to project)
+	Project     *string        `json:"project,omitempty"`
+	SampleEvery *int64         `json:"sampleEvery,omitempty"`
+	Start       []float64      `json:"start,omitempty"`
+	World       any            `json:"world,omitempty"`
+	Yaw         *float64       `json:"yaw,omitempty"`
+}
+
+// Locomotion3dSimulate calls locomotion3d.simulate: Run scripted input through the locomotion controller on a built-in test world (flat, wall, ramp, ice, conveyor, river, platform) and return the state timeline, per-state frame counts, events and a determinism hash.
+func (c *Client) Locomotion3dSimulate(ctx context.Context, in Locomotion3dSimulateInput) (*Envelope, error) {
+	return c.Call(ctx, "locomotion3d.simulate", in)
+}
+
+// Locomotion3dValidateInput is the input of locomotion3d.validate.
+type Locomotion3dValidateInput struct {
+	Config  map[string]any `json:"config,omitempty"` // locomotion3d config object (partial ok; missing keys default)
+	File    *string        `json:"file,omitempty"`   // path to a config .json (relative to project)
+	Project *string        `json:"project,omitempty"`
+}
+
+// Locomotion3dValidate calls locomotion3d.validate: Validate a locomotion3d movement config (schema ranges plus cross-field rules such as walk<=run<=sprint, i-frames inside the dodge duration). Returns the fully merged config.
+func (c *Client) Locomotion3dValidate(ctx context.Context, in Locomotion3dValidateInput) (*Envelope, error) {
+	return c.Call(ctx, "locomotion3d.validate", in)
 }
 
 // MeshyImportInput is the input of meshy.import.

@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "duration": 12,
+  "seed": 7,
+  "configs": {
+    "grunt": {
+      "version": 1, "id": "grunt", "role": "melee",
+      "stats": { "moveSpeed": 3.5, "turnRate": 8 },
+      "perception": { "sightRange": 14, "fovDeg": 100, "hearRadius": 6, "memorySec": 5 },
+      "leash": { "radius": 25 },
+      "moves": { "slash": { "range": { "min": 0, "max": 1.8 }, "cooldown": 1.2, "duration": 0.6 } },
+      "tree": { "type": "selector", "children": [
+        { "type": "sequence", "children": [
+          { "type": "condition", "test": "outsideLeash" },
+          { "type": "action", "do": "dropAggro" },
+          { "type": "action", "do": "seek", "to": "spawn", "stop": 0.5 } ] },
+        { "type": "sequence", "children": [
+          { "type": "condition", "test": "canSee" },
+          { "type": "selector", "children": [
+            { "type": "action", "do": "attack", "move": "slash" },
+            { "type": "action", "do": "path", "to": "target", "stop": 1.4 } ] } ] },
+        { "type": "sequence", "children": [
+          { "type": "condition", "test": "remembers" },
+          { "type": "action", "do": "path", "to": "lastKnown", "stop": 0.8 } ] },
+        { "type": "action", "do": "wander", "radius": 3 } ] }
+    }
+  },
+  "agents": [ { "id": "grunt1", "config": "grunt", "pos": [0, 0, 0], "facing": [0, 0, 1] } ],
+  "world": { "walls": [ { "min": [-1, 0, 6], "max": [1, 3, 7] } ], "grid": { "origin": [-15, -15], "cellSize": 1, "width": 30, "height": 30, "inflate": 0.3 } },
+  "target": { "id": "player", "noise": 0.3, "path": [ { "t": 0, "pos": [0, 0, 14] }, { "t": 4, "pos": [0, 0, 10] }, { "t": 12, "pos": [4, 0, 2] } ] }
+}
