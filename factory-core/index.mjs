@@ -1,5 +1,6 @@
 // Entry point: buildRegistry() registers styles, library (+registry), guide, then the core capabilities.
 import { createRegistry } from './registry.mjs';
+import { fileURLToPath } from 'node:url';
 import { registerStyles } from './styles/capabilities.mjs';
 import { registerLibrary } from './library/capabilities.mjs';
 import { registerGuide } from './guide/capabilities.mjs';
@@ -17,4 +18,4 @@ export function buildRegistry() {
   registerLanguages(r); registerPackage(r); registerClients(r); registerRendering(r); registerModels(r);
   return r;
 }
-export const FACTORY_ROOT = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
+export const FACTORY_ROOT = fileURLToPath(new URL('..', import.meta.url)).replace(/[\\/]$/, '');

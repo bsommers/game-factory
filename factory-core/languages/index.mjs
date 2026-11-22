@@ -1,9 +1,10 @@
 // Language axis: what the factory can build games in (kind game) or be driven from (kind client).
 import { execFile } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
-export const FACT = resolve(new URL('../..', import.meta.url).pathname);
+export const FACT = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 
 // toolchain: [cmd, args] probes, first is the primary; kind: game|client|both
 export const LANGUAGES = {

@@ -10,10 +10,13 @@ import { dirname, join } from 'node:path';
 import * as C from '../../templates/web-project/src/lib/collision2d.js';
 import * as P from '../../templates/web-project/src/lib/physics2d.js';
 
+import { same } from '../same.mjs';
 export const VERSION = 2;
 const here = dirname(fileURLToPath(import.meta.url));
 export const VECTOR_DIR = join(here, 'vectors');
 
+// Expected outputs only are snapped to a 1e-12 grid (cross-platform ulp differences in Math.*); inputs stay exact.
+const snap = (v) => { if (Array.isArray(v)) return v.map(snap); if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).map((k) => [k, snap(v[k])])); if (typeof v === 'number' && !Number.isInteger(v)) { const r = Math.round(v * 1e12) / 1e12; return Number.isInteger(r) ? v : r; } return v; };
 const canon = (v) => {
   if (Array.isArray(v)) return v.map(canon);
   if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).sort().map((k) => [k, canon(v[k])]));
@@ -212,7 +215,7 @@ const ENGINES = [['collision2d', runCollision, collisionCases], ['physics2d', ru
 export function buildAll() {
   const out = {};
   for (const [engine, run, mk] of ENGINES) {
-    const cases = mk().map((cs) => ({ name: cs.name, input: canon(rt(cs.input)), expect: canon(rt(run(rt(cs.input)) ?? null)) }));
+    const cases = mk().map((cs) => ({ name: cs.name, input: canon(rt(cs.input)), expect: snap(canon(rt(run(rt(cs.input)) ?? null))) }));
     out[engine] = JSON.stringify({ engine, version: VERSION, cases }, null, 1) + '\n';
   }
   return out;
@@ -224,7 +227,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     let bad = 0;
     for (const [engine, text] of Object.entries(all)) {
       const f = join(VECTOR_DIR, engine + '.json'), disk = existsSync(f) ? readFileSync(f, 'utf8') : null;
-      if (disk !== text) { console.error('DRIFT: ' + f + (disk === null ? ' missing' : ' differs from the JS reference')); bad++; } else console.log(engine, JSON.parse(text).cases.length, 'cases ok');
+      if (disk === null || !same(JSON.parse(disk), JSON.parse(text))) { console.error('DRIFT: ' + f + (disk === null ? ' missing' : ' differs from the JS reference')); bad++; } else console.log(engine, JSON.parse(text).cases.length, 'cases ok');
     }
     process.exit(bad ? 1 : 0);
   }

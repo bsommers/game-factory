@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, writeFileSync, existsSync, cpSync, readdirSync, statSync } from 'node:fs';
@@ -8,8 +9,8 @@ import { buildRegistry } from '../factory-core/index.mjs';
 import { registerClients, DEFAULT_OUT } from '../factory-core/clients/capabilities.mjs';
 import { ERROR_CODES, CLIENT_CODES } from '../factory-core/clients/generate.mjs';
 
-const BIN = new URL('../bin/factory', import.meta.url).pathname;
-const SCRATCH = process.env.FACTORY_TEST_TMP || '/datanapps/claude-tmp';
+const BIN = fileURLToPath(new URL('../bin/factory.mjs', import.meta.url));
+const SCRATCH = process.env.FACTORY_TEST_TMP || (existsSync('/datanapps/claude-tmp') ? '/datanapps/claude-tmp' : tmpdir());
 const tmp = () => mkdtempSync(join(existsSync(SCRATCH) ? SCRATCH : tmpdir(), 'fclients-'));
 const registry = () => { const r = buildRegistry(); if (!r.has('clients.generate')) registerClients(r); return r; };
 const have = (cmd, ...a) => spawnSync(cmd, a, { encoding: 'utf8' }).status === 0;
@@ -43,7 +44,7 @@ test('clients: one method per capability in every language, stable error codes c
   }
   // every literal fail('CODE') in the sources must be a known client constant
   const walk = (d) => readdirSync(d).flatMap((n) => { const p = join(d, n); return n === 'node_modules' || n === 'templates' ? [] : statSync(p).isDirectory() ? walk(p) : p.endsWith('.mjs') ? [p] : []; });
-  const root = new URL('..', import.meta.url).pathname;
+  const root = fileURLToPath(new URL('..', import.meta.url));
   const used = new Set();
   for (const d of ['factory-core', 'api']) for (const f of walk(join(root, d))) for (const m of readFileSync(f, 'utf8').matchAll(/\bfail\('([A-Z_]+)'/g)) used.add(m[1]);
   for (const code of used) assert.ok(ERROR_CODES.includes(code), `error code ${code} missing from ERROR_CODES`);
@@ -55,7 +56,7 @@ test('clients: one method per capability in every language, stable error codes c
 let server; let url;
 async function startServer() {
   if (url) return url;
-  server = spawn(BIN, ['serve', '--port', '0'], { stdio: ['ignore', 'ignore', 'pipe'] });
+  server = spawn(process.execPath, [BIN, 'serve', '--port', '0'], { stdio: ['ignore', 'ignore', 'pipe'] });
   url = await new Promise((ok, bad) => {
     let buf = ''; const t = setTimeout(() => bad(new Error('server did not start')), 15000);
     server.stderr.on('data', (d) => { buf += d; const m = buf.match(/http:\/\/127\.0\.0\.1:\d+/); if (m) { clearTimeout(t); ok(m[0]); } });
@@ -74,5 +75,5 @@ const smoke = (name, probe, cwd, cmd, args, env = {}) => test(`clients: ${name} 
   if (cwd === 'go') assert.doesNotMatch(r.stdout, /SKIP/);
 });
 smoke('go', ['go', 'version'], 'go', 'sh', ['-c', 'go vet ./... && go test -count=1 -v ./...']);
-smoke('rust', ['cargo', '--version'], 'rust', 'cargo', ['test', '--quiet'], { CARGO_TARGET_DIR: process.env.CARGO_TARGET_DIR || '/datanapps/cargo-target/clients' });
+smoke('rust', ['cargo', '--version'], 'rust', 'cargo', ['test', '--quiet'], { CARGO_TARGET_DIR: process.env.CARGO_TARGET_DIR || (existsSync('/datanapps') ? '/datanapps/cargo-target/clients' : join(tmpdir(), 'cargo-target-clients')) });
 smoke('python', ['python3', '--version'], 'python', 'python3', ['-I', '-m', 'unittest', '-v']);

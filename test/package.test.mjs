@@ -7,7 +7,7 @@ import { createRegistry } from '../factory-core/registry.mjs';
 import { registerPackage } from '../factory-core/package/capabilities.mjs';
 import { tauriFiles, electronFiles, wailsFiles } from '../factory-core/package/generators.mjs';
 
-const SCRATCH = process.env.FACTORY_TEST_TMP || '/datanapps/claude-tmp';
+const SCRATCH = process.env.FACTORY_TEST_TMP || (existsSync('/datanapps/claude-tmp') ? '/datanapps/claude-tmp' : tmpdir());
 const tmp = () => mkdtempSync(join(existsSync(SCRATCH) ? SCRATCH : tmpdir(), 'pkg-'));
 const w = (d, f, c = '') => { mkdirSync(dirname(join(d, f)), { recursive: true }); writeFileSync(join(d, f), c); };
 // stub: records calls; every probe passes unless listed in `missing`; build commands "produce" outputs via onBuild
@@ -54,9 +54,9 @@ test('standalone dryRun plans without writing or executing builds', async () => 
   const { reg, calls } = stubReg(); const d = webProj(); const o = join(tmp(), 'o');
   const r = await reg.call('package.standalone', { project: d, shell: 'tauri', out: o, dryRun: true });
   assert.ok(r.ok, JSON.stringify(r.error)); assert.deepEqual(r.data.artifacts, []);
-  assert.equal(r.data.plan.base, 'my-game-1.2.3-linux-x64'); assert.ok(r.data.plan.generated.some((f) => f.endsWith('src-tauri/tauri.conf.json')));
+  assert.equal(r.data.plan.base, 'my-game-1.2.3-linux-x64'); assert.ok(r.data.plan.generated.some((f) => f.replace(/\\/g, '/').endsWith('src-tauri/tauri.conf.json')));
   assert.equal(existsSync(o), false); assert.ok(!calls.some((c) => c.cmd === 'cargo' && c.args[0] === 'build'));
-  const step = r.data.plan.steps.find((s) => s.id === 'cargo-build'); assert.match(step.env.CARGO_TARGET_DIR, /^\/datanapps\/cargo-target\/my-game$/);
+  const step = r.data.plan.steps.find((s) => s.id === 'cargo-build'); if (process.env.CARGO_TARGET_DIR) assert.equal(step.env.CARGO_TARGET_DIR, process.env.CARGO_TARGET_DIR); else assert.match(step.env.CARGO_TARGET_DIR, /cargo-target[\\/]my-game$/);
 });
 
 test('tauri with missing toolchain: SKIP with reason, generated dir written outside project', async () => {
@@ -92,7 +92,7 @@ test('rust plan: profile env, cargo target dir default, cross target', async () 
   const d = tmp(); w(d, 'Cargo.toml', '[package]\nname = "zed"\nversion = "0.1.0"\n');
   const { reg } = stubReg(); const r = await reg.call('package.standalone', { project: d, platform: 'win-x64', dryRun: true });
   const s = r.data.plan.steps[0]; assert.ok(s.args.includes('--target') && s.args.includes('x86_64-pc-windows-msvc'));
-  assert.equal(s.env.CARGO_PROFILE_RELEASE_STRIP, 'true'); assert.match(s.env.CARGO_TARGET_DIR, /datanapps/); assert.match(r.data.plan.profileAdvice, /lto = true/);
+  assert.equal(s.env.CARGO_PROFILE_RELEASE_STRIP, 'true'); assert.ok(s.env.CARGO_TARGET_DIR); assert.match(r.data.plan.profileAdvice, /lto = true/);
 });
 
 test('godot wraps tools/build.sh; python gives a pyinstaller plan with nuitka alternative', async () => {

@@ -1,15 +1,16 @@
 // package.shells + package.standalone. Execution is injected (deps.exec / deps.probe) so tests can stub it.
 // Everything shells out through execFile argument arrays; nothing is interpolated into a shell string.
-import { execFile } from 'node:child_process';
+import { execFile, spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { chmodSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import { basename, dirname, join, relative, resolve } from 'node:path';
-import { arch as hostArch, platform as hostPlatform } from 'node:os';
+import { arch as hostArch, platform as hostPlatform, tmpdir } from 'node:os';
 import { ok, fail } from '../registry.mjs';
 import { electronFiles, pythonCommands, rustProfileAdvice, tauriFiles, wailsFiles } from './generators.mjs';
 
-const FACT = resolve(new URL('../..', import.meta.url).pathname);
+const FACT = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const FIXED = new Date('2026-01-01T00:00:00Z');
 const out = { type: 'object', required: ['ok', 'data', 'error', 'next'], properties: { ok: { type: 'boolean' }, data: {}, error: { type: ['object', 'null'] }, next: { type: 'array', items: { type: 'string' } } } };
 const obj = (properties, required = []) => ({ type: 'object', additionalProperties: false, required, properties });
@@ -158,7 +159,7 @@ async function buildPlan(c) {
   const { deps, project, kind, shell, platform, version, name, outDir } = c;
   const hostMatch = deps.host.os === platform.os && deps.host.arch === platform.arch;
   const base = `${name}-${version}-${platform.os}-${platform.arch}`;
-  const cargoTarget = process.env.CARGO_TARGET_DIR || `/datanapps/cargo-target/${name}`;
+  const cargoTarget = process.env.CARGO_TARGET_DIR || join(existsSync('/datanapps') ? '/datanapps' : tmpdir(), 'cargo-target', name);
   const buildDir = join(outDir, '.build', shell);
   const plan = { shell, kind, name, version, platform: platform.key, base, outDir, buildDir, status: 'READY', skip: null, warnings: [], steps: [], generated: [], files: {}, sizeNote: SHELLS[shell].size, tradeoff: SHELLS[shell].tradeoff, collect: null };
   const pr = await probes(deps, shell, platform, project);
@@ -269,7 +270,9 @@ async function collect(plan) {
   if (isZip) await run('zip', ['-X', '-q', archive, ...walk(stage).map((f) => relative(dirname(stage), f)), ], dirname(stage));
   else {
     const tarFile = archive.replace(/\.gz$/, '');
-    await run('tar', ['--sort=name', '--owner=0', '--group=0', '--numeric-owner', '--mtime=2026-01-01 00:00:00Z', '-cf', tarFile, '-C', dirname(stage), base]);
+    const gnu = /GNU tar/.test(spawnSync('tar', ['--version'], { encoding: 'utf8' }).stdout || '');
+    // GNU tar gives a reproducible archive; bsdtar (macOS) lacks --sort/--mtime, so it only normalises ownership.
+    await run('tar', [...(gnu ? ['--sort=name', '--owner=0', '--group=0', '--numeric-owner', '--mtime=2026-01-01 00:00:00Z'] : ['--uid', '0', '--gid', '0', '--numeric-owner']), '-cf', tarFile, '-C', dirname(stage), base]);
     writeFileSync(archive, gzipSync(readFileSync(tarFile), { level: 9 })); rmSync(tarFile);
   }
   rmSync(join(outDir, '.stage'), { recursive: true, force: true });

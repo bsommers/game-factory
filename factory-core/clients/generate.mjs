@@ -2,10 +2,11 @@
 // Pure: generate(doc, lang) returns { 'relative/path': 'content' }. Hand-written parts live in ./templates/<lang>/*.tmpl
 // (a trailing .tmpl is stripped); the per-capability surface is emitted from the document. Deterministic output.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { join, relative } from 'node:path';
 
 export const LANGS = ['go', 'rust', 'python'];
-const TEMPLATES = new URL('./templates/', import.meta.url).pathname;
+const TEMPLATES = fileURLToPath(new URL('./templates/', import.meta.url));
 
 // Stable error.code set: every code the factory emits plus the transport-level ones the clients add themselves.
 export const ERROR_CODES = ['BAD_CONFIG', 'BAD_INPUT', 'BAD_LOCK', 'CONFIRM_REQUIRED', 'CONFLICT', 'EXISTS', 'FAILED', 'FORBIDDEN', 'GH_FAILED', 'GIT_FAILED', 'IMPORT_FAILED', 'INTEGRITY', 'INTERNAL', 'INVALID', 'INVALID_THEME', 'MISSING_TEMPLATE', 'NOT_FETCHED', 'NOT_FOUND', 'NO_LOCK', 'NO_PROJECT', 'REGISTRY_ERROR', 'SECRETS_FOUND', 'STALE_INDEX', 'TAMPERED', 'TASK_FAILED', 'UNKNOWN_CAPABILITY', 'UNSAFE'];

@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import { spawn, execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync, existsSync } from 'node:fs';
@@ -7,12 +8,12 @@ import { tmpdir } from 'node:os';
 import { buildRegistry } from '../factory-core/index.mjs';
 import { createApp } from '../api/server.mjs';
 
-const BIN = new URL('../bin/factory', import.meta.url).pathname;
-const MCP = new URL('../mcp/server.mjs', import.meta.url).pathname;
-const SCRATCH = process.env.FACTORY_TEST_TMP || '/datanapps/claude-tmp';
+const BIN = fileURLToPath(new URL('../bin/factory.mjs', import.meta.url));
+const MCP = fileURLToPath(new URL('../mcp/server.mjs', import.meta.url));
+const SCRATCH = process.env.FACTORY_TEST_TMP || (existsSync('/datanapps/claude-tmp') ? '/datanapps/claude-tmp' : tmpdir());
 const tmp = () => mkdtempSync(join(existsSync(SCRATCH) ? SCRATCH : tmpdir(), 'fsurf-'));
 const strip = (r) => JSON.parse(JSON.stringify(r));
-const cli = (...a) => JSON.parse(execFileSync(BIN, [...a, '--json'], { encoding: 'utf8' }));
+const cli = (...a) => JSON.parse(execFileSync(process.execPath, [BIN, ...a, '--json'], { encoding: 'utf8' }));
 
 test('registry: every capability is well formed and schemas are valid', () => {
   const reg = buildRegistry(); const names = reg.list().map((c) => c.name);
@@ -57,7 +58,7 @@ test('same result on every surface: kits.list and project.new', async (t) => {
   assert.deepEqual(viaCli, viaLib); assert.deepEqual(viaApi, viaLib); assert.deepEqual(viaMcp, viaLib);
   assert.ok(existsSync(join(a, 'src/kits/art-kit')) && existsSync(join(a, 'tools/swarm-tracker/bin/track.mjs')));
   // exists -> stable failure + exit code 4
-  const again = spawnSync(BIN, ['new', a, 'T', '--json'], { encoding: 'utf8' });
+  const again = spawnSync(process.execPath, [BIN, 'new', a, 'T', '--json'], { encoding: 'utf8' });
   assert.equal(again.status, 4); assert.equal(JSON.parse(again.stdout).error.code, 'EXISTS');
 });
 
@@ -109,8 +110,8 @@ test('MCP smoke: initialize, tools/list, tools/call, resources', async (t) => {
 
 test('CLI: capabilities --json, help <cmd>, exit codes', () => {
   const caps = cli('capabilities'); assert.ok(caps.data.capabilities.length >= 30);
-  assert.equal(spawnSync(BIN, ['help', 'kits'], { encoding: 'utf8' }).status, 0);
-  assert.equal(spawnSync(BIN, ['kits', 'show', 'nope', '--json'], { encoding: 'utf8' }).status, 3);
-  assert.equal(spawnSync(BIN, ['kits', 'show', '--json'], { encoding: 'utf8' }).status, 2);
-  assert.equal(spawnSync(BIN, ['frobnicate'], { encoding: 'utf8' }).status, 2);
+  assert.equal(spawnSync(process.execPath, [BIN, 'help', 'kits'], { encoding: 'utf8' }).status, 0);
+  assert.equal(spawnSync(process.execPath, [BIN, 'kits', 'show', 'nope', '--json'], { encoding: 'utf8' }).status, 3);
+  assert.equal(spawnSync(process.execPath, [BIN, 'kits', 'show', '--json'], { encoding: 'utf8' }).status, 2);
+  assert.equal(spawnSync(process.execPath, [BIN, 'frobnicate'], { encoding: 'utf8' }).status, 2);
 });

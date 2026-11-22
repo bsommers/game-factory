@@ -1,13 +1,15 @@
 // Core capabilities wrapping the original factory commands: project.*, kits.*, swarm.*, docs.*.
 // Subprocesses use execFile with argument arrays only (no shell, no string interpolation of inputs).
 import { execFile } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { tmpdir } from 'node:os';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, resolve, basename } from 'node:path';
+import { join, resolve, basename, dirname } from 'node:path';
 import { ok, fail } from '../registry.mjs';
 import { LANG_IDS, GENERIC, templateDir } from '../languages/index.mjs';
 import { scaffoldFromTemplate } from '../languages/scaffold.mjs';
 
-const FACT = resolve(new URL('../..', import.meta.url).pathname);
+const FACT = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const KITS = join(FACT, 'templates/web-project/src');
 const out = { type: 'object', required: ['ok', 'data', 'error', 'next'], properties: { ok: { type: 'boolean' }, data: {}, error: { type: ['object', 'null'] }, next: { type: 'array', items: { type: 'string' } } } };
 const obj = (properties, required = []) => ({ type: 'object', additionalProperties: false, required, properties });
@@ -73,7 +75,7 @@ export const capabilities = [
       const kind = has('Cargo.toml') ? 'rust' : has('go.mod') ? 'go' : has('pyproject.toml') ? 'python' : null;
       if (kind === 'rust') {
         if (process.env.CARGO_TARGET_DIR) env.CARGO_TARGET_DIR = process.env.CARGO_TARGET_DIR;
-        else if (isDir('/datanapps')) env.CARGO_TARGET_DIR = join('/datanapps/cargo-target', basename(p));
+        else env.CARGO_TARGET_DIR = join(isDir('/datanapps') ? '/datanapps' : tmpdir(), 'cargo-target', basename(p));
       }
       const steps = kind && ({ test: { rust: [['cargo', ['test']]], go: [['go', ['vet', './...']], ['go', ['test', './...']]], python: [['python3', ['-m', 'pytest', '-q']]] },
         build: { rust: [['cargo', ['build', '--release', ...extra]]], go: [['go', ['build', './...', ...extra]]], python: [['python3', ['-m', 'compileall', '-q', '.']]] },
@@ -81,7 +83,7 @@ export const capabilities = [
       if (steps) {
         const runs = [];
         for (const [c, a] of steps) {
-          const r = await run(c, a, { cwd: p, env });
+          const r = await run(process.platform === 'win32' && c === 'python3' ? 'python' : c, a, { cwd: p, env });
           if (r.spawnError) return fail('NOT_FOUND', `cannot run ${c}: ${r.spawnError}`);
           runs.push(r); if (r.code) break;
         }
@@ -94,6 +96,10 @@ export const capabilities = [
       else if (i.task === 'check-imports') [cmd, args] = ['node', ['tools/check-imports.mjs']];
       else if (i.task === 'shot') [cmd, args] = has('tools/shot.mjs') ? ['node', ['tools/shot.mjs', ...extra]] : ['sh', ['tools/shot.sh', ...extra]];
       else [cmd, args] = ['sh', ['tools/build.sh', ...extra]];
+      if (process.platform === 'win32' && cmd === 'npm') { // npm is npm.cmd/npm.ps1 on Windows, which execFile cannot start; run its JS entry with node
+        const cli = join(dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js');
+        if (existsSync(cli)) { args = [cli, ...args]; cmd = process.execPath; }
+      }
       const r = await run(cmd, args, { cwd: p, env });
       if (r.spawnError) return fail('NOT_FOUND', `cannot run ${cmd}: ${r.spawnError}`);
       const data = { task: i.task, exitCode: r.code, stdout: tail(r.stdout), stderr: tail(r.stderr, 2000) };

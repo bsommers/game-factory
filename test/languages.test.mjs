@@ -8,7 +8,7 @@ import { registerLanguages } from '../factory-core/languages/capabilities.mjs';
 import { scaffoldFromTemplate } from '../factory-core/languages/scaffold.mjs';
 import { registerCore } from '../factory-core/capabilities/core.mjs';
 
-const SCRATCH = process.env.FACTORY_TEST_TMP || '/datanapps/claude-tmp';
+const SCRATCH = process.env.FACTORY_TEST_TMP || (existsSync('/datanapps/claude-tmp') ? '/datanapps/claude-tmp' : tmpdir());
 const tmp = () => mkdtempSync(join(existsSync(SCRATCH) ? SCRATCH : tmpdir(), 'lang-'));
 
 test('languages.list and show', async () => {

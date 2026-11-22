@@ -1,11 +1,12 @@
 // Rendering capabilities: render.trace (CPU path tracer via execFile, no shell), render.info (probe).
 import { execFile } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { existsSync, mkdirSync, statSync } from 'node:fs';
 import { cpus } from 'node:os';
 import { dirname, join, relative, resolve, isAbsolute } from 'node:path';
 import { ok, fail } from '../registry.mjs';
 
-const FACT = resolve(new URL('../..', import.meta.url).pathname);
+const FACT = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const TRACER = join(FACT, 'tools/render/pathtrace.mjs');
 const out = { type: 'object', required: ['ok', 'data', 'error', 'next'], properties: { ok: { type: 'boolean' }, data: {}, error: { type: ['object', 'null'] }, next: { type: 'array', items: { type: 'string' } } } };
 const obj = (properties, required = []) => ({ type: 'object', additionalProperties: false, required, properties });

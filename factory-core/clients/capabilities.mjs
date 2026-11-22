@@ -1,11 +1,12 @@
 // clients.generate: emit (or drift-check) the typed Go/Rust/Python clients from the registry's own OpenAPI document.
 // Wire with registerClients(registry) from factory-core/index.mjs.
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import { generate, LANGS } from './generate.mjs';
 import { ok, fail } from '../registry.mjs';
 
-const ROOT = new URL('../../', import.meta.url).pathname.replace(/\/$/, '');
+const ROOT = fileURLToPath(new URL('../../', import.meta.url)).replace(/[\\/]$/, '');
 export const DEFAULT_OUT = join(ROOT, 'clients');
 
 export async function buildFiles(registry, langs) {

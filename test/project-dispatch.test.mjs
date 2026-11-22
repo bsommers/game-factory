@@ -2,15 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, existsSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { createRegistry } from '../factory-core/registry.mjs';
 import { registerCore } from '../factory-core/capabilities/core.mjs';
 
-const SCRATCH = process.env.FACTORY_TEST_TMP || '/datanapps/claude-tmp';
+const SCRATCH = process.env.FACTORY_TEST_TMP || (existsSync('/datanapps/claude-tmp') ? '/datanapps/claude-tmp' : tmpdir());
 mkdirSync(SCRATCH, { recursive: true });
-process.env.CARGO_TARGET_DIR ||= '/datanapps/cargo-target/game-factory-test';
-process.env.GOCACHE ||= '/datanapps/go-cache';
-process.env.GOPATH ||= '/datanapps/go-path';
+if (existsSync('/datanapps')) { process.env.CARGO_TARGET_DIR ||= '/datanapps/cargo-target/game-factory-test'; process.env.GOCACHE ||= '/datanapps/go-cache'; process.env.GOPATH ||= '/datanapps/go-path'; }
 process.env.PYTHONDONTWRITEBYTECODE = '1';
 
 const have = (c, a = ['--version']) => { const r = spawnSync(c, a, { encoding: 'utf8' }); return !r.error && r.status === 0; };

@@ -1,9 +1,10 @@
 // Generic template scaffolder: copy tree, substitute __NAME__/__SLUG__ in text files, drop .tmpl, sync swarm tools, git init.
 import { cpSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync, renameSync, existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { join, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 
-const FACT = resolve(new URL('../..', import.meta.url).pathname);
+const FACT = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 export const slugify = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'game';
 const isText = (buf) => !buf.subarray(0, 8000).includes(0);
 

@@ -369,7 +369,7 @@ func (p *Patroller) speed(e *Entity) float64 {
 // Update implements Behaviour.
 func (p *Patroller) Update(e *Entity, dt float64, _ *Game) {
 	e.T += dt
-	dx := e.VX * dt
+	dx := float64(e.VX * dt)
 	e.X += dx
 	if e.X <= e.St["minX"] {
 		e.X, e.Dir = e.St["minX"], Ptr(1.0)

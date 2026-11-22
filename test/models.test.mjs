@@ -9,7 +9,7 @@ import { findBlender } from '../factory-core/models/capabilities.mjs';
 import * as M from '../templates/web-project/src/lib/mesh.js';
 import * as IO from '../templates/web-project/src/lib/mesh-io.js';
 
-const SCRATCH = process.env.FACTORY_TEST_TMP || '/datanapps/claude-tmp';
+const SCRATCH = process.env.FACTORY_TEST_TMP || (existsSync('/datanapps/claude-tmp') ? '/datanapps/claude-tmp' : tmpdir());
 const tmp = () => mkdtempSync(join(existsSync(SCRATCH) ? SCRATCH : tmpdir(), 'fmodels-'));
 const reg = buildRegistry();
 const call = (n, i) => reg.call(n, i);
@@ -62,7 +62,7 @@ test('models.convert between all pairs keeps geometry', async () => {
 });
 test('3MF zip validates with python zipfile (CRC) and unzip when available', async () => {
   const d = tmp(); await call('models.generate', { project: d, out: 'o', recipe: RECIPE, formats: ['3mf'] });
-  const f = join(d, 'o/fig.3mf'), py = spawnSync('python3', ['-I', '-c', 'import sys,zipfile;z=zipfile.ZipFile(sys.argv[1]);assert z.testzip() is None;print(",".join(z.namelist()));import xml.dom.minidom as m;m.parseString(z.read("3D/3dmodel.model"));m.parseString(z.read("[Content_Types].xml"));m.parseString(z.read("_rels/.rels"))', f], { encoding: 'utf8' });
+  const f = join(d, 'o/fig.3mf'), PY = ['python3', 'python'].find((c) => { const r = spawnSync(c, ['--version'], { encoding: 'utf8' }); return !r.error && r.status === 0 && /Python 3/.test(r.stdout + r.stderr); }), py = !PY ? { error: true } : spawnSync(PY, ['-I', '-c', 'import sys,zipfile;z=zipfile.ZipFile(sys.argv[1]);assert z.testzip() is None;print(",".join(z.namelist()));import xml.dom.minidom as m;m.parseString(z.read("3D/3dmodel.model"));m.parseString(z.read("[Content_Types].xml"));m.parseString(z.read("_rels/.rels"))', f], { encoding: 'utf8' });
   if (py.error) return; assert.equal(py.status, 0, py.stderr); assert.equal(py.stdout.trim(), '[Content_Types].xml,_rels/.rels,3D/3dmodel.model');
   const u = spawnSync('unzip', ['-t', f], { encoding: 'utf8' }); if (!u.error) assert.equal(u.status, 0, u.stdout);
 });

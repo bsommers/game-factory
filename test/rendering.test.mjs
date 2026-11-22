@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync, mkdirSync, existsSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { renderScene } from '../tools/render/pathtrace.mjs';
 import { parseHDR, encodeHDR } from '../tools/render/hdr.mjs';
@@ -13,7 +14,7 @@ import { sceneToBuffers, intersectBuffers, cameraBasis, primaryRay } from '../te
 import { detectCapabilities, tierLadder } from '../templates/web-project/src/kits/raytrace-kit/detect.js';
 import { createRaytracer } from '../templates/web-project/src/kits/raytrace-kit/index.js';
 
-const SCRATCH = existsSync('/datanapps/claude-tmp') ? '/datanapps/claude-tmp' : process.env.TMPDIR || '.';
+const SCRATCH = process.env.FACTORY_TEST_TMP || (existsSync('/datanapps/claude-tmp') ? '/datanapps/claude-tmp' : tmpdir());
 const scene = JSON.parse(readFileSync(new URL('../tools/render/scenes/cornell.json', import.meta.url), 'utf8'));
 const sha = (b) => createHash('sha256').update(b).digest('hex');
 const O = { width: 24, height: 24, spp: 4, seed: 7, tile: 8 };

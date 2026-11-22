@@ -20,6 +20,8 @@ const canon = (v) => {
   if (typeof v === 'number' && !Number.isFinite(v)) throw new Error('non-finite number in vector');
   return v;
 };
+// Expected outputs only are snapped to a 1e-12 grid: Math.sin/cos differ by an ulp across platforms. Inputs stay exact.
+const snap = (v) => { if (Array.isArray(v)) return v.map(snap); if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).map((k) => [k, snap(v[k])])); if (typeof v === 'number' && !Number.isInteger(v)) { const r = Math.round(v * 1e12) / 1e12; return Number.isInteger(r) ? v : r; } return v; };
 const rt = (v) => JSON.parse(JSON.stringify(v));
 
 // ---------------- rng ----------------
@@ -258,7 +260,7 @@ const ENGINES = [
 export function buildAll() {
   const out = {};
   for (const [engine, mod, mk] of ENGINES) {
-    const cases = mk().map((cs) => ({ name: cs.name, input: canon(rt(cs.input)), expect: canon(rt(mod.run(rt(cs.input)))) }));
+    const cases = mk().map((cs) => ({ name: cs.name, input: canon(rt(cs.input)), expect: snap(canon(rt(mod.run(rt(cs.input))))) }));
     out[engine] = JSON.stringify({ engine, version: VERSION, cases }, null, 1) + '\n';
   }
   return out;

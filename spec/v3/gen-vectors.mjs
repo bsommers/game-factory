@@ -12,6 +12,7 @@ import * as B from '../../templates/web-project/src/lib/bvh.js';
 
 export const VERSION = 1, TOLERANCE = 1e-9;
 const here = dirname(fileURLToPath(import.meta.url)), DIR = join(here, 'vectors');
+import { same } from '../same.mjs';
 const rnd = (v) => { if (Array.isArray(v)) return v.map(rnd); if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).sort().map((k) => [k, rnd(v[k])]));
   if (typeof v === 'number') { if (!Number.isFinite(v)) throw new Error('non-finite'); if (Number.isInteger(v)) return Object.is(v, -0) ? 0 : v; const r = Math.round(v * 1e12) / 1e12; return Object.is(r, -0) ? 0 : r; } return v; };
 function lcg(seed) { let s = seed >>> 0; return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; }
@@ -147,7 +148,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   if (!check) mkdirSync(DIR, { recursive: true });
   for (const [name, data] of Object.entries(all)) {
     const f = join(DIR, name + '.json'), text = ser(data);
-    if (check) { if (!existsSync(f) || readFileSync(f, 'utf8') !== text) { console.error('DIFF ' + f); bad++; } else console.log('ok   ' + name + ' (' + data.cases.length + ' cases)'); }
+    if (check) { if (!existsSync(f) || !same(JSON.parse(readFileSync(f, 'utf8')), JSON.parse(text))) { console.error('DIFF ' + f); bad++; } else console.log('ok   ' + name + ' (' + data.cases.length + ' cases)'); }
     else { writeFileSync(f, text); console.log('wrote ' + f + ' (' + data.cases.length + ' cases)'); }
   }
   process.exit(bad ? 1 : 0);

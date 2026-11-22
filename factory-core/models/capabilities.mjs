@@ -1,16 +1,17 @@
 // Model capabilities: models.formats / generate / convert / inspect / verify / print-prep / blender-check.
 // Mesh code lives in templates/web-project/src/lib/{mesh,mesh-io}.js (browser-safe); this file adds filesystem + zlib + blender.
 import { execFile } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { basename, dirname, extname, isAbsolute, join, relative, resolve } from 'node:path';
+import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { inflateRawSync } from 'node:zlib';
 import { ok, fail } from '../registry.mjs';
 import * as M from '../../templates/web-project/src/lib/mesh.js';
 import * as IO from '../../templates/web-project/src/lib/mesh-io.js';
 import { buildFromRecipe, PRIMITIVES } from './recipe.mjs';
 
-const FACT = resolve(new URL('../..', import.meta.url).pathname);
+const FACT = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const SCRIPT = join(FACT, 'tools/models/blender_roundtrip.py');
 const out = { type: 'object', required: ['ok', 'data', 'error', 'next'], properties: { ok: { type: 'boolean' }, data: {}, error: { type: ['object', 'null'] }, next: { type: 'array', items: { type: 'string' } } } };
 const obj = (properties, required = []) => ({ type: 'object', additionalProperties: false, required, properties });
@@ -46,7 +47,7 @@ function writeFiles(project, dir, base, m, formats, opts, overwrite) {
     files.push({ path: p, format: f, bytes: x.data.length, sha256: sha(x.data), data: x.data });
   }
   mkdirSync(dir, { recursive: true });
-  for (const f of files) { writeFileSync(f.path, f.data); delete f.data; f.path = relative(project, f.path) || f.path; }
+  for (const f of files) { writeFileSync(f.path, f.data); delete f.data; f.path = (relative(project, f.path) || f.path).split(sep).join('/'); }
   return { files };
 }
 const wrap = (fn) => async (i) => { try { return await fn(i); } catch (e) { return fail(e.code === 'NOT_FOUND' ? 'NOT_FOUND' : e.code === 'BAD_INPUT' || /unknown|cannot detect|not an? |zip|GLB|PLY|STL|OBJ|recipe|segments|polygon|heightmap/i.test(e.message) ? 'BAD_INPUT' : 'FAILED', e.message); } };
@@ -149,7 +150,7 @@ export function registerModels(r) {
       const res = await new Promise((done) => execFile(exe, ['-b', '--factory-startup', '--python', SCRIPT, '--', ...files], { timeout: i.timeoutMs || 180000, maxBuffer: 16 * 1024 * 1024 }, (err, so, se) => done({ err, so: String(so), se: String(se) })));
       const line = res.so.split('\n').find((l) => l.startsWith('GF_JSON '));
       if (!line) return fail('FAILED', (res.se || res.so).trim().split('\n').slice(-3).join(' ') || String(res.err?.message));
-      const j = JSON.parse(line.slice(8)), rel = {}; for (const [k, v] of Object.entries(j.files)) rel[relative(project, k) || k] = v;
+      const j = JSON.parse(line.slice(8)), rel = {}; for (const [k, v] of Object.entries(j.files)) rel[(relative(project, k) || k).split(sep).join('/')] = v;
       return ok({ blender: j.blender, executable: exe, files: rel, allImported: Object.values(rel).every((v) => v.imported) });
     }) });
   return r;

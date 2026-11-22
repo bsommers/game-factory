@@ -3,6 +3,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { same } from './same.mjs';
 import { buildAll, VECTOR_DIR } from './gen-vectors.mjs';
 
 export function verify() {
@@ -12,8 +13,9 @@ export function verify() {
     if (!existsSync(f)) { drift.push(`${engine}: missing ${f}`); continue; }
     const have = readFileSync(f, 'utf8');
     if (have === text) continue;
-    const a = JSON.parse(have), b = JSON.parse(text), names = new Map(a.cases.map((c) => [c.name, JSON.stringify(c)]));
-    const bad = b.cases.filter((c) => names.get(c.name) !== JSON.stringify(c)).map((c) => c.name);
+    const a = JSON.parse(have), b = JSON.parse(text), names = new Map(a.cases.map((c) => [c.name, c]));
+    if (same(a, b)) continue; // float noise only
+    const bad = b.cases.filter((c) => !same(names.get(c.name), c)).map((c) => c.name);
     drift.push(`${engine}: ${bad.length ? bad.slice(0, 5).join('; ') : 'formatting/case-count change'}`);
   }
   return drift;
