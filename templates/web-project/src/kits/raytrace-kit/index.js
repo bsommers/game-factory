@@ -17,8 +17,8 @@ export async function createRaytracer(canvas, scene, opts = {}) {
   const env = opts.env || globalThis, errors = [];
   let caps; try { caps = detectCapabilities(env); } catch { caps = { webgpu: false, webgl2: false, tier: 'raster', reasons: ['detect failed'] }; }
   for (const tier of tierLadder(caps, opts.prefer)) {
-    try {
-      if (tier === 'webgpu') { const p = await probeWebGPU(env); if (!p.ok) throw new Error(p.reason); return { ...(await createWebGPUTracer(canvas, scene, opts)), errors, caps }; }
+    try { // webgpu: mutate the tracer rather than spreading it, so the live `samples` getter survives
+      if (tier === 'webgpu') { const p = await probeWebGPU(env); if (!p.ok) throw new Error(p.reason); { const t = await createWebGPUTracer(canvas, scene, opts); t.errors = errors; t.caps = caps; return t; } }
       if (tier === 'sdf') return { ...createSdfMarcher(canvas, scene), samples: 1, errors, caps };
     } catch (e) { errors.push({ tier, message: String(e && e.message || e) }); }
   }

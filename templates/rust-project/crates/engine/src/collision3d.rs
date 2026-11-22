@@ -1192,6 +1192,9 @@ fn slide(ch: &Character, w: &World, p0: V3, d0: V3, stick: bool, info: &mut Slid
             if stick {
                 break;
             }
+            if n[1] < ch.min_ground_y {
+                info.wall = true;
+            }
         } else if n[1] < -0.7 {
             info.ceil = true;
         } else {

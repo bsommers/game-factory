@@ -1232,6 +1232,9 @@ func (c *Character) slide(w TriWorld, p0, d0 V3, stick bool, info *slideInfo) V3
 				d = V3{}
 				break
 			}
+			if n[1] < c.MinGroundY {
+				info.wall = true
+			}
 		} else if n[1] < -0.7 {
 			info.ceil = true
 		} else {

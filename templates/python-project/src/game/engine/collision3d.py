@@ -830,6 +830,8 @@ def _slide(ch, w, p0, d0, stick, info):
             if stick:
                 d = [0, 0, 0]
                 break
+            if n[1] < ch["minGroundY"]:
+                info["wall"] = True
         elif n[1] < -0.7:
             info["ceil"] = True
         else:

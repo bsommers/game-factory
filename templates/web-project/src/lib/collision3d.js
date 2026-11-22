@@ -497,7 +497,7 @@ function slide(ch, w, p0, d0, stick, info) {
     if (!hit) { p = add(p, d); d = [0, 0, 0]; break; }
     p = madd(madd(p, d, hit.t), hit.normal, ch.skin);
     const n = hit.normal, f = hit.face || n; info.hits.push(n);
-    if (f[1] >= ch.minGroundY) { info.floor = f; if (stick) { d = [0, 0, 0]; break; } }
+    if (f[1] >= ch.minGroundY) { info.floor = f; if (stick) { d = [0, 0, 0]; break; } if (n[1] < ch.minGroundY) info.wall = true; }
     else if (n[1] < -0.7) info.ceil = true;
     else info.wall = true;
     let nn = n;
