@@ -29,3 +29,6 @@ Y-UP, right-handed (unlike the y-down 2D libs), Float64, flat typed arrays, dete
 
 ## mesh.js / mesh-io.js (3D models for print, Blender, engines)
 Deterministic, browser-safe. Mesh = `{positions, indices, normals?, uvs?, colors?, materials?, faceMaterial?}`, mm, Z up. `mesh.js`: primitives (box, sphere, icosphere, cylinder, cone, capsule, torus, plane/grid, lathe, extrude with holes, heightmap), ops (transform, merge, mirror, weld, normals, scaleToHeight, fitToBed, addPlinth...) and `validate` (watertight/2-manifold, orientation, shells, volume). No boolean ops. `mesh-io.js`: read/write OBJ+MTL, STL (binary/ascii), PLY, GLB/glTF, 3MF (own STORE zip + CRC32) with units/up-axis options; `writeMesh/readMesh` dispatch. Factory side: `docs/MODELS.md`, `models.*` capabilities. Tests: `test/lib/mesh.test.mjs`.
+
+## gltf-anim.js (animated .glb)
+Browser-safe. `parseAnimGLB(bytes)` -> `{nodes, meshes, skins, animations, materials, images, warnings}`; `AnimPlayer` (play/setState/crossfade/update, `skinned()` CPU skinning, `jointMatrices()` for GPU), lower-level `poseAt`, `worldMatrices`, `jointMatrices`, `skinPrimitive`, `posedBounds`, `guessStates`, `mergeAnimGLB(base, [{data, name, prefix?, clips?, rename?}])`. glTF = metres, Y up. Draco/meshopt rejected with `UnsupportedError`. Factory side: `anim.inspect|import|merge|sample`, skill `animated-models`.

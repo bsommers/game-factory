@@ -10,6 +10,22 @@ class Capabilities:
     def call(self, name: str, input: dict | None = None):  # implemented by Client
         raise NotImplementedError
 
+    def anim_import(self, *, inputs: list[str], ids: dict | None = None, out: str | None = None, overwrite: bool | None = None, project: str | None = None):
+        """anim.import: Copy one or more animated .glb files into the project (assets/models/), inspect each, and write assets/models/manifest.json + models.js listing id, file, clips, guessed state map and rig groups. Files that share a rig are flagged so their clips can be combined with anim.merge."""
+        return self.call("anim.import", {"inputs": inputs, "ids": ids, "out": out, "overwrite": overwrite, "project": project})
+
+    def anim_inspect(self, *, input: str, project: str | None = None):
+        """anim.inspect: Inspect a rigged/animated .glb (Meshy, Blender, Mixamo): skeleton joints, skinned meshes, animation clips with durations, guessed game states (idle/walk/run/...), bounds, materials, warnings. Reports compressed (Draco/meshopt) files as UNSUPPORTED with the fix."""
+        return self.call("anim.inspect", {"input": input, "project": project})
+
+    def anim_merge(self, *, base: str, inputs: list[str], out: str, onConflict: str | None = None, overwrite: bool | None = None, prefix: str | None = None, project: str | None = None, rename: dict | None = None):
+        """anim.merge: Combine animation clips from several .glb files that share a skeleton into one .glb (Meshy exports one clip per file). Channels are matched to the base rig by node name; clips whose bones do not exist are skipped and reported."""
+        return self.call("anim.merge", {"base": base, "inputs": inputs, "out": out, "onConflict": onConflict, "overwrite": overwrite, "prefix": prefix, "project": project, "rename": rename})
+
+    def anim_sample(self, *, input: str, clip: str | None = None, loop: bool | None = None, project: str | None = None, time: float | None = None):
+        """anim.sample: Pose a .glb at a clip and time (no rendering): returns the posed bounding box and the world position of every joint, to verify an animation or script against it. time is seconds; loop wraps, otherwise clamps."""
+        return self.call("anim.sample", {"input": input, "clip": clip, "loop": loop, "project": project, "time": time})
+
     def clients_generate(self, *, check: bool | None = None, lang: str | None = None, out: str | None = None):
         """clients.generate: Generate typed thin HTTP clients (Go, Rust, Python) from the registry OpenAPI document into <out>/<lang>/. With check=true nothing is written and drift against <out> returns CONFLICT."""
         return self.call("clients.generate", {"check": check, "lang": lang, "out": out})

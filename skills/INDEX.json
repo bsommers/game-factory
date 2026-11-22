@@ -1,6 +1,6 @@
 {
   "formatVersion": 1,
-  "count": 16,
+  "count": 17,
   "skills": [
     {
       "name": "add-fx",
@@ -143,6 +143,73 @@
         "vine",
         "world",
         "worldgen"
+      ]
+    },
+    {
+      "name": "animated-models",
+      "description": "Bring rigged, animated .glb models (Meshy, Blender, Mixamo) into a game: inspect clips and skeleton, import into assets/models, merge clips from several files, and play them with crossfades and CPU or GPU skinning.",
+      "triggers": [
+        "animated model",
+        "animation",
+        "animated glb",
+        "rigged",
+        "skeleton",
+        "skinning",
+        "meshy",
+        "mixamo",
+        "walk cycle",
+        "idle animation",
+        "glb animation",
+        "bone",
+        "armature",
+        "clips",
+        "character 3d",
+        "3d character"
+      ],
+      "needs": [
+        "Node 22+"
+      ],
+      "outputs": [
+        "assets/models/*.glb",
+        "assets/models/manifest.json",
+        "assets/models/models.js"
+      ],
+      "model": "haiku",
+      "cost": "low",
+      "capabilities": [
+        "anim.inspect",
+        "anim.import",
+        "anim.merge",
+        "anim.sample"
+      ],
+      "kits": [],
+      "file": "animated-models.md",
+      "commands": [],
+      "steps": [
+        "`anim.inspect {input}`: joints, clips with durations, guessed states (idle, walk, run, jump, attack, ...), bounds, warnings. Compressed (Draco/meshopt) files come back UNSUPPORTED with the fix; re-export uncompressed.",
+        "`anim.import {inputs: [...]}`: copies into `assets/models/`, writes `manifest.json` and `models.js`. Files sharing a rig are reported under `sameRig`.",
+        "Meshy exports one clip per file: `anim.merge {base, inputs, out}` combines clips into one `.glb` (matched by bone name; use `prefix` or `rename` for tidy clip names).",
+        "Verify without rendering: `anim.sample {input, clip, time}` returns the posed bounds and joint positions.",
+        "In the game: `import { parseAnimGLB, AnimPlayer } from './lib/gltf-anim.js'`; `const player = new AnimPlayer(parseAnimGLB(bytes))`; `player.setState('walk')` (crossfades); each frame `player.update(dt)`, then `player.skinned()` (CPU skinned positions, model space) or `player.jointMatrices()` (GPU skinning, column-major)."
+      ],
+      "keywords": [
+        "3d",
+        "animated",
+        "animation",
+        "armature",
+        "bone",
+        "character",
+        "clip",
+        "cycle",
+        "glb",
+        "idle",
+        "meshy",
+        "mixamo",
+        "model",
+        "rigged",
+        "skeleton",
+        "skinn",
+        "walk"
       ]
     },
     {

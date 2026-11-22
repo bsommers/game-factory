@@ -4,6 +4,62 @@ package factoryclient
 
 import "context"
 
+// AnimImportInput is the input of anim.import.
+type AnimImportInput struct {
+	Inputs    []string       `json:"inputs"`        // .glb paths (relative to project or absolute)
+	Ids       map[string]any `json:"ids,omitempty"` // optional {inputPath: id} overrides; default id = sanitised file name
+	Out       *string        `json:"out,omitempty"` // directory inside the project (default assets/models)
+	Overwrite *bool          `json:"overwrite,omitempty"`
+	Project   *string        `json:"project,omitempty"`
+}
+
+// AnimImport calls anim.import: Copy one or more animated .glb files into the project (assets/models/), inspect each, and write assets/models/manifest.json + models.js listing id, file, clips, guessed state map and rig groups. Files that share a rig are flagged so their clips can be combined with anim.merge.
+func (c *Client) AnimImport(ctx context.Context, in AnimImportInput) (*Envelope, error) {
+	return c.Call(ctx, "anim.import", in)
+}
+
+// AnimInspectInput is the input of anim.inspect.
+type AnimInspectInput struct {
+	Input   string  `json:"input"` // path to a .glb (relative to project)
+	Project *string `json:"project,omitempty"`
+}
+
+// AnimInspect calls anim.inspect: Inspect a rigged/animated .glb (Meshy, Blender, Mixamo): skeleton joints, skinned meshes, animation clips with durations, guessed game states (idle/walk/run/...), bounds, materials, warnings. Reports compressed (Draco/meshopt) files as UNSUPPORTED with the fix.
+func (c *Client) AnimInspect(ctx context.Context, in AnimInspectInput) (*Envelope, error) {
+	return c.Call(ctx, "anim.inspect", in)
+}
+
+// AnimMergeInput is the input of anim.merge.
+type AnimMergeInput struct {
+	Base       string         `json:"base"`                 // .glb providing mesh + skeleton (and its own clips)
+	Inputs     []string       `json:"inputs"`               // .glb files whose clips are added
+	Out        string         `json:"out"`                  // output .glb path inside the project
+	OnConflict *string        `json:"onConflict,omitempty"` // clip name already present (default rename with _2 suffix)
+	Overwrite  *bool          `json:"overwrite,omitempty"`
+	Prefix     *string        `json:"prefix,omitempty"` // prepended to every added clip name
+	Project    *string        `json:"project,omitempty"`
+	Rename     map[string]any `json:"rename,omitempty"` // {clipName: newName} applied to added clips
+}
+
+// AnimMerge calls anim.merge: Combine animation clips from several .glb files that share a skeleton into one .glb (Meshy exports one clip per file). Channels are matched to the base rig by node name; clips whose bones do not exist are skipped and reported.
+func (c *Client) AnimMerge(ctx context.Context, in AnimMergeInput) (*Envelope, error) {
+	return c.Call(ctx, "anim.merge", in)
+}
+
+// AnimSampleInput is the input of anim.sample.
+type AnimSampleInput struct {
+	Input   string   `json:"input"`
+	Clip    *string  `json:"clip,omitempty"` // clip name; omit for bind pose
+	Loop    *bool    `json:"loop,omitempty"`
+	Project *string  `json:"project,omitempty"`
+	Time    *float64 `json:"time,omitempty"`
+}
+
+// AnimSample calls anim.sample: Pose a .glb at a clip and time (no rendering): returns the posed bounding box and the world position of every joint, to verify an animation or script against it. time is seconds; loop wraps, otherwise clamps.
+func (c *Client) AnimSample(ctx context.Context, in AnimSampleInput) (*Envelope, error) {
+	return c.Call(ctx, "anim.sample", in)
+}
+
 // ClientsGenerateInput is the input of clients.generate.
 type ClientsGenerateInput struct {
 	Check *bool   `json:"check,omitempty"` // diff only; CONFLICT on drift
