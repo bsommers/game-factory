@@ -52,3 +52,18 @@ Full suite: `node --test test/` = 154 pass, 0 fail.
 **Authorizations:** none outstanding. Pushing to `origin/multilang` was approved per request; ask again before any further push, PR, or merge to `main`.
 
 **Next:** nothing in flight. Candidate work from the Open list above (investigate the 'tall step height' character case; GPU kit; Tauri/Wails/Electron builds; Go cgo build needs X11 dev libs). Resume check: `git status --short && node --test test/ 2>&1 | grep -E "^ℹ (pass|fail)"`.
+
+## Cross-platform testing (done 2026-11-21, UNCOMMITTED)
+**User request:** "let's test this on MacOS (ssh bill@bigmac.local) and Windows (use VM via win-devvm repo ~/src/)".
+**Results now:** Linux 164/164. Mac (arm64, macOS 27) 160 pass, 4 skipped (no pytest), 0 fail. Windows 11 VM: every test file passes (rust dispatch ran for real; go/python not installed so skipped) provided Git's `sh` is on PATH.
+**Fixes made (all uncommitted):**
+- Vector drift: generators snap EXPECTED floats to a 1e-12 grid (inputs stay exact; integer-valued results keep the raw value so Python's strict-int check holds). Drift checks (`spec/same.mjs`) compare structure exactly and floats at 1e-9 across v1/v2/v3.
+- Go on arm64 fused `e.X += e.VX*dt` (FMA) in `templates/go-project/internal/engine/hazard.go` Patroller.Update; now `dx := float64(e.VX * dt)`.
+- `package.standalone` archive: GNU tar flags only when `tar --version` says GNU; bsdtar gets `--uid 0 --gid 0 --numeric-owner`. (macOS archive is therefore not byte-reproducible.)
+- `/datanapps` hardcoding removed: falls back to `os.tmpdir()` in core.mjs, package/capabilities.mjs and all tests.
+- Windows: `URL.pathname` replaced with `fileURLToPath`; tests launch `node bin/factory.mjs` (the `bin/factory` sh launcher cannot be spawned); models outputs use forward-slash relative paths; `project.run` runs npm via `node npm-cli.js` and `python` instead of `python3` on win32; 3MF test finds a working python.
+**Known Windows limits:** web scaffold (`project.new --web`) and some tasks shell out to `sh` (bin/factory-scaffold.sh, tools/*.sh), so Git's usr\bin must be on PATH. Go not installed in the VM. Tauri/Wails/Electron/Neutralino packaging NOT tried on Mac or Windows.
+**Scratch:** Mac `~/gf-test ~/gf-target ~/gf-tmp ~/gf-suite.log /tmp/gf.tgz` (cleaned at end of session); VM `gf-test`, `C:\gf-tmp`, `C:\gf-target`, `gf.tgz`.
+
+## Next (user request, not started)
+"do we have a way of working with Blender animation models I've created from Meshy ... .glb ... build a generalized tool that can take 1 or more .glb model files with animation and incorporate them into the games". Finding: `mesh-io.js` is static-mesh only (no skins/animations); no runtime plays skeletal animation. Plan: `lib/gltf-anim.js` parser (nodes, skins, JOINTS_0/WEIGHTS_0, animation channels, Draco/meshopt detection), animation player + CPU skinning + character-kit state mapping, capabilities `anim.inspect|import|merge` on all four surfaces, tests using a code-generated animated .glb. User will supply real Meshy files later.
