@@ -34,6 +34,12 @@ export const COMBAT_CASES = [
     script: { ghoul: [{ at: 5, action: 'swipe' }, { at: 80, action: 'swipe' }], hero: [{ at: 200, action: 'light' }, { at: 201, action: 'light' }, { at: 202, action: 'heavy' }] } },
   { name: 'poise-stagger-scaling', summary: 'poise break, combo scaling, multihit-free chain', a: { file: HERO, patch: { comboScaling: [1, 0.8, 0.6, 0.4] } }, b: { file: GHOUL, patch: { maxPoise: 20, comboScaling: [1, 0.9] } }, frames: 400, distance: 1.2, seed: 2,
     script: { hero: [{ at: 1, action: 'light' }, { at: 2, action: 'light' }, { at: 3, action: 'heavy' }, { at: 60, action: 'light' }, { at: 61, action: 'light' }, { at: 62, action: 'heavy' }, { at: 120, action: 'light' }, { at: 121, action: 'light' }], ghoul: [{ at: 150, action: 'swipe' }] } },
+  { name: 'multihit-long-active', summary: 'multihit move re-hits every N frames while active (hit-set interval)', a: { file: HERO, patch: { 'moves.light1.active': 24, 'moves.light1.multihit': { every: 6 } } }, b: { file: GHOUL }, frames: 200, distance: 1.0, seed: 31,
+    script: { hero: [{ at: 1, action: 'light' }], ghoul: [{ at: 120, action: 'swipe' }] } },
+  { name: 'bone-fallback-hitbox', summary: 'hitbox/hurtbox naming a bone with no pose falls back to the root transform', a: { file: HERO, patch: { 'moves.light1.hitboxes': [{ id: 'blade', bone: 'hand_r', offset: [0, 1, 0.5], shape: { type: 'sphere', r: 0.3 } }] } }, b: { file: GHOUL, patch: { hurtboxes: [{ id: 'body', bone: 'spine', shape: { type: 'capsule', a: [0, 0.4, 0], b: [0, 1.3, 0], r: 0.45 }, mult: 1 }, { id: 'core', bone: 'chest', offset: [0, 1, 0.25], shape: { type: 'sphere', r: 0.2 }, mult: 2, weak: true }] } }, frames: 160, distance: 1.0, seed: 33,
+    script: { hero: [{ at: 1, action: 'light' }, { at: 40, action: 'light' }], ghoul: [{ at: 90, action: 'swipe' }] } },
+  { name: 'unblockable-statusonly', summary: 'unblockable swipe through a held block; statusOnly spit applies status without damage', a: { file: HERO }, b: { file: GHOUL, patch: { 'moves.swipe.unblockable': true, 'moves.swipe.onHit': [{ id: 'burn', chance: 1 }], 'moves.lunge.statusOnly': true, 'moves.lunge.onHit': [{ id: 'poison', chance: 1 }] } }, frames: 260, distance: 1.0, seed: 35,
+    script: { hero: [{ from: 1, to: 240, block: true }], ghoul: [{ at: 20, action: 'swipe' }, { at: 120, action: 'lunge' }] } },
 ];
 
 // Boss cases: simulate() determinism hash + per-run log hashes + summary numbers + the head of run 0's event log.

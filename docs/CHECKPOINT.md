@@ -136,3 +136,6 @@ Merge steps after all report: check index.mjs has all registrations; regenerate 
 - 7 new skills, `guide.route` ranking for 3D action goals, 6 3D swarm roles, edit-distance tie-break for NOT_FOUND suggestions.
 - Suite: 306/306. Push gate still closed (licence audit, Green Lantern/Superman IP blocks, Meshy ToS unread).
 - Still open: parity ports of fairness/balance/validateFighter, wall/ramp parity, img2model back-view sheet, colbdysseus story questions.
+
+## Parity cases extended (2026-11-22)
+combat3d parity now 16 cases (added multihit-long-active, bone-fallback-hitbox, unblockable-statusonly); all match Godot. Suite 306/306. Still uncovered: real `poses`, `friendlyFire`, `hostility`, `kbDecay` (need simulateDuel options). Untracked `raw_spec/` (Gemini chat) left uncommitted. Push gate still closed; no outstanding authorizations.
