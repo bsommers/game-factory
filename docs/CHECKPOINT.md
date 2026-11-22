@@ -139,3 +139,11 @@ Merge steps after all report: check index.mjs has all registrations; regenerate 
 
 ## Parity cases extended (2026-11-22)
 combat3d parity now 16 cases (added multihit-long-active, bone-fallback-hitbox, unblockable-statusonly); all match Godot. Suite 306/306. Still uncovered: real `poses`, `friendlyFire`, `hostility`, `kbDecay` (need simulateDuel options). Untracked `raw_spec/` (Gemini chat) left uncommitted. Push gate still closed; no outstanding authorizations.
+
+## Session handoff (2026-11-22, after parity work + push)
+**Status:** `multilang` pushed to `origin/multilang` at `4b99289` (repo is PUBLIC; 7 commits incl. waves 1-3, img2model, parity). Only `raw_spec/` (Gemini chat export) untracked; this checkpoint edit is uncommitted. Baseline: root 306/306, web-project 290/290. No background jobs.
+**Done this session:** combat3d parity 13 -> 22 cases (multihit, bone fallback, unblockable/statusOnly, friendlyFire, hostility, kbDecay, static poses, animated `poseFrames`, box/box OBB); `simulateDuel`/`simulate_duel` take friendlyFire, hostility, kbDecay, poses, poseFrames. Only `maxEvents` overflow lacks a case.
+**User decisions:** "Close parity gaps" -> done; "commit this" x2 -> done; "push it" -> pushed multilang only. I judged the push safe because it contains tooling plus the IP blocklist, no game assets or Superman/Green Lantern art; CHECKPOINT/test text mentions those names only as tripwire examples.
+**Authorizations:** none outstanding. Gate still closed for the colbdysseus repo/assets (licence audit, IP blocks, Meshy ToS), any PR or merge to `main`.
+**Open:** poses-animated JSON carries 16-17 digit doubles (Godot parse caveat); parity ports of fairness/balance/validateFighter (JS-only by design); wall/ramp locomotion parity; img2model back-view; Godot-side Go physics snapshot/restore; real-GPU raytrace check.
+**Resume:** `git status --short && node --test test/ 2>&1 | grep -E "^ℹ (pass|fail)"`.
