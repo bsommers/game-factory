@@ -120,3 +120,11 @@ Merge steps after all report: check index.mjs has all registrations; regenerate 
 - W2c DONE: Godot ai3d_core/ai3d_nav + animgraph_core/adapter; exact parity with JS (ai3d grunt/ranged/charger/group-token; animgraph humanoid/meshy-rootmotion/stress). Real Pete GLB: 58 bones, retarget via meshy.rig-map; Meshy Walking/Running are in-place (~0 root travel). Runners tests/run_ai3d.gd, run_animgraph.gd. GLB tests need ANIMGRAPH_GLB env. Housekeeping: templates/godot-action3d/.godot/ and .uid files must be gitignored/removed at merge.
 - Still running: W2a, img2model.
 - img2model DONE: caps img2model.silhouette|build|verify; tools/img2model/*.py; docs/IMG2MODEL.md; SuperColby -> colbdysseus/assets/generated/img2model/ (10k tris, 28 joints, auto weights, projected texture). Limits: blobby, flat cape, seams, neck/hip/knee/elbow heights are fractions not measured. User said: commit it all once agents finish. Only W2a still running.
+
+## Wave 2 + img2model MERGED (commit f1804ec; colbdysseus 7babdc8, local only)
+- All agents done and committed. Root suite 291/291, web-project 290/290. Clients regenerated; limb3d/vfx3d/level3d exported from lib/index.js; .gitignore now ignores .godot/ and *.gd.uid (shader .uid files were committed, harmless).
+- W2a: parity.run proves exact JS/Godot hash parity for combat3d and boss3d. Any JS sim change must be mirrored in the .gd files (spec/v4/PARITY.md). Not ported: validateFighter, fairness, balance, frameDataTable; poses/friendlyFire/multihit not covered.
+- Balance margins tight: hydra average ~43% (band 40-65), vortex novice ~32% (band 10-35).
+- img2model: SuperColby proxy in colbdysseus/assets/generated/img2model/ (10k tris, 28 joints). Best next improvement: add a back-view sheet (docs/IMG2MODEL.md).
+- Gate unchanged: nothing pushed or public until licence audit clean, IP blocks resolved (Superman/Green Lantern marks, Cujo name, real likenesses) and Meshy ToS read. The SuperColby proxy GLB carries the Superman-style logo.
+- Next (wave 3, awaiting user go): skills/INDEX.json entries (godot, meshy, wave-1/2 modules, boss3d.balance, img2model), Godot export templates, meshy.generate (env-var key, maxCredits, dryRun), library.blobs.pack|publish|fetch, swarm presets, guide routing for "3D action game".
