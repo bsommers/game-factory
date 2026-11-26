@@ -15,8 +15,14 @@ Copy each to its original path (inside a game repo, or the matching `templates/w
 | scripts_verify.sh.proposed | layered gate (imports, tests, level validation, botplay); per-level botplay is informational (`\|\| true` under `set -e`) |
 | src_core_scores.js.proposed + test_sim_scores.test.mjs.proposed | top scores in localStorage, with test |
 | src_core_settings.js.proposed | persisted options (volume etc.) |
-| src_ui_startmenu.js.proposed + style.css_startmenu-block.css.proposed | start/pause menu: play/levels, controls, options, top scores; `#startmenu` CSS |
+| src_ui_startmenu.js.proposed + style.css_menu-blocks.css.proposed | start/pause menu: play/levels, controls, options, top scores; `#startmenu` CSS |
 | assets_characters_library.json.proposed, assets_characters_README.md.proposed, docs_CHARACTERS.md.proposed | example asset-library layout for templates (library.json + README + docs) |
+| src_levels_difficulty.js.proposed + test_levels_difficulty.test.mjs.proposed | easy/medium/hard/insane as a pure LevelDef transform (medium = identity), score multipliers |
+| src_levels_size.js.proposed + test_levels_size.test.mjs.proposed | 1x/2x/3x store size as a pure transform: each tile becomes a k x k block (real extra cells), counts and ammo scale |
+| src_ui_levelmenu.js.proposed | end-of-level card (retry / next level), keeps ?level/?diff/?size params |
+| test_system_music-load.test.mjs.proposed | imports the music module so bad jingles fail in node, not as a blank browser canvas |
+
+Compose order: `applyDifficulty(applySize(level, size), diff)`. Score keys: `level:diff[:2x|3x]`.
 
 ## GitHub Pages recipe
 1. Fetch data with `new URL('./x.json', import.meta.url)`; never absolute `/src/...` paths (Pages serves under `/REPO/`).

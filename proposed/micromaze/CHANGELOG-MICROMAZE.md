@@ -10,3 +10,5 @@
 | 6 | NOTE | GitHub Pages recipe, learnings | README.md, LEARNINGS-MICROMAZE.md |
 
 Files are verbatim, not generalized; MicroMaze-specific names (level ids in verify.sh, character names) need adapting on adoption.
+
+- Added difficulty and store-size transforms (+tests), levelmenu, music-load test; refreshed startmenu (difficulty/size rows), settings, botplay (--diff/--size), verify.sh, scores.
