@@ -108,3 +108,16 @@ test('new: refuses non-empty dir and bad names; secrets in names are not templat
   const r = newLibrary({ name: 'quoted', dir: join(tmp(), 'q'), description: 'he said "hi"\nnow' });
   assert.equal(r.ok, true); assert.equal(loadLibrary(r.data.dir).errors.length, 0);
 });
+
+test('add from a pixbuf-web project whose art module is nested (px16/chars): tag is schema-safe', async () => {
+  const proj = tmp('nested-proj');
+  mkdirSync(join(proj, 'src/core'), { recursive: true }); mkdirSync(join(proj, 'src/art/px16'), { recursive: true });
+  writeFileSync(join(proj, 'src/core/defs.js'), "export const ART = [{ name: 'hero', w: 2, h: 2, frames: 1, module: 'px16/chars', desc: 'hero' }];\n");
+  writeFileSync(join(proj, 'src/art/px16/chars.js'), "export function build() { return { hero: { w: 2, h: 2, rgba: new Uint8Array([255,0,0,255, 0,255,0,255, 0,0,255,255, 255,255,255,255]) } }; }\n");
+  const d = mkLib('addnested', []);
+  const r = await addAssets({ library: d, from: { project: proj, game: 'nested', types: ['sprite', 'character'] } });
+  assert.equal(r.ok, true, JSON.stringify(r.error));
+  assert.deepEqual(r.data.added, ['nested.hero']);
+  assert.ok(readJ(join(d, 'assets/nested.hero/asset.json')).tags.includes('module:px16-chars'));
+  assert.equal(loadLibrary(d).errors.length, 0);
+});

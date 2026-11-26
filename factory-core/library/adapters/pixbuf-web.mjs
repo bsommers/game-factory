@@ -49,7 +49,7 @@ export async function collect({ project, types, names, game, styleTag }) {
       const it = {
         id: `${g}.${r.name.replace(/_/g, '-')}`, type, name: r.name, description: r.desc || r.name, format: 'png-strip-rgba',
         size: { w: frames[0].w, h: frames[0].h, frames: frames.length },
-        tags: [g, `module:${mod}`, 'pixel-art', ...(frames.length > 1 ? ['animated'] : []), ...styleTags],
+        tags: [g, `module:${mod.replace(/[^a-z0-9._-]+/gi, "-").toLowerCase()}`, 'pixel-art', ...(frames.length > 1 ? ['animated'] : []), ...styleTags],
         provenance: { game: gameName, generator: `src/art/${mod}.js build() (deterministic, procedural)` },
         files: [{ path: `${r.name}.png`, data: encodePNG(strip.w, strip.h, strip.rgba) }],
         preview: { path: 'preview.png', data: previewOf(strip, 256, 2) },
