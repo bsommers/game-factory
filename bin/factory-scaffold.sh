@@ -23,7 +23,8 @@ case "$cmd" in
       cp -r "$FACT/templates/web-project/src/kits" "$D/src/kits"; cp -r "$FACT/templates/web-project/src/lib" "$D/src/lib";
       SLUG=$(printf '%s' "$NAME" | tr 'A-Z' 'a-z' | sed 's/[^a-z0-9][^a-z0-9]*/-/g; s/^-//; s/-$//'); SLUG="${SLUG:-game}"
       for sub in core levels ui; do cp -r "$FACT/templates/web-project/src/$sub" "$D/src/$sub"; done
-      sed -i "s#__SLUG__#$SLUG#g; s#__NAME__#$NAME#g" "$D"/src/core/*.js "$D"/src/ui/*.js cp "$FACT/docs/KITS.md" "$D/docs/KITS.md"
+      sed -i "s#__SLUG__#$SLUG#g; s#__NAME__#$NAME#g" "$D"/src/core/*.js "$D"/src/ui/*.js
+      cp "$FACT/docs/KITS.md" "$D/docs/KITS.md"
       cp "$FACT/swarm/templates/SWARM.md" "$D/docs/swarm/SWARM.md"; cp "$FACT/swarm/templates/CHECKPOINT.md" "$D/docs/CHECKPOINT.md"
       cp "$FACT/swarm/templates/LEARNINGS.md" "$D/docs/LEARNINGS.md"; cp "$FACT/swarm/PLAYBOOK.md" "$D/docs/PLAYBOOK.md"
       printf '.tracker/\nout/\ndist/\n*.log\nnode_modules/\ndocs/CHECKPOINT.md\ndocs/swarm/prompts/\ndocs/swarm/progress/\n' > "$D/.gitignore"
