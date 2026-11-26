@@ -17,3 +17,6 @@ Files are verbatim, not generalized; MicroMaze-specific names (level ids in veri
 - `src/levels/difficulty.js`, `src/levels/size.js` (verbatim) + `test/levels/transforms.test.mjs` (synthetic level, no game assets).
 - `test/system/modules-load.test.mjs`: generalizes micromaze's music-load test; imports every browser-safe module under `src/` so load-time throws fail the gate.
 - `package.json` test script now includes `test/levels` and `test/system`.
+- Priority 2: `src/core/{config,scores,settings}.js` (storage keys namespaced by `GAME_ID`, `__SLUG__` substituted at scaffold), `src/ui/startmenu.js` (levels/titles/controls/title/tagline passed as options, no MicroMaze strings), menu CSS appended to `style.css`, `test/core/{scores,settings}.test.mjs`.
+- `bin/factory-scaffold.sh` now copies `src/core`, `src/levels`, `src/ui` into new web games (the earlier levels commit was in the template but never scaffolded) and substitutes `__SLUG__`/`__NAME__`.
+- Known: 33 `test/lib/*` tests fail inside a scaffolded project (they import factory-root `test/helpers`); pre-existing, unrelated.
