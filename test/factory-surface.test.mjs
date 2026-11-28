@@ -56,7 +56,7 @@ test('same result on every surface: kits.list and project.new', async (t) => {
   const viaMcp = shape((await mcp.call('project_new', { dir: d, title: 'T', web: true })).structuredContent, d);
   assert.equal(viaLib.ok, true);
   assert.deepEqual(viaCli, viaLib); assert.deepEqual(viaApi, viaLib); assert.deepEqual(viaMcp, viaLib);
-  assert.ok(existsSync(join(a, 'src/kits/art-kit')) && existsSync(join(a, 'tools/swarm-tracker/bin/track.mjs')));
+  assert.ok(!existsSync(join(a, 'src/kits/art-kit')) && existsSync(join(a, 'src/lib')) && existsSync(join(a, 'tools/swarm-tracker/bin/track.mjs'))); // kits are opt-in
   // exists -> stable failure + exit code 4
   const again = spawnSync(process.execPath, [BIN, 'new', a, 'T', '--json'], { encoding: 'utf8' });
   assert.equal(again.status, 4); assert.equal(JSON.parse(again.stdout).error.code, 'EXISTS');

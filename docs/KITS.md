@@ -1,4 +1,4 @@
-# Content kits (`src/kits/`, copied by `factory new --web`)
+# Content kits (`src/kits/`, opt-in: `factory new --web --with kits=art,audio`)
 
 Zero-dependency, Node-safe, tested ES modules extracted from PawFall (and its sibling games). Each kit works in Node (tests, tools) and the browser. `src/kits/index.js` re-exports all of them as namespaces (`art`, `character`, `audio`, `fx`, `docs`). Tests: `node --test test/kits/*.test.mjs`. Examples live in `src/kits/examples/` and write to `out/`.
 

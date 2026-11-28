@@ -39,7 +39,10 @@ const projectOf = (i) => resolve(i.project || '.');
 
 export const capabilities = [
   { name: 'project.new', summary: 'Scaffold a new game repo (web = zero-dep browser game with kits and tracker; otherwise a Godot project). Same as `factory new`.',
-    inputSchema: obj({ dir: str('target directory (must not exist)'), title: str('game title'), web: { type: 'boolean', description: 'browser (Canvas/ES-module) game instead of Godot (alias for lang js)' }, lang: { type: 'string', enum: LANG_IDS, description: `language: ${LANG_IDS.join('|')} (default gdscript)` } }, ['dir']),
+    inputSchema: obj({ dir: str('target directory (must not exist)'), title: str('game title'), web: { type: 'boolean', description: 'browser (Canvas/ES-module) game instead of Godot (alias for lang js)' }, lang: { type: 'string', enum: LANG_IDS, description: `language: ${LANG_IDS.join('|')} (default gdscript)` },
+      with: { type: 'string', description: 'web only: opt-in extras, e.g. "kits=art,audio" (kits: art,character,audio,fx,docs,raytrace,all; default none)' },
+      kits: { type: 'array', items: { type: 'string' }, description: 'web only: kit names to copy (same as with "kits=a,b")' },
+      solo: { type: 'boolean', description: 'web only: single-author game, no swarm tracker/SWARM.md/PLAYBOOK (guide.check treats swarm gaps as info)' } }, ['dir']),
     outputSchema: out,
     handler: async (i) => {
       const dir = resolve(i.dir), title = i.title || 'My Game';
@@ -55,7 +58,12 @@ export const capabilities = [
       }
       const web = lang === 'js';
       const args = ['new', dir, title]; if (web) args.push('--web');
+      if ((i.solo || i.with || i.kits) && !web) return fail('BAD_INPUT', 'solo/with/kits apply to web games only (lang js)');
+      if (i.solo) args.push('--solo');
+      const kitList = [...(i.kits || []), ...(i.with ? [String(i.with).replace(/^kits=/, '')] : [])].join(',');
+      if (kitList) args.push('--with', `kits=${kitList}`);
       const r = await run('sh', [join(FACT, 'bin/factory-scaffold.sh'), ...args]);
+      if (r.code === 2) return fail('BAD_INPUT', r.stderr.trim());
       if (r.code) return fail('FAILED', r.stderr.trim() || `scaffold exited ${r.code}`);
       return ok({ dir, title, kind: web ? 'web' : 'godot', log: r.stdout.trim() }, web ? [`project.run {project:"${dir}", task:"test"}`, `styles.recommend {idea}`, `guide.check {project:"${dir}"}`] : [`guide.check {project:"${dir}"}`]);
     } },

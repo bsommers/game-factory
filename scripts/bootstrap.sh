@@ -5,20 +5,25 @@
 #   scripts/bootstrap.sh                          check prerequisites + smoke-test the factory
 #   scripts/bootstrap.sh --new <dir> "<Title>"    ...then scaffold a web game (default) into <dir>
 #   scripts/bootstrap.sh --new <dir> "<Title>" --godot   scaffold a Godot game instead
+#   scripts/bootstrap.sh --new <dir> "<Title>" --with kits=art,audio   opt in to content kits (default none; same as `factory new --web --with`)
+#   scripts/bootstrap.sh --new <dir> "<Title>" --solo     web game without the swarm tracker/SWARM.md (same as `factory new --web --solo`)
 #   scripts/bootstrap.sh --link                   also symlink bin/factory into ~/.local/bin
 #   scripts/bootstrap.sh --json                   machine-readable report on stdout
 #
 # exit: 0 ready, 1 a required check failed, 2 bad usage, 4 target dir already exists
 set -eu
 FACT="$(cd "$(dirname "$0")/.." && pwd)"
-NEW=""; TITLE=""; GODOT=0; LINK=0; JSON=0
+NEW=""; TITLE=""; GODOT=0; LINK=0; JSON=0; SOLO=0; WITHKITS=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --new) NEW="${2:-}"; TITLE="${3:-}"; [ -n "$NEW" ] && [ -n "$TITLE" ] || { echo "usage: --new <dir> \"<Title>\"" >&2; exit 2; }; shift 3 ;;
     --godot) GODOT=1; shift ;;
+    --solo) SOLO=1; shift ;;
+    --with) case "${2:-}" in kits=*) WITHKITS="${2#kits=}"; shift 2 ;; *) echo "usage: --with kits=a,b" >&2; exit 2 ;; esac ;;
+    --with=kits=*) WITHKITS="${1#--with=kits=}"; shift ;;
     --link) LINK=1; shift ;;
     --json) JSON=1; shift ;;
-    -h|--help) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "unknown option: $1 (try --help)" >&2; exit 2 ;;
   esac
 done
@@ -67,11 +72,13 @@ fi
 
 CREATED=""
 if [ "$FAIL" = 0 ] && [ -n "$NEW" ]; then
-  if [ "$GODOT" = 1 ]; then SC=""; else SC="--web"; fi
+  if [ "$GODOT" = 1 ]; then SC=""; else SC="--web"; [ "$SOLO" = 1 ] && SC="$SC --solo"; [ -n "$WITHKITS" ] && SC="$SC --with kits=$WITHKITS"; fi
+  # the scaffold writes AGENTS.md (web games) itself, so flags and output stay identical to `factory new`
   # shellcheck disable=SC2086
   if "$FACT/bin/factory" new "$NEW" "$TITLE" $SC >/dev/null 2>&1; then
     CREATED=$(cd "$NEW" && pwd); add scaffold ok "$CREATED"
-    sed "s#__NAME__#$TITLE#g; s#__FACTORY__#$FACT#g" "$FACT/templates/AGENTS.game.md" > "$CREATED/AGENTS.md" && add agents-md ok "$CREATED/AGENTS.md"
+    if [ -f "$CREATED/AGENTS.md" ]; then add agents-md ok "$CREATED/AGENTS.md"
+    else sed "s#__NAME__#$TITLE#g; s#__FACTORY__#$FACT#g; /<!-- swarm -->/d" "$FACT/templates/AGENTS.game.md" > "$CREATED/AGENTS.md" && add agents-md ok "$CREATED/AGENTS.md"; fi
   else add scaffold fail "factory new failed; run: bin/factory new \"$NEW\" \"$TITLE\" $SC"; fi
 fi
 

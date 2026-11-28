@@ -8,6 +8,11 @@ that no other agent shares. Why: agents run in parallel and cannot see each othe
 a fixed contract lets agents code against files that do not exist yet. Scope growth then means adding rows to the
 manifest, not rewriting. An agent that needs something from a file it does not own writes a "Requests" note in its report.
 
+## 1b. Reuse before write
+Before giving an agent a new system to build, check `docs/KITS.md`, `src/lib` and `factory guide route "<goal>" --json`, and put the
+kit it should import into its prompt. If the kit is not in the game yet, copy it from the factory (`templates/web-project/src/kits/<name>-kit`,
+plus art-kit for character/fx) before launching. Why: agents that cannot see a kit re-implement it, and the copies drift and need their own tests.
+
 ## 2. One manifest, generated prompt files
 Keep a single `docs/swarm/SWARM.md` (preamble + one section per agent) and run `swarm-plan.mjs`. It writes one prompt
 file per agent and `plan.json` for the dashboard. Spawn with a one-line prompt: "Read <path>/prompts/<id>.md and execute it exactly."

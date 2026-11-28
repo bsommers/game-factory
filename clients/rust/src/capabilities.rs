@@ -2616,21 +2616,30 @@ impl Client {
 pub struct ProjectNewInput {
     /// target directory (must not exist)
     pub dir: String,
+    /// web only: kit names to copy (same as with "kits=a,b")
+    pub kits: Option<Vec<String>>,
     /// language: gdscript|js|go|rust|python (default gdscript)
     pub lang: Option<String>,
+    /// web only: single-author game, no swarm tracker/SWARM.md/PLAYBOOK (guide.check treats swarm gaps as info)
+    pub solo: Option<bool>,
     /// game title
     pub title: Option<String>,
     /// browser (Canvas/ES-module) game instead of Godot (alias for lang js)
     pub web: Option<bool>,
+    /// web only: opt-in extras, e.g. "kits=art,audio" (kits: art,character,audio,fx,docs,raytrace,all; default none)
+    pub with: Option<String>,
 }
 
 impl ProjectNewInput {
     pub fn to_json(&self) -> Value {
         let mut m = Map::new();
         m.insert("dir".to_string(), serde_json::to_value(&self.dir).unwrap_or(Value::Null));
+        if let Some(v) = &self.kits { m.insert("kits".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
         if let Some(v) = &self.lang { m.insert("lang".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.solo { m.insert("solo".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
         if let Some(v) = &self.title { m.insert("title".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
         if let Some(v) = &self.web { m.insert("web".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.with { m.insert("with".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
         Value::Object(m)
     }
 }

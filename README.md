@@ -37,7 +37,7 @@ Extracted from **KÄSEKRIEG: RAT OPS** (Godot 4.7 third-person shooter): https:/
 | `tools/build-web.mjs`, `tools/package-desktop.mjs`, `tools/desktop/` | `npm run build` (single-file + zip), `npm run package[:all]` (Neutralino desktop archives for linux/win/mac with launchers and installers), smoke tests; see `docs/BUILD-WEB.md` |
 | `tools/contact_sheet.sh`, `tools/smoke_web.sh` | labelled contact sheet of screenshots (ImageMagick); smoke test of the shipped single-file build |
 | `tools/swarm-tracker/bin/swarm-next.mjs` | scheduler: shows running/done, enforces concurrency + model-tier caps (`--cap 5 --fable 1 --opus 2`), prints the next spawn prompts |
-| `templates/web-project/src/kits/` | content kits copied by `--web`: art-kit, character-kit, audio-kit, fx-kit, docs-kit (see `docs/KITS.md`) |
+| `templates/web-project/src/kits/` | content kits, opt-in via `--web --with kits=a,b` (none by default; `--solo` drops swarm tooling): art-kit, character-kit, audio-kit, fx-kit, docs-kit (see `docs/KITS.md`) |
 | `templates/web-project/src/lib/` | gameplay engines copied by `--web`: platformer-physics, hazard-kit, world-gen (+ fairness validator), autopilot-kit; tests in `test/lib/` (see its README.md) |
 
 ## Quick start

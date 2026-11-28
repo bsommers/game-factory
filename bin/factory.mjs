@@ -14,6 +14,7 @@ const ALIASES = { new: 'project.new', sync: 'project.sync', run: 'project.run', 
 
 const USAGE = `factory <command> [args] [--json] [--yes]
   new <dir> "<Title>" [--web]     scaffold a game repo           sync <dir>   refresh its tooling
+      web options: --with kits=art,audio,fx,character,docs,raytrace|all (default none)  --solo (no swarm tooling)
   test|shot|build [project]       run a project task             run <task> [--project dir]
   kits list|show <name>           content kits and engines       swarm plan|next|track|status
   styles list|show|recommend|apply|validate                      guide <sub>  (route, plan, check, ...)
