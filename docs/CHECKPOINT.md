@@ -149,3 +149,20 @@ combat3d parity now 16 cases (added multihit-long-active, bone-fallback-hitbox, 
 **Resume:** `git status --short && node --test test/ 2>&1 | grep -E "^ℹ (pass|fail)"`.
 
 _Refreshed 2026-11-22 for /compact: state unchanged since the handoff above (HEAD a4f0e6e local, origin/multilang at 4b99289; suites 306/306 and 290/290; no background jobs)._
+
+## Scenery & Environment Plan Added (2026-11-23)
+- **State:** branch `multilang` at `abe97ce` (`origin/multilang` synced); untracked `raw_spec/` untouched; edits to `docs/PLAN-3D-ACTION.md` and `docs/CHECKPOINT.md` uncommitted.
+- **Plan update:** added **Wave 4 (environment & outdoor scenery generalization)** to `docs/PLAN-3D-ACTION.md`, cross-linked to `/home/bill/src/fun/colbdysseus/docs/PLAN-SCENERY.md` and `/home/bill/src/fun/colbdysseus/docs/CHECKPOINT.md`.
+- **Rollout order:** Phases 1–2 prove out realistic PBR floors, HDRI PMREM skies, 360° horizon rings, outer water, heightmap splats, and GTAO in `colbdysseus` first; Phase 3 / Wave 4 extracts `factory-core/env/`, `templates/web-project/src/kits/env-kit/`, `level3d` visual metadata + Godot loader parity, `tools/scenery/` (`img2pbr`, `backdrop-gen`, `impostor-bake`), and `environment-lookdev` swarm QA gates into `game-factory`.
+- **Authorizations:** user granted local command execution permission (main session and subagents) for the upcoming scenery work; no commit, push, PR, or public-publish authorization outstanding (`colbdysseus` assets/IP push gate unchanged).
+- **Resume:** `git status --short && node --test test/ 2>&1 | grep -E "^ℹ (pass|fail)"`
+
+## Lantern Run dogfood + web packaging (2026-11-28)
+- **State:** game-factory `multilang` HEAD `16cb05e` is 1 ahead of origin (not mine: swarm tracker media commit); my work is pushed through `dc7e4e3`. Uncommitted: this file, `raw_spec/` (left out on purpose). Tests: factory 319/319, lantern-run 230/230, `scripts/verify.sh` OK. No background jobs.
+- **Built:** `scripts/bootstrap.sh` (+`--new`, `--json`, `--link`) and `templates/AGENTS.game.md`; generic web build/package/installers (`tools/web/pkg/{build-web,package-desktop,project-info}.mjs`, `desktop/` templates, `docs/BUILD-WEB.md`, npm scripts build/package/package:all/smoke:*); `factory new --web` and `sync` ship them; `check-imports` accepts JSON imports; `docs/PLAN-DOGFOOD.md` (14 findings, 3 fixed + check-imports).
+- **Game:** `~/src/fun/lantern-run` (local git only, no remote), HEAD `8d6bf72`. Sim, 3 generated levels (`tools/gen-levels.mjs`), lookahead bot, `tools/balance.mjs`, renderer, loop, sfx. Plan for the cursor-agent review: `lantern-run/docs/IMPROVEMENT-PLAN.md`.
+- **User decisions (verbatim):** "build a small web game with it. write an improvement plan. I'll get cursor-agent to review the game, too and extend/edit and implement the improvement plan"; "commit and push including plans . fix-up Lantern Run with render and main.js game loop. finish the game"; "go" (= start P0 balance).
+- **Dead ends:** force-sum bot stalled and lost to a weaker bot (replaced); fetching level JSON from `import.meta.url` breaks single-file/desktop builds (now static JSON imports); `menu.close(true)` calls `onResume` (recursed); first commit swept in `assets-cache/` (amended out); the context hook assumes a 200k window, real window is 1M (`/context` said 17%), so ignore its % warnings.
+- **Not verified:** Windows/macOS archives and installers never run; the game was never played by a human; skill-0.3 bot still clears 87-100% so balance bands do not prove difficulty; kits/swarm/ARCHITECTURE.md unused for this game.
+- **Authorizations:** commit and push of game-factory given and used; none outstanding. lantern-run has no remote (no push possible). Same standing gates as above (colbdysseus assets, PR/merge to `main`).
+- **Resume:** `cd ~/src/fun/lantern-run && npm test && node tools/balance.mjs --seeds 20`, then follow `docs/IMPROVEMENT-PLAN.md` (next: human-like novice bot / playtest, walls + reachability, difficulty-mod smoothing).
