@@ -16,6 +16,8 @@ Source: building `~/src/fun/lantern-run` with `scripts/bootstrap.sh --new` (web 
 | 10 | Swarm tracker, `ARCHITECTURE.md` contract, style presets: skipped because the game was small; `guide check` still reports them as warnings | decide whether a "solo mode" scaffold should hide them; otherwise exercise the swarm on the next game | open |
 | 11 | Windows/macOS archives and installers are built but never run on those OSes | run on a Windows VM / mac; until then docs say untested | open |
 | 12 | `factory sync` on a web project copied Godot scripts into it | fixed | fixed |
+| 13 | `tools/check-imports.mjs` treated `import x from './a.json' with {type:'json'}` as a missing default export and failed `verify` | skip export checks for `.json` targets (existence still checked) | fixed (`test/web-pkg.test.mjs`) |
+| 14 | `autopilot-kit`/botplay is the only difficulty oracle, but a stalling bot scored *worse* than a less skilled one; balance tests built on it can lie | ship a reference lookahead bot and a `balance.mjs` matrix in the template; document that bot parity with a novice means untested difficulty | open |
 
 ## Acceptance
 - A new web game can `npm run verify && npm run build && npm run package && npm run smoke:web && npm run smoke:desktop` with zero edits to tooling.

@@ -31,6 +31,7 @@ for (const f of files) {
   for (const m of src.matchAll(/import\s+(?:([\w$]+)\s*,?\s*)?(?:\{([^}]*)\}|\*\s+as\s+[\w$]+)?\s*from\s*['"]([^'"]+)['"]/g)) {
     if (!m[3].startsWith('.')) continue;
     const t = resolve(f, m[3]); if (!t) { console.log(`ERR  ${rel(f)}: cannot resolve '${m[3]}'`); errors++; continue; }
+    if (t.endsWith('.json')) continue; // JSON modules (import x from './a.json' with { type: 'json' }): existence is enough
     const ex = exp(t);
     if (m[1] && !ex.has('default')) { console.log(`ERR  ${rel(f)}: '${m[3]}' has no default export`); errors++; }
     if (m[2]) for (const part of m[2].split(',')) { const n = part.trim().split(/\s+as\s+/)[0]; if (n && !ex.has(n)) { console.log(`ERR  ${rel(f)}: '${n}' is not exported by ${rel(t)}`); errors++; } }

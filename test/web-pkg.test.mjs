@@ -59,3 +59,12 @@ test('install-linux.sh installs and uninstalls cleanly under a prefix', () => {
   execFileSync('sh', [join(pk, 'install.sh'), '--prefix', prefix, '--uninstall']);
   assert.ok(!existsSync(join(prefix, 'bin', slug)) && !existsSync(join(prefix, 'share', slug)));
 });
+
+test('check-imports accepts JSON module default imports but still flags missing files', () => {
+  writeFileSync(join(proj, 'src/data.json'), '{"a":1}');
+  writeFileSync(join(proj, 'src/usesjson.js'), "import data from './data.json' with { type: 'json' };\nexport const x = data;\n");
+  const run = () => execFileSync('node', [join(proj, 'tools/check-imports.mjs')], { cwd: proj, encoding: 'utf8' });
+  assert.match(run(), /0 error/);
+  writeFileSync(join(proj, 'src/usesjson.js'), "import data from './missing.json' with { type: 'json' };\nexport const x = data;\n");
+  assert.throws(run);
+});
