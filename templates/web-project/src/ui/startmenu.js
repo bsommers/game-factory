@@ -1,7 +1,22 @@
 // Start / pause menu (DOM overlay). Views: main, levels, controls, options, scores.
+//
+// Close contract: close(resumed) is idempotent — if the menu is already closed or a close is in
+// progress, onResume is not invoked again. onResume may call close(true); that re-entry is ignored.
 import { loadScores, clearScores } from '../core/scores.js';
 import { DIFFICULTIES, SCORE_MULT } from '../levels/difficulty.js';
 import { SIZES, SIZE_SCORE } from '../levels/size.js';
+
+/** @param {{ open: boolean, closing?: boolean }} state */
+export function safeClose(state, resumed, onResume) {
+  if (state.closing || !state.open) return;
+  state.closing = true;
+  state.open = false;
+  try {
+    if (resumed) onResume?.();
+  } finally {
+    state.closing = false;
+  }
+}
 
 const DEFAULT_CONTROLS = [
   ['W A S D / Arrows', 'Move'],
@@ -34,7 +49,7 @@ export function createStartMenu(opts) {
   const root = el('div', { id: 'startmenu', hidden: true, role: 'dialog', 'aria-label': `${TITLE} menu` });
   document.body.appendChild(root);
   let view = 'main';
-  let open = false;
+  const menuState = { open: false, closing: false };
 
   const btn = (label, fn, cls = '') => el('button', { class: 'mbtn ' + cls, type: 'button', textContent: label, onclick: fn });
   const back = () => btn('« Back', () => go('main'), 'sub');
@@ -145,7 +160,7 @@ export function createStartMenu(opts) {
         }
         kids.push(el('h3', { textContent: `${LEVEL_TITLES[id] ?? id} — ${dif.toUpperCase()}${sz ? ' ' + sz : ''}` }), ol);
       }
-      if (!any) kids.push(el('p', { class: 'tag', textContent: 'No runs yet. Go defend a store.' }));
+      if (!any) kids.push(el('p', { class: 'tag', textContent: 'No runs yet. Play a level to set a score.' }));
       kids.push(btn('Clear scores', () => { clearScores(); render(); }, 'sub'), back());
     }
     root.replaceChildren(el('div', { class: 'panel' }, ...kids));
@@ -153,8 +168,22 @@ export function createStartMenu(opts) {
   }
 
   function go(v) { view = v; render(); }
-  function openMenu(v = 'main') { open = true; view = v; root.hidden = false; render(); }
-  function close(resumed) { open = false; root.hidden = true; if (resumed) opts.onResume(); }
+  function openMenu(v = 'main') {
+    menuState.open = true;
+    menuState.closing = false;
+    view = v;
+    root.hidden = false;
+    render();
+  }
+  function close(resumed) {
+    safeClose(menuState, resumed, opts.onResume);
+    if (!menuState.open) root.hidden = true;
+  }
 
-  return { open: openMenu, close, get isOpen() { return open; }, toggle() { open ? (opts.canResume() && close(true)) : openMenu('main'); } };
+  return {
+    open: openMenu,
+    close,
+    get isOpen() { return menuState.open; },
+    toggle() { menuState.open ? (opts.canResume() && close(true)) : openMenu('main'); },
+  };
 }

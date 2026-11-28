@@ -186,7 +186,14 @@ export async function main(argv = process.argv.slice(2), log = console.log) {
   if (!names.length) throw new Error(`unknown --platform ${platform} (linux|win|mac|all)`);
   const version = arg('--version', JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version);
   const outDir = resolve(root, arg('--out', 'dist/desktop'));
-  if (!argv.includes('--skip-web') || !existsSync(join(root, 'dist/web/index.html'))) buildWeb({ log });
+  const webDir = join(root, 'dist/web');
+  if (!argv.includes('--skip-web') || !existsSync(join(webDir, 'index.html'))) {
+    const { bundled } = buildWeb({ log });
+    if (!bundled) throw new Error('desktop packaging requires a bundled web build (esbuild); unbundled output cannot be packaged');
+  }
+  if (!existsSync(join(webDir, 'app.js'))) {
+    throw new Error('desktop packaging requires dist/web/app.js (bundled web build); run npm run build with esbuild available');
+  }
   const zipPath = await fetchPinned(NL_ZIP_URL, join(cache, `neutralinojs-v${NL_VERSION}.zip`), NL_ZIP_SHA256);
   await fetchPinned(NL_CLIENT_URL, join(cache, `neutralino-lib-${NL_CLIENT_VERSION}.js`), NL_CLIENT_SHA256);
   rmSync(outDir, { recursive: true, force: true });
