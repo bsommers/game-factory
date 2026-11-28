@@ -19,7 +19,10 @@ case "$cmd" in
       mkdir -p "$D/src" "$D/test" "$D/docs/swarm" "$D/tools"
       sync_tools "$D"; (cd "$D/tools" && rm -f *.sh fetch_assets.mjs); cp "$FACT"/tools/web/*.sh "$D/tools/"; cp "$FACT"/tools/web/*.mjs "$D/tools/"
       for f in index.html style.css src/main.js; do sed "s#__NAME__#$NAME#g" "$FACT/templates/web-project/$f" > "$D/$f"; done
+      mkdir -p "$D/scripts"; cp "$FACT/templates/web-project/scripts/verify.sh" "$D/scripts/verify.sh"; chmod +x "$D/scripts/verify.sh"
       cp "$FACT/templates/web-project/package.json" "$D/package.json"; cp -r "$FACT"/templates/web-project/test/* "$D/test/"
+      # lib tests that read factory-root spec/ or test/helpers only make sense inside the factory; do not ship them
+      grep -rlE "(\.\./){4}(spec|test)/" "$D/test" 2>/dev/null | xargs -r rm -f
       cp -r "$FACT/templates/web-project/src/kits" "$D/src/kits"; cp -r "$FACT/templates/web-project/src/lib" "$D/src/lib";
       SLUG=$(printf '%s' "$NAME" | tr 'A-Z' 'a-z' | sed 's/[^a-z0-9][^a-z0-9]*/-/g; s/^-//; s/-$//'); SLUG="${SLUG:-game}"
       for sub in core levels ui; do cp -r "$FACT/templates/web-project/src/$sub" "$D/src/$sub"; done

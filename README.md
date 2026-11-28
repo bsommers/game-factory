@@ -29,12 +29,20 @@ Extracted from **KÄSEKRIEG: RAT OPS** (Godot 4.7 third-person shooter): https:/
 | `tools/serve.mjs`, `tools/shot.mjs` | zero-dep static server; headless-Chrome screenshots/frames/key-driving via CDP |
 | `tools/sheet.mjs <artModule>` | validates a PixBuf art module against `defs.artManifest()` and renders a contact-sheet PNG |
 | `tools/check-imports.mjs [src]` | integration lint: every relative import resolves and every named import is really exported (catches contract drift between parallel agents) |
+| `tools/validate-level.mjs <level.json>`, `tools/botplay.mjs --level id --seeds 1,2,3` | generic level validator (JSON + `id`, plus the game's own `src/levels/level.js` `validateLevel` if present); bot-play harness over the game's `src/sim` (exit 2 when the game has none) |
+| `scripts/verify.sh` (`npm run verify`) | post-build gate: lint:imports, tests, validate every `src/levels/*.json`, botplay each level |
+| `web.*` capabilities | `web.validate-level`, `web.botplay`, `web.sheet`, `web.verify`, `web.serve` drive the tools above through CLI (`factory call`), HTTP, MCP and the generated clients; they run the *project's own* `tools/*.mjs`, so a game can customise them |
 | `tools/contact_sheet.sh`, `tools/smoke_web.sh` | labelled contact sheet of screenshots (ImageMagick); smoke test of the shipped single-file build |
 | `tools/swarm-tracker/bin/swarm-next.mjs` | scheduler: shows running/done, enforces concurrency + model-tier caps (`--cap 5 --fable 1 --opus 2`), prints the next spawn prompts |
 | `templates/web-project/src/kits/` | content kits copied by `--web`: art-kit, character-kit, audio-kit, fx-kit, docs-kit (see `docs/KITS.md`) |
 | `templates/web-project/src/lib/` | gameplay engines copied by `--web`: platformer-physics, hazard-kit, world-gen (+ fairness validator), autopilot-kit; tests in `test/lib/` (see its README.md) |
 
 ## Quick start
+```sh
+scripts/bootstrap.sh                                  # check prerequisites, smoke-test the factory (--json for agents)
+scripts/bootstrap.sh --new ~/src/fun/my-game "My Game"   # ...and scaffold a web game with its own AGENTS.md
+```
+Or by hand:
 ```sh
 bin/factory new ~/src/fun/my-game "My Game"
 cd ~/src/fun/my-game && tools/install_godot.sh && tools/run_tests.sh
