@@ -242,6 +242,8 @@ header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-item
 .thumb .cap{position:absolute;left:0;right:0;bottom:0;padding:14px 6px 4px;background:linear-gradient(transparent,rgba(5,8,16,.92));font:500 10px/1.2 var(--mono);color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .thumb .kd{position:absolute;top:4px;left:4px;font:800 8.5px/1 var(--mono);letter-spacing:.1em;padding:3px 4px;border-radius:3px;background:rgba(5,8,16,.8);color:var(--accent);text-transform:uppercase}
 .thumb .kd.shot{color:var(--sonnet)}
+.thumb .kd.char{color:#f5a623}
+.thumb .kd.tex{color:#7bd88f}
 .tabs{display:flex;gap:4px}
 
 /* tables */
@@ -332,7 +334,7 @@ footer{margin-top:20px;color:var(--ink3);font:500 10.5px/1 var(--mono);text-alig
     <div class="mt" id="mediaTotals"></div>
     <div class="mh3">Audio</div><div id="audio"></div>
     <div class="mh3" style="margin-top:14px">Art &amp; screenshots<span id="galsub" style="margin-left:10px;text-transform:none;letter-spacing:0;font-weight:500"></span></div>
-    <div class="tabs" id="galTabs" style="margin-bottom:10px"><button class="btn on" data-g="all">ALL</button><button class="btn" data-g="preview">PIXEL ART</button><button class="btn" data-g="shot">SHOTS</button></div><div id="gallery"></div></section>
+    <div class="tabs" id="galTabs" style="margin-bottom:10px"><button class="btn on" data-g="all">ALL</button><button class="btn" data-g="preview">PIXEL ART</button><button class="btn" data-g="shot">SHOTS</button><button class="btn" data-g="char">CHARACTERS</button><button class="btn" data-g="tex">TEXTURES</button></div><div id="gallery"></div></section>
 
   <div class="grid g-2">
     <section class="panel"><div class="hd"><h2>Recently modified</h2></div><div id="recent"></div></section>
@@ -707,15 +709,15 @@ function renderGallery() {
   const box = $('gallery');
   const all = S.gallery || [];
   const filt = all.filter(g => galMode === 'all' || g.kind === galMode);
-  galList = filt.slice(0, galAll ? 200 : 16);
-  txt($('galsub'), all.length ? all.filter(g => g.kind === 'preview').length + ' sheets · ' + all.filter(g => g.kind === 'shot').length + ' shots' : '');
+  galList = filt.slice(0, galAll ? 400 : 16);
+  txt($('galsub'), all.length ? all.filter(g => g.kind === 'preview').length + ' sheets · ' + all.filter(g => g.kind === 'shot').length + ' shots · ' + all.filter(g => g.kind === 'char').length + ' character · ' + all.filter(g => g.kind === 'tex').length + ' textures' : '');
   if (!galList.length) return emptyState(box, 'No pixels yet', 'Contact sheets (out/previews) and game screenshots (out/shots) will appear here, newest first.');
   if (!box._grid) { box.innerHTML = ''; box._empty = null; box._grid = h('div', 'gal'); box.appendChild(box._grid); }
   if (box._empty) { box.innerHTML = ''; box._empty = null; box.appendChild(box._grid); }
   keyed(box._grid, galList, g => g.path, () => { const e = h('div', 'thumb'); e.innerHTML = '<img loading="lazy" alt=""><span class="kd"></span><span class="cap"></span>'; return e; }, (e, g, _n, i) => {
     const src = '/files/' + g.path.split('/').map(encodeURIComponent).join('/') + '?v=' + Math.round(g.mtime);
     const img = e.querySelector('img'); if (img.getAttribute('src') !== src) img.setAttribute('src', src);
-    const kd = e.querySelector('.kd'); cls(kd, 'kd ' + g.kind); txt(kd, g.kind === 'shot' ? 'shot' : 'art');
+    const kd = e.querySelector('.kd'); cls(kd, 'kd ' + g.kind); txt(kd, ({shot:'shot',char:'char',tex:'tex'})[g.kind] || 'art');
     txt(e.querySelector('.cap'), g.path.replace(/^out\/(previews|shots)\//, '')); e.title = g.path + ' · ' + ago(g.mtime);
     e.onclick = () => openLb(galList.findIndex(x => x.path === g.path));
   });
