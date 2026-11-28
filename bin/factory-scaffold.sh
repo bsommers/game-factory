@@ -53,11 +53,10 @@ prune_kit_tests() { # $1 = target dir; drop template kit tests for kits that wer
   for k in art character audio fx docs; do kit_has "$k" || rm -f "$1/test/kits/$(kit_dir "$k").test.mjs"; done
   rmdir "$1/test/kits" 2>/dev/null || true
 }
-finish_pkg() { # $1 = target dir; kits glob, solo flag and scripts in package.json (node is a factory prerequisite)
+finish_pkg() { # $1 = target dir; solo flag in package.json (test script is recursive `node --test test/`; unused kit tests are pruned above)
   node -e '
     const fs=require("fs"),p=process.argv[1]+"/package.json",j=JSON.parse(fs.readFileSync(p,"utf8"));
     const [,,kits,solo]=process.argv;
-    if(!kits) j.scripts.test=j.scripts.test.replace(" test/kits/*.test.mjs","");
     if(solo==="1"){delete j.scripts.plan;delete j.scripts.tracker;j.game={...j.game,solo:true};}
     fs.writeFileSync(p,JSON.stringify(j,null,2)+"\n");' "$1" "${KITS# }" "$SOLO"
 }
