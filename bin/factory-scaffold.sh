@@ -53,7 +53,7 @@ prune_kit_tests() { # $1 = target dir; drop template kit tests for kits that wer
   for k in art character audio fx docs; do kit_has "$k" || rm -f "$1/test/kits/$(kit_dir "$k").test.mjs"; done
   rmdir "$1/test/kits" 2>/dev/null || true
 }
-finish_pkg() { # $1 = target dir; solo flag in package.json (test script is recursive `node --test test/`; unused kit tests are pruned above)
+finish_pkg() { # $1 = target dir; solo flag in package.json (test script is recursive `node --test test/**/*.test.mjs`; unused kit tests are pruned above)
   node -e '
     const fs=require("fs"),p=process.argv[1]+"/package.json",j=JSON.parse(fs.readFileSync(p,"utf8"));
     const [,,kits,solo]=process.argv;
@@ -87,9 +87,10 @@ case "$cmd" in
       grep -rlE "(\.\./){4}(spec|test)/" "$D/test" 2>/dev/null | xargs -r rm -f
       prune_kit_tests "$D"; copy_kits "$D"; cp -r "$FACT/templates/web-project/src/lib" "$D/src/lib"; finish_pkg "$D"
       SLUG=$(printf '%s' "$NAME" | tr 'A-Z' 'a-z' | sed 's/[^a-z0-9][^a-z0-9]*/-/g; s/^-//; s/-$//'); SLUG="${SLUG:-game}"
-      for sub in core levels ui; do cp -r "$FACT/templates/web-project/src/$sub" "$D/src/$sub"; done
+      for sub in core levels ui sim; do cp -r "$FACT/templates/web-project/src/$sub" "$D/src/$sub"; done
       sed -i "s#__SLUG__#$SLUG#g; s#__NAME__#$NAME#g" "$D"/src/core/*.js "$D"/src/ui/*.js
       cp "$FACT/docs/KITS.md" "$D/docs/KITS.md"
+      [ -f "$FACT/templates/web-project/docs/BOTPLAY.md" ] && cp "$FACT/templates/web-project/docs/BOTPLAY.md" "$D/docs/BOTPLAY.md"
       cp "$FACT/swarm/templates/LEARNINGS.md" "$D/docs/LEARNINGS.md"
       if [ "$SOLO" = 1 ]; then
         printf '# Solo mode\n\nThis game was scaffolded with `--solo`: one author, no agent swarm. There is no swarm tracker, `docs/swarm/SWARM.md` or PLAYBOOK, and `package.json` has `"game": {"solo": true}`.\n`factory guide check` reports swarm gaps (tracker, ARCHITECTURE.md, manifest) as info instead of warnings.\n\nTo go multi-agent later: remove `game.solo` from package.json, run `factory sync .`, copy `swarm/templates/SWARM.md` to `docs/swarm/SWARM.md`, and read `PLAYBOOK.md`.\n' > "$D/docs/SOLO.md"

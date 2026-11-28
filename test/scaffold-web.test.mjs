@@ -17,7 +17,9 @@ test('default web scaffold: no kits, lib always, AGENTS.md + README point at gui
   assert.equal(existsSync(join(dir, 'src/kits')), false);
   assert.equal(existsSync(join(dir, 'test/kits')), false);
   assert.ok(existsSync(join(dir, 'src/lib')));
-  assert.match(pkg(dir).scripts.test, /node --test test\/?$/); // recursive: no fixed subdir globs (PLAN-DOGFOOD #4)
+  assert.ok(existsSync(join(dir, 'src/sim/game.js')) && existsSync(join(dir, 'src/sim/autopilot.js')));
+  assert.ok(existsSync(join(dir, 'docs/BOTPLAY.md')));
+  assert.match(pkg(dir).scripts.test, /node --test test\/\*\*\/\*\.test\.mjs/); // recursive glob (PLAN-DOGFOOD #4; Node 24)
   assert.ok(pkg(dir).scripts.plan && pkg(dir).scripts.tracker);
   assert.ok(existsSync(join(dir, 'docs/swarm/SWARM.md')) && existsSync(join(dir, 'docs/PLAYBOOK.md')) && existsSync(join(dir, 'tools/swarm-tracker')));
   const agents = readFileSync(join(dir, 'AGENTS.md'), 'utf8');
@@ -34,7 +36,7 @@ test('--with kits=audio copies only audio-kit (plus its test/examples)', async (
   assert.deepEqual(readdirSync(join(dir, 'test/kits')), ['audio-kit.test.mjs']);
   assert.match(readFileSync(join(dir, 'src/kits/index.js'), 'utf8'), /audio/);
   assert.doesNotMatch(readFileSync(join(dir, 'src/kits/index.js'), 'utf8'), /art-kit|fx-kit/);
-  assert.match(pkg(dir).scripts.test, /node --test test\/?$/); // kit tests discovered under test/kits/ via recursion
+  assert.match(pkg(dir).scripts.test, /node --test test\/\*\*\/\*\.test\.mjs/); // kit tests under test/kits/ via recursive glob
   const t = spawnSync('npm', ['test'], { cwd: dir, encoding: 'utf8' }); assert.equal(t.status, 0, t.stdout.slice(-800));
 });
 

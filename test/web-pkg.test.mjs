@@ -27,8 +27,9 @@ test('npm test recurses under test/ (nested dirs like test/sim/)', () => {
   const tpl = JSON.parse(readFileSync(join(FACT, 'templates/web-project/package.json'), 'utf8'));
   const pkg = JSON.parse(readFileSync(join(proj, 'package.json'), 'utf8'));
   for (const script of [tpl.scripts.test, pkg.scripts.test]) {
-    assert.match(script, /^node --test test\/$/);
-    assert.doesNotMatch(script, /test\/\w+\/\*/);
+    // Node 24 does not treat `node --test test/` as a directory walk; use an explicit recursive glob.
+    assert.match(script, /node --test test\/\*\*\/\*\.test\.mjs/);
+    assert.doesNotMatch(script, /test\/(core|levels|system|kits|lib)\/\*\.test\.mjs/);
   }
 });
 
