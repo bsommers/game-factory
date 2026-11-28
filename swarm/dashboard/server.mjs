@@ -314,11 +314,15 @@ async function loadMedia(gallery, audio) {
 
 // ---------- state assembly ----------
 const RANK = { failed: 0, blocked: 1, running: 2, queued: 3, done: 4 };
+async function loadTokens() {
+  try { return JSON.parse(await fsp.readFile(join(TRK, 'tokens.json'), 'utf8')); } catch { return null; }
+}
 async function buildState() {
   const [plan, evs, checks, scan, gallery, artifacts, audio] = await Promise.all([
     loadPlan(), loadEvents(), loadChecks(), scanTree(), loadGallery(), loadArtifacts(), loadAudio(),
   ]);
   const media = await loadMedia(gallery, audio);
+  const tokens = await loadTokens();
   const planAgents = Array.isArray(plan.agents) ? plan.agents.filter(a => a && a.id) : [];
   const ids = new Set(planAgents.map(a => str(a.id)));
   const agentsIn = planAgents.map(a => ({ ...a, id: str(a.id), inPlan: true }));
@@ -353,6 +357,7 @@ async function buildState() {
       phase: str(a.phase), desc: str(a.desc), owns: Array.isArray(a.owns) ? a.owns.map(x => str(x)) : [],
       inPlan: a.inPlan, order: idx,
       state, pct: state === 'done' ? 100 : pct, lastMsg, lastT, startedAt, endedAt,
+      tokens: tokens?.agents?.[a.id] || null,
       eventCount: list.length, loc: own.loc, ownedFiles: own.files, segments: segs,
       marks: list.filter(e => e.t && e.state !== 'start').slice(-60).map(e => [e.t, e.state]),
     };
@@ -376,6 +381,7 @@ async function buildState() {
     agents, counts, progress,
     feed: feed.slice(0, 120),
     checks, gallery, artifacts, audio, media,
+    tokens: tokens ? { updatedAt: tokens.updatedAt, estimate: true, total: tokens.total, byTier: tokens.byTier } : null,
     totals: scan.totals,
     loc: history.slice(-1500),
     recent,

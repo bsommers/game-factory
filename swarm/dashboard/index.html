@@ -157,8 +157,9 @@ header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-item
 .s-running .bar>i{background:repeating-linear-gradient(-45deg,var(--accent) 0 6px,var(--accent2) 6px 12px);background-size:17px 17px;animation:barmove 1s linear infinite}
 @keyframes barmove{to{background-position:17px 0}}
 .c-msg{color:var(--ink2);font-size:12px;min-height:2.8em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
-.c-foot{display:flex;gap:10px;margin-top:6px;font:500 10.5px/1 var(--mono);color:var(--ink3);white-space:nowrap}
+.c-foot{display:flex;flex-wrap:wrap;row-gap:4px;gap:10px;margin-top:6px;font:500 10.5px/1 var(--mono);color:var(--ink3);white-space:nowrap}
 .c-foot b{color:var(--ink2);font-weight:600}
+.c-foot .tk{flex-basis:100%;color:var(--ink2)}
 .c-foot .pct{margin-left:auto;color:var(--sc);font-weight:800}
 .owns{position:absolute;left:-1px;right:-1px;top:calc(100% - 4px);z-index:20;background:#0f1628;border:1px solid var(--line2);border-top:0;border-radius:0 0 8px 8px;padding:8px 11px;font:500 10.5px/1.5 var(--mono);color:var(--ink2);display:none;box-shadow:0 12px 24px rgba(0,0,0,.5)}
 .owns .d{font-family:var(--sans);color:var(--ink3);font-size:11px;margin-bottom:4px}
@@ -316,6 +317,7 @@ footer{margin-top:20px;color:var(--ink3);font:500 10.5px/1 var(--mono);text-alig
     <section class="panel"><div class="hd"><h2>Agent swarm<span class="sub" id="swsub"></span></h2><span class="sp"></span><div class="tabs" id="sortTabs"><button class="btn on" data-s="role">BY ROLE</button><button class="btn" data-s="state">BY STATE</button></div></div><div id="swarm"></div></section>
     <div class="col">
       <section class="panel"><div class="hd"><h2>Model usage</h2></div><div id="models"></div></section>
+      <section class="panel"><div class="hd"><h2>Tokens &amp; cost (est.)</h2></div><div id="tokens"></div></section>
       <section class="panel" style="flex:1"><div class="hd"><h2>Live feed<span class="sub" id="feedsub"></span></h2></div><div id="feed"></div></section>
     </div>
   </div>
@@ -435,6 +437,8 @@ function renderHeader() {
     ['failed', 'Failed', S.counts.failed, SCOL.failed],
     ['files', 'Files', fmtN(S.totals.files), 'var(--sonnet)'],
     ['loc', 'Lines of code', fmtN(S.totals.loc), 'var(--tabby)'],
+    ['tokens', 'Tokens', S.tokens ? fmtTok(S.tokens.total.tokens) : 'n/a', 'var(--opus, #c58cff)'],
+    ['cost', 'Est. cost', S.tokens ? '$' + S.tokens.total.cost.toFixed(2) : 'n/a', 'var(--done, #5ad19a)'],
   ];
   keyed(st, defs, d => d[0], d => { const e = h('div', 'stat'); e.innerHTML = '<div class="l"><i></i><span></span></div><div class="v"></div>'; return e; }, (e, d, isNew) => {
     const v = e.querySelector('.v'); const changed = !isNew && v.textContent !== String(d[2]);
@@ -502,7 +506,7 @@ function makeCard() {
   const e = h('div', 'card');
   e.innerHTML = '<div class="c-top"><span class="badge"></span><span class="pill"><span class="dot"></span><span class="st"></span></span></div>' +
     '<div class="c-name"></div><div class="c-id"></div><div class="bar"><i></i></div><div class="c-msg"></div>' +
-    '<div class="c-foot"><span class="el"></span><span class="lc"></span><span class="ec"></span><span class="pct"></span></div><div class="owns"></div>';
+    '<div class="c-foot"><span class="el"></span><span class="lc"></span><span class="tk"></span><span class="ec"></span><span class="pct"></span></div><div class="owns"></div>';
   e.addEventListener('click', () => openAgent(e._key));
   return e;
 }
@@ -520,6 +524,7 @@ function updateCard(e, a, isNew) {
   txt(e.querySelector('.c-msg'), a.lastMsg || (a.state === 'queued' ? (a.desc || 'Awaiting deployment…') : ''));
   e.querySelector('.c-msg').title = a.lastMsg || a.desc || '';
   txt(e.querySelector('.lc'), ''); e.querySelector('.lc').innerHTML = '<b>' + fmtN(a.loc) + '</b> loc';
+  e.querySelector('.tk').innerHTML = a.tokens ? '<b>' + fmtTok(a.tokens.tokens) + '</b> tok · <b>$' + a.tokens.cost.toFixed(2) + '</b>' : '';
   e.querySelector('.ec').innerHTML = '<b>' + a.eventCount + '</b> ev';
   txt(e.querySelector('.pct'), a.state === 'queued' ? '' : (a.pct == null ? '' : Math.round(a.pct) + '%'));
   const ow = e.querySelector('.owns'); const oh = '<div class="d">' + esc(a.desc || '') + '</div>' + (a.owns.length ? a.owns.map(esc).join('<br>') : '<i>owns no paths</i>');
@@ -527,6 +532,17 @@ function updateCard(e, a, isNew) {
   tickCard(e);
 }
 function tickCard(e) { const a = e._a; if (!a) return; const d = agentElapsed(a); e.querySelector('.el').innerHTML = d == null ? '<b>—</b>' : '<b>' + dur(d) + '</b>' + (a.state === 'done' ? ' total' : ''); }
+
+// ---------- tokens ----------
+function fmtTok(n) { return n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'k' : String(n); }
+function renderTokens() {
+  const box = $('tokens'); if (!box) return;
+  const t = S.tokens;
+  if (!t) { box.innerHTML = '<i>no token data (run bin/tokens.mjs)</i>'; return; }
+  const rows = Object.entries(t.byTier || {}).map(([m, v]) => '<div class="mrow" style="color:' + (MCOL[m] || '#8a93ad') + '"><span class="n">' + esc(m) + '</span><span class="c">' + fmtTok(v.tokens) + ' · $' + v.cost.toFixed(2) + ' · ' + v.agents + ' ag</span></div>').join('');
+  box.innerHTML = '<div class="mrow"><span class="n"><b>total</b></span><span class="c"><b>' + fmtTok(t.total.tokens) + ' tok · ~$' + t.total.cost.toFixed(2) + '</b></span></div>' + rows +
+    '<div class="d" style="opacity:.6;font-size:11px">in ' + fmtTok(t.total.input) + ' · out ' + fmtTok(t.total.output) + ' · cache r/w ' + fmtTok(t.total.cacheRead) + '/' + fmtTok(t.total.cacheWrite) + ' · estimate, subagents only</div>';
+}
 
 // ---------- models ----------
 function renderModels() {
@@ -915,7 +931,7 @@ tabs('tlzoom', 'data-z', v => { tlZoom = v; S && renderTimeline(); });
 
 // ---------- render loop ----------
 function renderAll() {
-  const parts = [renderHeader, renderTimeline, renderSwarm, renderModels, renderFeed, renderChecks, renderLoc, renderMedia, renderGallery, renderTables];
+  const parts = [renderHeader, renderTimeline, renderSwarm, renderModels, renderTokens, renderFeed, renderChecks, renderLoc, renderMedia, renderGallery, renderTables];
   for (const f of parts) { try { f(); } catch (err) { console.error(f.name, err); } }
   if (openId) fillAgentModal();
   tick();
