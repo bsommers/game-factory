@@ -3,6 +3,7 @@
 One capability registry (`factory-core/`), four equal front doors: CLI, HTTP, MCP, direct import. Whatever one can do, all can.
 
 ## Discover
+- First run: `scripts/bootstrap.sh --json` checks Node/git/Chrome, smoke-tests the registry; add `--new <dir> "<Title>"` to scaffold a game with its own AGENTS.md.
 - `bin/factory capabilities --json` (CLI), `GET /capabilities` or `/openapi.json` (HTTP), `tools/list` (MCP).
 - Unsure what to do: `bin/factory guide route "<goal>" --json`; it ranks skills, capabilities, kits, styles and assets, and gives next commands and a model tier per step.
 - `bin/factory help <cmd>` lists flags; `guide explain <capability>` gives an example call.
