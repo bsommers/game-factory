@@ -1,0 +1,14 @@
+{
+  "id": "level01",
+  "title": "Level 1",
+  "width": 20,
+  "height": 12,
+  "playerHp": 2,
+  "player": { "x": 1, "y": 6 },
+  "goal": { "x": 19, "y": 6 },
+  "entities": [
+    { "x": 5, "y": 2, "hp": 1, "speed": 3, "count": 4 },
+    { "x": 10, "y": 8, "hp": 1, "speed": 4, "count": 4 },
+    { "x": 15, "y": 4, "hp": 1, "speed": 3.5, "count": 4 }
+  ]
+}

@@ -1,4 +1,9 @@
-// Difficulty = pure transform of a validated LevelDef. Medium is the identity.
+// Difficulty = pure transform of a LevelDef. Medium is the identity; unknown tiers fall back to medium.
+// Two shapes are understood:
+//   generic     optional entities[{x,y,hp?,speed?,count?}]; hp/speed/count scale with the tier. No entities => clone + stamp, never throws.
+//   MicroMaze   tiles+waves+registers (detected by shape): the original tuned scaling, see examples/micromaze-transforms.js.
+import { isMicroMaze, microMazeDifficulty } from './examples/micromaze-transforms.js';
+
 export const DIFFICULTIES = Object.freeze(['easy', 'medium', 'hard', 'insane']);
 
 const MODS = Object.freeze({
@@ -19,18 +24,16 @@ export function applyDifficulty(level, difficulty) {
   const m = MODS[d];
   const out = structuredClone(level);
   if (d === 'medium') return out;
-  const r = (n) => Math.max(1, Math.round(n));
-  for (const reg of out.registers) reg.hp = r(reg.hp * m.regHp);
-  for (const k of Object.keys(out.startAmmo ?? {})) out.startAmmo[k] = r(out.startAmmo[k] * m.ammo);
-  if (typeof out.dropChance === 'number') out.dropChance = Math.min(1, Math.max(0, out.dropChance + m.drop));
-  for (const w of out.waves) {
-    for (const g of w.groups) {
-      if (g.kind === 'mouse') g.count = r(g.count * m.count); // exactly one Pete group: never scaled
-      if (typeof g.hp === 'number') g.hp = r(g.hp * m.hp);
-      if (typeof g.speed === 'number') g.speed = Math.round(g.speed * m.speed * 10) / 10;
-      if (g.every > 0) g.every = Math.round(g.every * m.every * 1000) / 1000;
+  if (isMicroMaze(out)) microMazeDifficulty(out, m);
+  else if (Array.isArray(out?.entities)) {
+    const r = (n) => Math.max(1, Math.round(n));
+    for (const e of out.entities) {
+      if (!e || typeof e !== 'object') continue;
+      if (typeof e.hp === 'number') e.hp = r(e.hp * m.hp);
+      if (typeof e.speed === 'number') e.speed = Math.round(e.speed * m.speed * 10) / 10;
+      if (typeof e.count === 'number') e.count = r(e.count * m.count);
     }
   }
-  out.difficulty = d;
+  if (out && typeof out === 'object') out.difficulty = d;
   return out;
 }
