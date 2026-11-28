@@ -20,6 +20,8 @@ Synthesis of `docs/research/{ENGINE-DECISION,3D-ACTION-TOOLKIT,MESHY-PIPELINE,AS
 
 **Wave 3: content + delivery**: `library.blobs.pack|publish|fetch`, `library.attribution`, `library.ip-review`, `meshy.generate` (env-var key, `maxCredits`, `dryRun`), swarm presets, skills + guide routing for "3D action game", docs, tests for every capability on all four surfaces.
 
+**Wave 4: environment & outdoor scenery**: generalize PBR textures, HDRI skies, 360° horizon backdrops, heightmap splat terrain and instanced foliage proved out in colbdysseus (`~/src/fun/colbdysseus/docs/PLAN-SCENERY.md`). Refactor `tools/fetch_assets.mjs` -> `factory-core/env/` (`env.fetch|presets|optimize`, web+Godot targets, biome packs via `library.install`); add `templates/web-project/src/kits/env-kit/` (Node-safe `spec.js` + Three.js adapter with world-space UVs/anti-tiling, HDRI PMREM, horizon cylinder, terrain splat, scatter); extend `level3d` with optional visual-only `material`/`uvScale`/`environment` fields (excluded from bake hash, Godot `level_loader.gd` parity); add `tools/scenery/` + `factory-core/scenery/` (`img2pbr`, `backdrop-gen`, `impostor-bake`); add `environment-lookdev` swarm role and visual/budget QA gates.
+
 Colbdysseus-specific work (characters, levels, bosses, asset intake) is tracked in `~/src/fun/colbdysseus/spec/` and starts after wave 0.
 
 ## Gates (never weakened)
