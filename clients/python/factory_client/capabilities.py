@@ -405,3 +405,23 @@ class Capabilities:
     def vfx3d_validate(self, *, effect: dict | None = None, file: str | None = None, project: str | None = None):
         """vfx3d.validate: Validate a vfx3d effect definition (whirlpool, flood water, sludge, fire, steam, sparks): force field, Gerstner waves, visual params and particle emitters. Errors carry JSON paths; warnings flag choppy waves or a vortex without ramp."""
         return self.call("vfx3d.validate", {"effect": effect, "file": file, "project": project})
+
+    def web_botplay(self, *, difficulty: str | None = None, level: str | None = None, maxT: float | None = None, project: str | None = None, seeds: list[int] | None = None, size: float | None = None, skill: float | None = None):
+        """web.botplay: Run the project's autopilot bot over several seeds (tools/botplay.mjs) and report wins per seed. ok when the project's own clear-rate bar is met."""
+        return self.call("web.botplay", {"difficulty": difficulty, "level": level, "maxT": maxT, "project": project, "seeds": seeds, "size": size, "skill": skill})
+
+    def web_serve(self, *, lan: bool | None = None, port: int | None = None, project: str | None = None, yes: bool | None = None):
+        """web.serve: Static dev server for the project (tools/serve.mjs). Confirm-first: without yes:true it only returns the command and URL; with yes:true it starts a detached server and returns its pid (stop it with kill <pid>). Binds 127.0.0.1 unless lan:true (serve.mjs reads SERVE_HOST)."""
+        return self.call("web.serve", {"lan": lan, "port": port, "project": project, "yes": yes})
+
+    def web_sheet(self, *, module: str, only: str | None = None, out: str | None = None, project: str | None = None, scale: int | None = None):
+        """web.sheet: Render an art module to a contact sheet PNG (out/previews/<module>.png + .mat.png) and validate it against the art manifest (tools/sheet.mjs). Problems come back in data.problems."""
+        return self.call("web.sheet", {"module": module, "only": only, "out": out, "project": project, "scale": scale})
+
+    def web_validate_level(self, *, file: str, project: str | None = None):
+        """web.validate-level: Validate a level JSON with the project's tools/validate-level.mjs (schema + reachability checks the game defines). Exit 0 = valid."""
+        return self.call("web.validate-level", {"file": file, "project": project})
+
+    def web_verify(self, *, project: str | None = None, timeoutSec: int | None = None):
+        """web.verify: Run the project's post-build gate: scripts/verify.sh when present, else lint:imports + npm test. Returns the tail of the output; ok only on exit 0."""
+        return self.call("web.verify", {"project": project, "timeoutSec": timeoutSec})

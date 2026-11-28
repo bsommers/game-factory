@@ -3247,3 +3247,153 @@ impl Client {
         self.call("vfx3d.validate", &input.to_json())
     }
 }
+
+/// Input of `web.botplay`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct WebBotplayInput {
+    /// difficulty tier
+    pub difficulty: Option<String>,
+    /// level id
+    pub level: Option<String>,
+    /// seconds of game time per seed
+    pub max_t: Option<f64>,
+    /// game project directory (default .)
+    pub project: Option<String>,
+    pub seeds: Option<Vec<i64>>,
+    pub size: Option<f64>,
+    pub skill: Option<f64>,
+}
+
+impl WebBotplayInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.difficulty { m.insert("difficulty".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.level { m.insert("level".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.max_t { m.insert("maxT".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.seeds { m.insert("seeds".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.size { m.insert("size".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.skill { m.insert("skill".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// web.botplay: Run the project's autopilot bot over several seeds (tools/botplay.mjs) and report wins per seed. ok when the project's own clear-rate bar is met.
+    pub fn web_botplay(&self, input: &WebBotplayInput) -> Result<Envelope, Error> {
+        self.call("web.botplay", &input.to_json())
+    }
+}
+
+/// Input of `web.serve`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct WebServeInput {
+    /// bind 0.0.0.0 (serve.mjs default)
+    pub lan: Option<bool>,
+    /// default 4781
+    pub port: Option<i64>,
+    /// game project directory (default .)
+    pub project: Option<String>,
+    /// actually start it
+    pub yes: Option<bool>,
+}
+
+impl WebServeInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.lan { m.insert("lan".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.port { m.insert("port".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.yes { m.insert("yes".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// web.serve: Static dev server for the project (tools/serve.mjs). Confirm-first: without yes:true it only returns the command and URL; with yes:true it starts a detached server and returns its pid (stop it with kill <pid>). Binds 127.0.0.1 unless lan:true (serve.mjs reads SERVE_HOST).
+    pub fn web_serve(&self, input: &WebServeInput) -> Result<Envelope, Error> {
+        self.call("web.serve", &input.to_json())
+    }
+}
+
+/// Input of `web.sheet`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct WebSheetInput {
+    /// art module name under src/art, e.g. characters
+    pub module: String,
+    /// only rows whose name contains this
+    pub only: Option<String>,
+    /// output dir inside the project (default out/previews)
+    pub out: Option<String>,
+    /// game project directory (default .)
+    pub project: Option<String>,
+    pub scale: Option<i64>,
+}
+
+impl WebSheetInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("module".to_string(), serde_json::to_value(&self.module).unwrap_or(Value::Null));
+        if let Some(v) = &self.only { m.insert("only".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.out { m.insert("out".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.scale { m.insert("scale".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// web.sheet: Render an art module to a contact sheet PNG (out/previews/<module>.png + .mat.png) and validate it against the art manifest (tools/sheet.mjs). Problems come back in data.problems.
+    pub fn web_sheet(&self, input: &WebSheetInput) -> Result<Envelope, Error> {
+        self.call("web.sheet", &input.to_json())
+    }
+}
+
+/// Input of `web.validate-level`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct WebValidateLevelInput {
+    /// level JSON path, relative to the project or absolute
+    pub file: String,
+    /// game project directory (default .)
+    pub project: Option<String>,
+}
+
+impl WebValidateLevelInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        m.insert("file".to_string(), serde_json::to_value(&self.file).unwrap_or(Value::Null));
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// web.validate-level: Validate a level JSON with the project's tools/validate-level.mjs (schema + reachability checks the game defines). Exit 0 = valid.
+    pub fn web_validate_level(&self, input: &WebValidateLevelInput) -> Result<Envelope, Error> {
+        self.call("web.validate-level", &input.to_json())
+    }
+}
+
+/// Input of `web.verify`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct WebVerifyInput {
+    /// game project directory (default .)
+    pub project: Option<String>,
+    pub timeout_sec: Option<i64>,
+}
+
+impl WebVerifyInput {
+    pub fn to_json(&self) -> Value {
+        let mut m = Map::new();
+        if let Some(v) = &self.project { m.insert("project".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        if let Some(v) = &self.timeout_sec { m.insert("timeoutSec".to_string(), serde_json::to_value(v).unwrap_or(Value::Null)); }
+        Value::Object(m)
+    }
+}
+
+impl Client {
+    /// web.verify: Run the project's post-build gate: scripts/verify.sh when present, else lint:imports + npm test. Returns the tail of the output; ok only on exit 0.
+    pub fn web_verify(&self, input: &WebVerifyInput) -> Result<Envelope, Error> {
+        self.call("web.verify", &input.to_json())
+    }
+}

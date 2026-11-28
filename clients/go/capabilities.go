@@ -1411,3 +1411,68 @@ type Vfx3dValidateInput struct {
 func (c *Client) Vfx3dValidate(ctx context.Context, in Vfx3dValidateInput) (*Envelope, error) {
 	return c.Call(ctx, "vfx3d.validate", in)
 }
+
+// WebBotplayInput is the input of web.botplay.
+type WebBotplayInput struct {
+	Difficulty *string  `json:"difficulty,omitempty"` // difficulty tier
+	Level      *string  `json:"level,omitempty"`      // level id
+	MaxT       *float64 `json:"maxT,omitempty"`       // seconds of game time per seed
+	Project    *string  `json:"project,omitempty"`    // game project directory (default .)
+	Seeds      []int64  `json:"seeds,omitempty"`
+	Size       *float64 `json:"size,omitempty"`
+	Skill      *float64 `json:"skill,omitempty"`
+}
+
+// WebBotplay calls web.botplay: Run the project's autopilot bot over several seeds (tools/botplay.mjs) and report wins per seed. ok when the project's own clear-rate bar is met.
+func (c *Client) WebBotplay(ctx context.Context, in WebBotplayInput) (*Envelope, error) {
+	return c.Call(ctx, "web.botplay", in)
+}
+
+// WebServeInput is the input of web.serve.
+type WebServeInput struct {
+	Lan     *bool   `json:"lan,omitempty"`     // bind 0.0.0.0 (serve.mjs default)
+	Port    *int64  `json:"port,omitempty"`    // default 4781
+	Project *string `json:"project,omitempty"` // game project directory (default .)
+	Yes     *bool   `json:"yes,omitempty"`     // actually start it
+}
+
+// WebServe calls web.serve: Static dev server for the project (tools/serve.mjs). Confirm-first: without yes:true it only returns the command and URL; with yes:true it starts a detached server and returns its pid (stop it with kill <pid>). Binds 127.0.0.1 unless lan:true (serve.mjs reads SERVE_HOST).
+func (c *Client) WebServe(ctx context.Context, in WebServeInput) (*Envelope, error) {
+	return c.Call(ctx, "web.serve", in)
+}
+
+// WebSheetInput is the input of web.sheet.
+type WebSheetInput struct {
+	Module  string  `json:"module"`            // art module name under src/art, e.g. characters
+	Only    *string `json:"only,omitempty"`    // only rows whose name contains this
+	Out     *string `json:"out,omitempty"`     // output dir inside the project (default out/previews)
+	Project *string `json:"project,omitempty"` // game project directory (default .)
+	Scale   *int64  `json:"scale,omitempty"`
+}
+
+// WebSheet calls web.sheet: Render an art module to a contact sheet PNG (out/previews/<module>.png + .mat.png) and validate it against the art manifest (tools/sheet.mjs). Problems come back in data.problems.
+func (c *Client) WebSheet(ctx context.Context, in WebSheetInput) (*Envelope, error) {
+	return c.Call(ctx, "web.sheet", in)
+}
+
+// WebValidateLevelInput is the input of web.validate-level.
+type WebValidateLevelInput struct {
+	File    string  `json:"file"`              // level JSON path, relative to the project or absolute
+	Project *string `json:"project,omitempty"` // game project directory (default .)
+}
+
+// WebValidateLevel calls web.validate-level: Validate a level JSON with the project's tools/validate-level.mjs (schema + reachability checks the game defines). Exit 0 = valid.
+func (c *Client) WebValidateLevel(ctx context.Context, in WebValidateLevelInput) (*Envelope, error) {
+	return c.Call(ctx, "web.validate-level", in)
+}
+
+// WebVerifyInput is the input of web.verify.
+type WebVerifyInput struct {
+	Project    *string `json:"project,omitempty"` // game project directory (default .)
+	TimeoutSec *int64  `json:"timeoutSec,omitempty"`
+}
+
+// WebVerify calls web.verify: Run the project's post-build gate: scripts/verify.sh when present, else lint:imports + npm test. Returns the tail of the output; ok only on exit 0.
+func (c *Client) WebVerify(ctx context.Context, in WebVerifyInput) (*Envelope, error) {
+	return c.Call(ctx, "web.verify", in)
+}
