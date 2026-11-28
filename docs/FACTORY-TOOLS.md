@@ -6,6 +6,12 @@ Reusable pieces, born from real problems. Add to this list whenever a bug or man
 |---|---|---|
 | `tools/godot.sh` | project-local Godot 4.7.2 wrapper | setup |
 | `tools/shot.sh <scene\|model:id> out.png` | real GPU frame in a private Xvfb, never the desktop; prints mean/std (std<0.01 = blank) | agents verifying visuals |
+| `tools/shot_bevy.sh <level> out.png` | Bevy/wgpu game screenshot in a private Xvfb (X11 forced, Vulkan, `GAME_BIN`), needs `--level/--shot` in the game | Cheesemageddon DeviceLost under Wayland/Xvfb |
+| `tools/fetch_textures.mjs [--config sets.json] [--res 1k\|2k]` | zero-dep Poly Haven CC0 PBR (color/normal/rough) + HDRI fetcher with slug fallbacks, writes MANIFEST.json + INDEX.md | Cheesemageddon photoreal levels |
+| `tools/gen_audio.py [--out dir] [--only a,b]` | numpy-only procedural sfx/ambience/music WAV synth (FPS example set) | Cheesemageddon audio |
+| `tools/build_fatniss.py` | example: procedural Blender character to rigged, animated glb (Idle/Run/Shoot) + `--verify` previews; run `blender --background --python` | Cheesemageddon Fatniss |
+| `swarm/bin/tokens.mjs` | per-agent and total token/cost tracker feeding the dashboard (already in the factory) | Cheesemageddon cost tracking |
+| `templates/bevy-fps-project/` | Rust + Bevy 0.20 FPS starter (see skill `rust-bevy-fps`) | Cheesemageddon |
 | `game/scripts/battle_view/shot.sh` | battle harness: `--mode=idle\|menu\|vfx\|summon\|victory`, timed frames (needs absolute `--out`) | battle-presentation |
 | `tools/cutscene_sheet.sh <summon\|all>` | captures 4 frames of a summon cinematic and tiles them to `out/show/summon_<id>.jpg` | reviewing cutscenes by hand |
 | `tools/sheet.sh out.jpg COLS imgs...` | labelled contact sheet of any screenshots | reviewing galleries |

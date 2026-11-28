@@ -1,6 +1,6 @@
 {
   "formatVersion": 1,
-  "count": 23,
+  "count": 28,
   "skills": [
     {
       "name": "add-fx",
@@ -260,6 +260,63 @@
         "publish",
         "storage",
         "store"
+      ]
+    },
+    {
+      "name": "asset-library-extraction",
+      "description": "Extract a game's reusable assets into its own CC0 asset-library repo (models, textures, hdri, sfx, songs) with raised size caps and the extra 3D asset types.",
+      "triggers": [
+        "asset library",
+        "extract assets",
+        "publish assets",
+        "cheesemageddon-assets",
+        "pawfall-assets",
+        "glb library",
+        "texture library",
+        "hdri library",
+        "library schema",
+        "size cap"
+      ],
+      "needs": [
+        "Node 22+",
+        "templates/asset-library"
+      ],
+      "outputs": [
+        "<game>-assets repo",
+        "library.json",
+        "INDEX.json",
+        "assets/*"
+      ],
+      "model": "haiku",
+      "cost": "low",
+      "capabilities": [
+        "library.verify",
+        "library.install"
+      ],
+      "kits": [],
+      "file": "asset-library-extraction.md",
+      "commands": [],
+      "steps": [
+        "Scaffold from `templates/asset-library`; one folder per asset id `assets/<game>.<name>/asset.json` with sha256 file hashes, licence (CC0-1.0 for Poly Haven), source slug.",
+        "3D differences vs the 2D library: add `model`, `texture`, `hdri` to the `type` enum in both `asset.schema.json` and `library.schema.json` (`assetTypes`), and raise `tools/library/safe.mjs` limits from 16 MB per file / 128 MB library to 95 MB / 512 MB so rigged glb files and HDRIs fit.",
+        "Index: `INDEX.json` + `INDEX.md` list id, type, tags, bytes. Textures are grouped per set (color/normal/rough as one asset); a character is one glb plus preview PNGs and the builder script reference.",
+        "`library.verify` after install into a project; for very large blobs use `library.blobs-pack` (skill asset-library-blobs) so git stays small.",
+        "Credit sources in README; keep generated files byte-deterministic."
+      ],
+      "keywords": [
+        "asset",
+        "cap",
+        "cheesemageddon",
+        "extract",
+        "extraction",
+        "glb",
+        "hdri",
+        "library",
+        "pawfall",
+        "publish",
+        "schema",
+        "size",
+        "texture"
       ]
     },
     {
@@ -805,6 +862,57 @@
       ]
     },
     {
+      "name": "headless-gpu-screenshots",
+      "description": "Take real GPU screenshots of a Bevy or Godot game in a private Xvfb with no desktop window, and avoid the DeviceLost / blank-frame traps.",
+      "triggers": [
+        "screenshot",
+        "headless screenshot",
+        "xvfb",
+        "gpu screenshot",
+        "deviceloss",
+        "device lost",
+        "blank frame",
+        "shot.sh",
+        "bevy screenshot",
+        "visual qa"
+      ],
+      "needs": [
+        "Xvfb",
+        "Vulkan driver",
+        "built game binary"
+      ],
+      "outputs": [
+        "out/*.png"
+      ],
+      "model": "haiku",
+      "cost": "low",
+      "capabilities": [],
+      "kits": [],
+      "file": "headless-gpu-screenshots.md",
+      "commands": [],
+      "steps": [
+        "Game side: support `--level <x> --shot <png>`: after ~3 s of Playing, `Screenshot::primary_window()` + `save_to_disk`, wait for the file, then `AppExit` (template: `templates/bevy-fps-project/src/render/mod.rs`).",
+        "`tools/shot_bevy.sh <level> out/x.png` (set `GAME_BIN` to the binary). It starts `Xvfb -displayfd`, unsets `WAYLAND_DISPLAY`, sets `XDG_SESSION_TYPE=x11`, `WGPU_BACKEND=vulkan`, `MESA_VK_WSI_DEBUG=sw`, runs under `timeout 120`, kills Xvfb by PID on exit.",
+        "Godot games use `tools/shot.sh <scene>` instead (prints mean/std; std < 0.01 means blank).",
+        "Look at the image yourself (Read tool) and compare levels with a contact sheet before reporting done."
+      ],
+      "keywords": [
+        "bevy",
+        "blank",
+        "device",
+        "deviceloss",
+        "frame",
+        "gpu",
+        "headless",
+        "lost",
+        "qa",
+        "screenshot",
+        "shot.sh",
+        "visual",
+        "xvfb"
+      ]
+    },
+    {
       "name": "img2model-rig",
       "description": "Rig a model from an image: silhouette extraction, procedural model build and verification against the source image.",
       "triggers": [
@@ -1035,6 +1143,110 @@
       ]
     },
     {
+      "name": "nvidia-windows-portability",
+      "description": "Make a Rust/Bevy (wgpu) game run on NVIDIA, AMD and Windows 11 without Linux-only assumptions, with ray tracing as an opt-in that degrades to raster.",
+      "triggers": [
+        "nvidia",
+        "windows 11",
+        "windows build",
+        "dx12",
+        "vulkan",
+        "portability",
+        "hybrid laptop",
+        "rtx",
+        "amd gpu",
+        "platforms",
+        "cross platform gpu"
+      ],
+      "needs": [
+        "rustup stable 1.95+",
+        "MSVC build tools on Windows"
+      ],
+      "outputs": [
+        "docs/PLATFORMS.md"
+      ],
+      "model": "sonnet",
+      "cost": "low",
+      "capabilities": [],
+      "kits": [],
+      "file": "nvidia-windows-portability.md",
+      "commands": [],
+      "steps": [
+        "Do not force a wgpu backend in code. `WGPU_BACKEND=vulkan` is only for headless Linux screenshots (kept in `tools/shot_bevy.sh`). On Windows wgpu picks DX12 or Vulkan.",
+        "Default look is plain raster PBR (SSAO, TAA, bloom, fog): any GPU. Ray tracing is opt-in (`--rt`, F1 toggle) and needs wgpu ray-query + acceleration-structure features (RTX 20+, RDNA2+, recent drivers). If missing, log a warning and stay raster, never panic (`detect_rt` in the template).",
+        "Never hard-code adapter names/indices: use `WGPU_ADAPTER_NAME` / `WGPU_POWER_PREF=high` for the dGPU on hybrid laptops.",
+        "No Linux-only deps (audio via Bevy/rodio, gamepad via gilrs). `asset_root()` finds `assets/` in cwd or next to Cargo.toml so the exe works from anywhere.",
+        "Write `docs/PLATFORMS.md` plus a laptop test checklist: `cargo run --release -- --level 1`, each level, then `--rt`; report the AdapterInfo log line, fps and any `ERROR bevy_render`. Windows VM smoke test: `tools/smoke_windows.sh`."
+      ],
+      "keywords": [
+        "11",
+        "amd",
+        "cross",
+        "dx12",
+        "gpu",
+        "hybrid",
+        "laptop",
+        "nvidia",
+        "platform",
+        "portability",
+        "rtx",
+        "vulkan",
+        "window"
+      ]
+    },
+    {
+      "name": "photoreal-pbr-levels",
+      "description": "Skin 3D environments (desert, bunker, city) with CC0 Poly Haven PBR textures and HDRIs with per-level look presets, fog, bloom and optional ray tracing.",
+      "triggers": [
+        "photoreal",
+        "pbr",
+        "pbr textures",
+        "poly haven",
+        "hdri sky",
+        "fetch textures",
+        "look preset",
+        "photoreal 3d",
+        "cc0 textures"
+      ],
+      "needs": [
+        "Node 22+",
+        "network for fetch"
+      ],
+      "outputs": [
+        "assets/textures/**",
+        "assets/textures/MANIFEST.json",
+        "level modules"
+      ],
+      "model": "sonnet",
+      "cost": "medium",
+      "capabilities": [],
+      "kits": [],
+      "file": "photoreal-pbr-levels.md",
+      "commands": [],
+      "steps": [
+        "`node tools/fetch_textures.mjs [--config sets.json] [--res 1k|2k]` writes `assets/textures/<biome>/<name>_{color,normal,rough}.jpg`, `sky/<name>.hdr`, `MANIFEST.json` (slug, source, CC0) and `INDEX.md`. List several fallback slugs per set; slugs drift.",
+        "Load with `ImageLoaderSettings` sampler = repeat + anisotropic, set `uv_transform` scale per mesh so a metre of floor shows ~1 tile; normal maps are `nor_gl`. Roughness JPG goes in `perceptual_roughness` via a roughness texture or a tuned scalar.",
+        "One `LookPreset` per level (sun dir/colour/illuminance, ambient, fog colour+density, exposure EV100): desert ~28k lux warm, bunker ~600 lux green, city ~9k lux dusk. The render module applies it to every camera.",
+        "Level builder pattern: build in `SpawnSet::Level`, tag everything `LevelEntity`, add `Solid` AABBs, fill `LevelSpec` (spawns, extents). Unlit sky domes/suns need `NotShadowCaster` or they black out the level.",
+        "Screenshot every level (headless-gpu-screenshots) and tune exposure/fog until the image reads; compare raster vs `--rt`."
+      ],
+      "keywords": [
+        "3d",
+        "cc0",
+        "fetch",
+        "haven",
+        "hdri",
+        "level",
+        "look",
+        "pbr",
+        "photoreal",
+        "poly",
+        "preset",
+        "sky",
+        "texture"
+      ]
+    },
+    {
       "name": "plan-run-swarm",
       "description": "Plan an agent swarm for a game or tool: contract first, disjoint file ownership, one SWARM.md manifest, generated prompt files, waves under a concurrency cap.",
       "triggers": [
@@ -1217,6 +1429,62 @@
         "smoke",
         "test",
         "verify"
+      ]
+    },
+    {
+      "name": "rust-bevy-fps",
+      "description": "Build a Rust + Bevy 0.20 first-person game with a contract-first module layout and a parallel agent swarm (one Plugin per module), Solari RT with raster fallback.",
+      "triggers": [
+        "rust fps",
+        "bevy",
+        "bevy fps",
+        "bevy 0.20",
+        "rust 3d game",
+        "first person shooter rust",
+        "solari",
+        "ray tracing game",
+        "rust swarm",
+        "bevy plugin"
+      ],
+      "needs": [
+        "rustc 1.95+",
+        "cargo",
+        "templates/bevy-fps-project"
+      ],
+      "outputs": [
+        "Cargo project",
+        "src/core.rs contract",
+        "docs/swarm/SWARM.md"
+      ],
+      "model": "sonnet",
+      "cost": "medium",
+      "capabilities": [],
+      "kits": [],
+      "file": "rust-bevy-fps.md",
+      "commands": [],
+      "steps": [
+        "Copy `templates/bevy-fps-project` to the game dir; replace `__NAME__` / `__SLUG__`. Set `CARGO_TARGET_DIR=/datanapps/cargo-target/<slug>` (never /tmp). Rust >= 1.95.",
+        "Write the contract first: `src/core.rs` holds states, `LevelId`, marker components, `Message` types, `LevelSpec`, `SpawnSet {Level, Entities, Post}`, HUD snapshot resources, `FreshStart`. Only the integrator edits it.",
+        "One `pub struct <X>Plugin;` per module (render, levels/*, entities/*, ui, audio, flow). Modules talk only through core.rs messages/resources. Level plugins early-return unless `*level == their LevelId`.",
+        "Edit `docs/swarm/SWARM.md` (task, model tier, `owns:` paths that never overlap), then `swarm plan` / `swarm next`. Agents report with `track.mjs <id> start|progress|done|failed`. Cap at 4 concurrent; cargo builds serialize on the target-dir lock, so split work by file, not by waiting.",
+        "Integrator wires `main.rs` + `flow.rs` after each wave; run `cargo check` then `cargo test` (pure-math tests for movement, AI, phase logic).",
+        "Verify visually with `tools/shot_bevy.sh` (skill headless-gpu-screenshots) for every level; fix, repeat."
+      ],
+      "keywords": [
+        "0.20",
+        "3d",
+        "bevy",
+        "first",
+        "fps",
+        "game",
+        "person",
+        "plugin",
+        "ray",
+        "rust",
+        "shooter",
+        "solari",
+        "swarm",
+        "trac"
       ]
     },
     {

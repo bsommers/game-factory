@@ -1,0 +1,18 @@
+[package]
+name = "__SLUG__"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+description = "__NAME__ - Rust + Bevy 0.20 first-person starter (Solari RT + raster fallback)"
+
+[dependencies]
+# `debug` = readable system-param errors (B0001 etc). `bevy_solari` = ray-traced GI (opt-in at runtime with --rt).
+bevy = { version = "0.20.1", features = ["bevy_solari", "free_camera", "debug", "wav"] }
+
+[profile.dev]
+opt-level = 1
+[profile.dev.package."*"]
+opt-level = 3
+[profile.release]
+lto = "thin"
+codegen-units = 4

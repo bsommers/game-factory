@@ -21,6 +21,8 @@ Extracted from **KÄSEKRIEG: RAT OPS** (Godot 4.7 third-person shooter): https:/
 | `docs/MODELS.md` | Generate/export 3D models (obj, stl, ply, glb/gltf, 3mf) for printing, Blender, engines: `models.*` capabilities, mesh library |
 | `docs/LEARNINGS.md` | Mistakes and fixes from the first build |
 | `docs/LEARNINGS-PAWFALL.md` | Mistakes and fixes from the PawFall web-game swarm |
+| `docs/LEARNINGS-CHEESEMAGEDDON.md` | Bevy 0.20 API changes, Solari RT, headless GPU shots, cost routing from the Rust FPS swarm |
+| `templates/bevy-fps-project/` | Rust + Bevy 0.20 FPS starter (core contract, one Plugin per module, Solari RT + raster preset, `--shot`) |
 | `docs/NEXT-GAME.md` | Plan for an outdoor/open-world follow-up |
 
 ## Web-game extras (`factory new <dir> "<Title>" --web`)

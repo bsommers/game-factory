@@ -1,5 +1,7 @@
 # Learnings from building RAT OPS with an agent swarm (Godot 4.7 + Blender)
 
+See also `docs/LEARNINGS-PAWFALL.md` (web) and `docs/LEARNINGS-CHEESEMAGEDDON.md` (Rust + Bevy 0.20, Solari RT, headless GPU shots).
+
 Real mistakes and fixes from the first game built with this factory. Generic swarm rules are in `swarm/PLAYBOOK.md`.
 
 ## Orchestration

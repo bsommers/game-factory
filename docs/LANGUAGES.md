@@ -12,6 +12,9 @@
 
 Unknown `lang` returns `BAD_INPUT` listing the valid ids. If a template directory does not exist yet, `project.new` returns `NOT_FOUND`.
 
+## Rust + Bevy 3D FPS (`templates/bevy-fps-project/`)
+Rust is listed above as a generic 2D/engine template; for a native 3D first-person game use the Bevy 0.20 starter instead: Rust >= 1.95, `bevy` with `bevy_solari`, contract-first `core.rs`, one Plugin per module, Solari RT (`--rt`) with raster fallback, `--level`/`--shot` flags. It is copied by hand (replace `__NAME__` / `__SLUG__`, then `cargo check` with `CARGO_TARGET_DIR=/datanapps/cargo-target/<slug>`); it is not yet a `project.new` target. Skill: `rust-bevy-fps`; pitfalls: `docs/LEARNINGS-CHEESEMAGEDDON.md`.
+
 ## Generic templates (go, rust, python)
 A plain tree; `*.tmpl` files and all text files have `__NAME__` (title) and `__SLUG__` (kebab-case) replaced, and the `.tmpl` suffix is dropped. The scaffolder then copies `tools/` and `tools/swarm-tracker/`, the swarm docs, writes a `.gitignore`/README if absent, and runs `git init`.
 
