@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Standalone desktop builds on Neutralinojs (prebuilt ~3 MB binaries using the OS webview).
 //   node tools/package-desktop.mjs [--platform linux|win|mac|all] [--skip-web] [--out dist/desktop]
-// Output: dist/desktop/catxzzon-<ver>-<os>-<arch>.{tar.gz|zip} + SHA256SUMS. No global installs; the Neutralino
+// Output: dist/desktop/<slug>-<ver>-<os>-<arch>.{tar.gz|zip} + SHA256SUMS. No global installs; the Neutralino
 // release zip is downloaded once into assets-cache/ (gitignored) and verified against a pinned SHA-256.
 // resources.neu is written by our own asar writer (same format `neu build --release` produces).
 import { execFileSync } from 'node:child_process';
@@ -11,24 +11,29 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { buildWeb } from './build-web.mjs';
 import { encodePNG } from './sheet.mjs';
+import { projectInfo } from './project-info.mjs';
 
-export const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const here = dirname(fileURLToPath(import.meta.url)); // tools/ (desktop/ templates live next to this file)
+export const root = join(here, '..');
 export const NL_VERSION = '6.10.0';
 export const NL_ZIP_SHA256 = 'e633f480737f229f582d8ec6165a52d789340950aef062560702122389f08329';
 export const NL_ZIP_URL = `https://github.com/neutralinojs/neutralinojs/releases/download/v${NL_VERSION}/neutralinojs-v${NL_VERSION}.zip`;
 export const NL_CLIENT_VERSION = '6.7.0';
 export const NL_CLIENT_SHA256 = '33c0f325b7f237f559de43397f60db89d1303b4f057b7a9346c4826cf65cc96a';
 export const NL_CLIENT_URL = `https://cdn.jsdelivr.net/npm/@neutralinojs/lib@${NL_CLIENT_VERSION}/dist/neutralino.js`;
+const INFO = projectInfo(root);
 const cache = join(root, 'assets-cache');
 const FIXED_TIME = new Date('2026-01-01T00:00:00Z');
 
 export const TARGETS = {
-  'linux-x64': { os: 'linux', src: 'neutralino-linux_x64', bin: 'catxzzon', pack: 'tar.gz' },
-  'win-x64': { os: 'win', src: 'neutralino-win_x64.exe', bin: 'catxzzon.exe', pack: 'zip' },
-  'mac-x64': { os: 'mac', src: 'neutralino-mac_x64', bin: 'catxzzon', pack: 'zip' },
-  'mac-arm64': { os: 'mac', src: 'neutralino-mac_arm64', bin: 'catxzzon', pack: 'zip' },
+  'linux-x64': { os: 'linux', src: 'neutralino-linux_x64', bin: INFO.slug, pack: 'tar.gz' },
+  'win-x64': { os: 'win', src: 'neutralino-win_x64.exe', bin: INFO.slug + '.exe', pack: 'zip' },
+  'mac-x64': { os: 'mac', src: 'neutralino-mac_x64', bin: INFO.slug, pack: 'zip' },
+  'mac-arm64': { os: 'mac', src: 'neutralino-mac_arm64', bin: INFO.slug, pack: 'zip' },
 };
 
+/** Replace __SLUG__ / __TITLE__ / __APPID__ in desktop templates. */
+const fill = (t) => t.replaceAll('__SLUG__', INFO.slug).replaceAll('__TITLE__', INFO.title).replaceAll('__APPID__', INFO.appId);
 const sha256 = (buf) => createHash('sha256').update(buf).digest('hex');
 
 async function fetchPinned(url, file, want) {
@@ -67,23 +72,16 @@ export function makeAsar(files) {
   return Buffer.concat([head, ...chunks]);
 }
 
-/** App icon PNG (256x256 RGBA) rendered from the cat art with the shared PNG encoder; flat orange fallback. */
+/** App icon PNG (256x256 RGBA): the project's icon (package.json game.icon, default assets/icon.png) if present, else a flat tile coloured from the slug with its initial. */
 export async function makeIcon() {
-  const N = 256;
-  const out = new Uint8Array(N * N * 4);
-  try {
-    const art = (await import(pathToFileURL(join(root, 'src/art/cat.js')).href)).build();
-    const pb = (art.cat_portrait && art.cat_portrait[0]) || art.cat_head[0];
-    const s = Math.max(1, Math.floor(N / Math.max(pb.w, pb.h)));
-    const ox = (N - pb.w * s) >> 1, oy = (N - pb.h * s) >> 1;
-    for (let y = 0; y < pb.h * s; y++) for (let x = 0; x < pb.w * s; x++) {
-      const si = (((y / s) | 0) * pb.w + ((x / s) | 0)) * 4, di = ((y + oy) * N + x + ox) * 4;
-      for (let k = 0; k < 4; k++) out[di + k] = pb.rgba[si + k];
-    }
-    if (!out.some((v, i) => i % 4 === 3 && v)) throw new Error('blank cat art');
-  } catch (e) {
-    for (let i = 0; i < N * N; i++) out.set([255, 150, 40, 255], i * 4);
-  }
+  const custom = join(root, INFO.icon);
+  if (existsSync(custom)) return readFileSync(custom);
+  const N = 256, out = new Uint8Array(N * N * 4);
+  let h = 0; for (const c of INFO.slug) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const col = [64 + (h & 127), 64 + ((h >> 7) & 127), 64 + ((h >> 14) & 127), 255];
+  for (let i = 0; i < N * N; i++) out.set(col, i * 4);
+  const m = 56; // inner light square so the tile is not a bare colour
+  for (let y = m; y < N - m; y++) for (let x = m; x < N - m; x++) out.set([245, 240, 225, 255], (y * N + x) * 4);
   return Buffer.from(encodePNG(N, N, out));
 }
 
@@ -117,9 +115,9 @@ export async function buildResources(version, webDir = join(root, 'dist/web')) {
     add('resources/' + rel, data);
   }
   add('resources/js/neutralino.js', readFileSync(join(cache, `neutralino-lib-${NL_CLIENT_VERSION}.js`)));
-  add('resources/js/shell.js', readFileSync(join(root, 'desktop/shell.js')));
+  add('resources/js/shell.js', readFileSync(join(here, 'desktop/shell.js')));
   add('resources/icon.png', await makeIcon());
-  add('neutralino.config.json', readFileSync(join(root, 'desktop/neutralino.config.json'), 'utf8').replace('__VERSION__', version).replace('__NL__', NL_VERSION));
+  add('neutralino.config.json', fill(readFileSync(join(here, 'desktop/neutralino.config.json'), 'utf8').replace('__VERSION__', version).replace('__NL__', NL_VERSION)));
   return makeAsar(files);
 }
 
@@ -127,8 +125,8 @@ function plist(version) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-<key>CFBundleName</key><string>CATXZZON</string><key>CFBundleDisplayName</key><string>CATXZZON</string>
-<key>CFBundleIdentifier</key><string>dev.catxzzon.game</string><key>CFBundleExecutable</key><string>catxzzon</string>
+<key>CFBundleName</key><string>${INFO.title}</string><key>CFBundleDisplayName</key><string>${INFO.title}</string>
+<key>CFBundleIdentifier</key><string>${INFO.appId}</string><key>CFBundleExecutable</key><string>${INFO.slug}</string>
 <key>CFBundleVersion</key><string>${version}</string><key>CFBundleShortVersionString</key><string>${version}</string>
 <key>CFBundlePackageType</key><string>APPL</string><key>LSMinimumSystemVersion</key><string>10.13</string>
 <key>NSHighResolutionCapable</key><true/><key>LSApplicationCategoryType</key><string>public.app-category.games</string>
@@ -138,32 +136,37 @@ function plist(version) {
 
 export async function packageTarget(name, { version, outDir, resources, zipPath, log }) {
   const t = TARGETS[name];
-  const stage = join(outDir, '.stage', `catxzzon-${version}-${name}`);
+  const stage = join(outDir, '.stage', `${INFO.slug}-${version}-${name}`);
   rmSync(stage, { recursive: true, force: true });
   mkdirSync(stage, { recursive: true });
-  const binDir = t.os === 'mac' ? join(stage, 'CATXZZON.app/Contents/MacOS') : stage;
+  const app = `${INFO.title}.app`;
+  const binDir = t.os === 'mac' ? join(stage, app, 'Contents/MacOS') : stage;
   mkdirSync(binDir, { recursive: true });
   const bin = join(binDir, t.bin);
   writeFileSync(bin, execFileSync('unzip', ['-p', zipPath, t.src], { maxBuffer: 64 << 20 }));
   chmodSync(bin, 0o755);
   writeFileSync(join(binDir, 'resources.neu'), resources);
+  const put = (from, to, mode) => { writeFileSync(join(stage, to), fill(readFileSync(join(here, 'desktop', from), 'utf8'))); if (mode) chmodSync(join(stage, to), mode); };
+  const icon = await makeIcon();
   if (t.os === 'mac') {
-    writeFileSync(join(stage, 'CATXZZON.app/Contents/Info.plist'), plist(version));
-    cpSync(join(root, 'desktop/catxzzon-browser.command'), join(stage, 'catxzzon-browser.command'));
-    chmodSync(join(stage, 'catxzzon-browser.command'), 0o755);
+    writeFileSync(join(stage, app, 'Contents/Info.plist'), plist(version));
+    put('launch-browser.command', `${INFO.slug}-browser.command`, 0o755);
+    put('install-mac.command', 'install.command', 0o755);
   } else if (t.os === 'linux') {
-    cpSync(join(root, 'desktop/catxzzon.sh'), join(stage, 'catxzzon.sh'));
-    chmodSync(join(stage, 'catxzzon.sh'), 0o755);
+    put('launch.sh', `${INFO.slug}.sh`, 0o755);
+    put('install-linux.sh', 'install.sh', 0o755);
+    writeFileSync(join(stage, 'icon.png'), icon);
   } else {
-    cpSync(join(root, 'desktop/catxzzon-browser.cmd'), join(stage, 'catxzzon-browser.cmd'));
+    put('launch-browser.cmd', `${INFO.slug}-browser.cmd`);
+    put('install-windows.ps1', 'install.ps1');
   }
-  writeFileSync(join(stage, 'README.txt'), `CATXZZON ${version} (${name}) - Neutralinojs ${NL_VERSION}\n` +
-    (t.os === 'linux' ? 'Run ./catxzzon.sh (native window needs webkit2gtk-4.1; add --browser to use your default browser).\n'
-      : t.os === 'win' ? 'Run catxzzon.exe (needs the Edge WebView2 runtime, preinstalled on Windows 11); catxzzon-browser.cmd plays in your browser.\n'
-      : 'Open CATXZZON.app (unsigned: right-click > Open the first time); catxzzon-browser.command plays in your browser.\n') +
+  writeFileSync(join(stage, 'README.txt'), `${INFO.title} ${version} (${name}) - Neutralinojs ${NL_VERSION}\n` +
+    (t.os === 'linux' ? `Run ./${INFO.slug}.sh (native window needs webkit2gtk-4.1; add --browser to use your default browser).\nInstall to your menu: ./install.sh  (remove: ./install.sh --uninstall)\n`
+      : t.os === 'win' ? `Run ${INFO.slug}.exe (needs the Edge WebView2 runtime, preinstalled on Windows 11); ${INFO.slug}-browser.cmd plays in your browser.\nStart Menu shortcut: right-click install.ps1 > Run with PowerShell (remove: install.ps1 -Uninstall)\n`
+      : `Open ${app} (unsigned: right-click > Open the first time); ${INFO.slug}-browser.command plays in your browser.\nCopy to ~/Applications: double-click install.command\n`) +
     'F11 toggles fullscreen.\n');
   normalizeTimes(stage);
-  const base = `catxzzon-${version}-${name}`;
+  const base = `${INFO.slug}-${version}-${name}`;
   const archive = join(outDir, `${base}.${t.pack}`);
   rmSync(archive, { force: true });
   if (t.pack === 'tar.gz') {

@@ -1,5 +1,5 @@
 {
-  "applicationId": "dev.catxzzon.game",
+  "applicationId": "__APPID__",
   "version": "__VERSION__",
   "defaultMode": "window",
   "port": 0,
@@ -12,7 +12,7 @@
   "nativeAllowList": ["app.exit", "window.setFullScreen", "window.exitFullScreen", "window.isFullScreen", "events.on", "events.off"],
   "modes": {
     "window": {
-      "title": "CATXZZON",
+      "title": "__TITLE__",
       "width": 960,
       "height": 540,
       "minWidth": 480,
@@ -29,5 +29,5 @@
     },
     "browser": { "globalVariables": {}, "nativeBlockList": ["filesystem.*", "os.*", "computer.*", "updater.*"] }
   },
-  "cli": { "binaryName": "catxzzon", "resourcesPath": "/resources/", "clientLibrary": "/resources/js/neutralino.js", "binaryVersion": "__NL__", "clientVersion": "6.7.0" }
+  "cli": { "binaryName": "__SLUG__", "resourcesPath": "/resources/", "clientLibrary": "/resources/js/neutralino.js", "binaryVersion": "__NL__", "clientVersion": "6.7.0" }
 }

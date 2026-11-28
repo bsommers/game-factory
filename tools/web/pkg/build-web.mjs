@@ -1,15 +1,18 @@
 #!/usr/bin/env node
 // Web build: node tools/build-web.mjs [--no-bundle]
 //   dist/web/{index.html,app.js,style.css}  minified static build (esbuild via npx, fallback: unbundled copy of src/)
-//   dist/catxzzon.html                      ONE self-contained file (JS+CSS inlined), playable from file://
+//   dist/<slug>.html                        ONE self-contained file (JS+CSS inlined), playable from file://
+//   dist/<slug>-<ver>-web.zip               dist/web zipped for itch.io / static hosting (--zip, needs `zip`)
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, mkdirSync, rmSync, cpSync, existsSync, statSync, readdirSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { projectInfo } from './project-info.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 let dist = join(root, 'dist'), web = join(dist, 'web');
+const INFO = projectInfo(root);
 const ESBUILD = process.env.ESBUILD_SPEC || 'esbuild@0.25';
 
 function esbuild(args) {
@@ -69,7 +72,7 @@ export function buildWeb({ bundle = true, log = console.log, outDir } = {}) {
     }
   }
   if (!bundled) {
-    rmSync(join(dist, 'catxzzon.html'), { force: true }); // no bundler -> no single-file build; never leave a stale one
+    rmSync(join(dist, INFO.slug + '.html'), { force: true }); // no bundler -> no single-file build; never leave a stale one
     cpSync(join(root, 'src'), join(web, 'src'), { recursive: true });
     cpSync(join(root, 'style.css'), join(web, 'style.css'));
     writeFileSync(join(web, 'index.html'), html);
@@ -84,11 +87,11 @@ export function buildWeb({ bundle = true, log = console.log, outDir } = {}) {
       .replace(/<link rel="stylesheet" href="style\.css">/, () => `<style>${css}</style>`)
       .replace(/<script type="module" src="app\.js"><\/script>/, () => `<script type="module">${js}</script>`);
     if (/href="style\.css"|src="app\.js"/.test(one)) throw new Error('single-file inlining failed');
-    writeFileSync(join(dist, 'catxzzon.html'), one);
+    writeFileSync(join(dist, INFO.slug + '.html'), one);
   }
   rmSync(join(dist, '.stage'), { recursive: true, force: true });
   const files = [];
-  for (const f of ['web/index.html', 'web/app.js', 'web/style.css', 'catxzzon.html']) {
+  for (const f of ['web/index.html', 'web/app.js', 'web/style.css', INFO.slug + '.html']) {
     const p = join(dist, f);
     if (existsSync(p)) files.push({ name: 'dist/' + f, bytes: size(p), gzip: gz(p) });
   }
@@ -99,4 +102,10 @@ export function buildWeb({ bundle = true, log = console.log, outDir } = {}) {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   buildWeb({ bundle: !process.argv.includes('--no-bundle') });
+  if (process.argv.includes('--zip')) {
+    const out = join(root, 'dist', `${INFO.slug}-${INFO.version}-web.zip`);
+    rmSync(out, { force: true });
+    execFileSync('zip', ['-X', '-q', '-r', out, '.'], { cwd: join(root, 'dist/web') });
+    console.log(`  ${relative(root, out)}  ${kb(size(out))}  (upload to itch.io, or unzip on any static host)`);
+  }
 }

@@ -11,6 +11,11 @@ sync_tools() { # $1 = target dir
   cp "$FACT"/tools/*.sh "$FACT"/tools/*.mjs "$1/tools/"
   cp -r "$FACT"/swarm/bin "$FACT"/swarm/dashboard "$1/tools/swarm-tracker/"
 }
+sync_web_pkg() { # $1 = target dir: build + desktop packaging + installers for web games
+  mkdir -p "$1/tools"
+  cp "$FACT"/tools/web/pkg/build-web.mjs "$FACT"/tools/web/pkg/package-desktop.mjs "$FACT"/tools/web/pkg/project-info.mjs "$1/tools/"
+  rm -rf "$1/tools/desktop"; cp -r "$FACT/tools/web/pkg/desktop" "$1/tools/desktop"
+}
 case "$cmd" in
   new)
     D="${2:?usage: factory new <dir> \"<Title>\" [--web]}"; NAME="${3:-My Game}"
@@ -20,7 +25,7 @@ case "$cmd" in
       sync_tools "$D"; (cd "$D/tools" && rm -f *.sh fetch_assets.mjs); cp "$FACT"/tools/web/*.sh "$D/tools/"; cp "$FACT"/tools/web/*.mjs "$D/tools/"
       for f in index.html style.css src/main.js; do sed "s#__NAME__#$NAME#g" "$FACT/templates/web-project/$f" > "$D/$f"; done
       mkdir -p "$D/scripts"; cp "$FACT/templates/web-project/scripts/verify.sh" "$D/scripts/verify.sh"; chmod +x "$D/scripts/verify.sh"
-      cp "$FACT/templates/web-project/package.json" "$D/package.json"; cp -r "$FACT"/templates/web-project/test/* "$D/test/"
+      cp "$FACT/templates/web-project/package.json" "$D/package.json"; sed -i "s#\"name\": \"game\"#\"name\": \"$(printf '%s' "$NAME" | tr 'A-Z' 'a-z' | sed 's/[^a-z0-9][^a-z0-9]*/-/g; s/^-//; s/-$//')\"#" "$D/package.json"; sync_web_pkg "$D"; cp -r "$FACT"/templates/web-project/test/* "$D/test/"
       # lib tests that read factory-root spec/ or test/helpers only make sense inside the factory; do not ship them
       grep -rlE "(\.\./){4}(spec|test)/" "$D/test" 2>/dev/null | xargs -r rm -f
       cp -r "$FACT/templates/web-project/src/kits" "$D/src/kits"; cp -r "$FACT/templates/web-project/src/lib" "$D/src/lib";
@@ -30,7 +35,7 @@ case "$cmd" in
       cp "$FACT/docs/KITS.md" "$D/docs/KITS.md"
       cp "$FACT/swarm/templates/SWARM.md" "$D/docs/swarm/SWARM.md"; cp "$FACT/swarm/templates/CHECKPOINT.md" "$D/docs/CHECKPOINT.md"
       cp "$FACT/swarm/templates/LEARNINGS.md" "$D/docs/LEARNINGS.md"; cp "$FACT/swarm/PLAYBOOK.md" "$D/docs/PLAYBOOK.md"
-      printf '.tracker/\nout/\ndist/\n*.log\nnode_modules/\ndocs/CHECKPOINT.md\ndocs/swarm/prompts/\ndocs/swarm/progress/\n' > "$D/.gitignore"
+      printf '.tracker/\nout/\ndist/\nassets-cache/\n*.log\nnode_modules/\ndocs/CHECKPOINT.md\ndocs/swarm/prompts/\ndocs/swarm/progress/\n' > "$D/.gitignore"
       printf '# %s\n\nScaffolded by `game-factory new --web`. `npm start` serves the game (port 4781); `npm run plan` then `npm run tracker` opens the swarm tracker (port 4780).\n' "$NAME" > "$D/README.md"
       (cd "$D" && git init -q -b main); echo "created web game $D"; exit 0
     fi
@@ -48,6 +53,6 @@ case "$cmd" in
     (cd "$D" && git init -q -b main)
     echo "created $D  (run: cd $D && tools/install_godot.sh)";;
   sync)
-    D="${2:?usage: factory sync <dir>}"; sync_tools "$D"; echo "synced tools into $D";;
+    D="${2:?usage: factory sync <dir>}"; sync_tools "$D"; [ -f "$D/index.html" ] && { (cd "$D/tools" && rm -f *.sh fetch_assets.mjs); cp "$FACT"/tools/web/*.sh "$FACT"/tools/web/*.mjs "$D/tools/"; sync_web_pkg "$D"; }; echo "synced tools into $D";;
   *) sed -n '2,5p' "$0"; exit 2;;
 esac
