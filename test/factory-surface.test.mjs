@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import { spawn, execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync, existsSync } from 'node:fs';
@@ -7,18 +8,18 @@ import { tmpdir } from 'node:os';
 import { buildRegistry } from '../factory-core/index.mjs';
 import { createApp } from '../api/server.mjs';
 
-const BIN = new URL('../bin/factory', import.meta.url).pathname;
-const MCP = new URL('../mcp/server.mjs', import.meta.url).pathname;
-const SCRATCH = process.env.FACTORY_TEST_TMP || '/datanapps/claude-tmp';
+const BIN = fileURLToPath(new URL('../bin/factory.mjs', import.meta.url));
+const MCP = fileURLToPath(new URL('../mcp/server.mjs', import.meta.url));
+const SCRATCH = process.env.FACTORY_TEST_TMP || (existsSync('/datanapps/claude-tmp') ? '/datanapps/claude-tmp' : tmpdir());
 const tmp = () => mkdtempSync(join(existsSync(SCRATCH) ? SCRATCH : tmpdir(), 'fsurf-'));
 const strip = (r) => JSON.parse(JSON.stringify(r));
-const cli = (...a) => JSON.parse(execFileSync(BIN, [...a, '--json'], { encoding: 'utf8' }));
+const cli = (...a) => JSON.parse(execFileSync(process.execPath, [BIN, ...a, '--json'], { encoding: 'utf8' }));
 
 test('registry: every capability is well formed and schemas are valid', () => {
   const reg = buildRegistry(); const names = reg.list().map((c) => c.name);
   for (const need of ['styles.list', 'library.add', 'registry.search', 'guide.route', 'project.new', 'kits.list', 'swarm.track']) assert.ok(names.includes(need), need);
   for (const c of reg.list()) {
-    assert.match(c.name, /^[a-z]+\.[a-z-]+$/); assert.ok(c.summary.length > 10, c.name);
+    assert.match(c.name, /^[a-z][a-z0-9]*\.[a-z-]+$/); assert.ok(c.summary.length > 10, c.name);
     assert.equal(c.inputSchema.type, 'object', c.name); assert.equal(typeof c.handler, 'function');
     assert.ok(c.outputSchema.properties.ok, c.name);
     const walk = (s) => { if (!s || typeof s !== 'object') return; if (s.type) for (const t of [].concat(s.type)) assert.ok(['object', 'string', 'integer', 'number', 'boolean', 'array', 'null'].includes(t), `${c.name} type ${t}`); Object.values(s.properties || {}).forEach(walk); walk(s.items); (s.anyOf || []).forEach(walk); };
@@ -55,9 +56,9 @@ test('same result on every surface: kits.list and project.new', async (t) => {
   const viaMcp = shape((await mcp.call('project_new', { dir: d, title: 'T', web: true })).structuredContent, d);
   assert.equal(viaLib.ok, true);
   assert.deepEqual(viaCli, viaLib); assert.deepEqual(viaApi, viaLib); assert.deepEqual(viaMcp, viaLib);
-  assert.ok(existsSync(join(a, 'src/kits/art-kit')) && existsSync(join(a, 'tools/swarm-tracker/bin/track.mjs')));
+  assert.ok(!existsSync(join(a, 'src/kits/art-kit')) && existsSync(join(a, 'src/lib')) && existsSync(join(a, 'tools/swarm-tracker/bin/track.mjs'))); // kits are opt-in
   // exists -> stable failure + exit code 4
-  const again = spawnSync(BIN, ['new', a, 'T', '--json'], { encoding: 'utf8' });
+  const again = spawnSync(process.execPath, [BIN, 'new', a, 'T', '--json'], { encoding: 'utf8' });
   assert.equal(again.status, 4); assert.equal(JSON.parse(again.stdout).error.code, 'EXISTS');
 });
 
@@ -100,7 +101,7 @@ test('MCP smoke: initialize, tools/list, tools/call, resources', async (t) => {
   assert.equal(init.result.serverInfo.name, 'game-factory'); assert.ok(init.result.capabilities.tools);
   const tools = (await s.rpc('tools/list', {})).result.tools;
   const reg = buildRegistry(); assert.equal(tools.length, reg.list().length);
-  for (const x of tools) { assert.ok(x.name && x.description && x.inputSchema.type === 'object'); assert.match(x.name, /^[a-z]+_[a-z-]+$/); }
+  for (const x of tools) { assert.ok(x.name && x.description && x.inputSchema.type === 'object'); assert.match(x.name, /^[a-z][a-z0-9]*_[a-z-]+$/); }
   const r = await s.call('kits_show', { name: 'art-kit' }); assert.equal(r.isError, false); assert.equal(r.structuredContent.data.name, 'art-kit');
   const bad = await s.call('kits_show', {}); assert.equal(bad.isError, true);
   const res = (await s.rpc('resources/list', {})).result.resources; assert.ok(res.some((x) => x.uri === 'factory://kits'));
@@ -109,8 +110,8 @@ test('MCP smoke: initialize, tools/list, tools/call, resources', async (t) => {
 
 test('CLI: capabilities --json, help <cmd>, exit codes', () => {
   const caps = cli('capabilities'); assert.ok(caps.data.capabilities.length >= 30);
-  assert.equal(spawnSync(BIN, ['help', 'kits'], { encoding: 'utf8' }).status, 0);
-  assert.equal(spawnSync(BIN, ['kits', 'show', 'nope', '--json'], { encoding: 'utf8' }).status, 3);
-  assert.equal(spawnSync(BIN, ['kits', 'show', '--json'], { encoding: 'utf8' }).status, 2);
-  assert.equal(spawnSync(BIN, ['frobnicate'], { encoding: 'utf8' }).status, 2);
+  assert.equal(spawnSync(process.execPath, [BIN, 'help', 'kits'], { encoding: 'utf8' }).status, 0);
+  assert.equal(spawnSync(process.execPath, [BIN, 'kits', 'show', 'nope', '--json'], { encoding: 'utf8' }).status, 3);
+  assert.equal(spawnSync(process.execPath, [BIN, 'kits', 'show', '--json'], { encoding: 'utf8' }).status, 2);
+  assert.equal(spawnSync(process.execPath, [BIN, 'frobnicate'], { encoding: 'utf8' }).status, 2);
 });

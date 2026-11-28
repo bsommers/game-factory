@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync, existsSync, mkdirSync, symlinkSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { addItems, addAssets, installAssets, verifyInstalled, publishLibrary, scanSecrets, newLibrary } from '../../factory-core/library/ops.mjs';
+import { licenseSet } from '../../factory-core/library/license.mjs';
 import { loadLibrary } from '../../factory-core/library/format.mjs';
 import { mkLib, item, tmp, readJ, png } from './helpers.mjs';
 
@@ -94,6 +95,8 @@ test('publish is confirm-first, scans secrets, and only calls gh with yes', () =
 test('publish with yes runs git+gh through the injected runner only', async () => {
   const d = mkLib('pub2', [item('a')]), calls = [];
   const run = (cmd, args) => { calls.push([cmd, ...args].join(' ')); return { status: 0, stdout: 'https://github.com/me/pub2\n', stderr: '' }; };
+  assert.equal(publishLibrary({ library: d, repo: 'me/pub2', yes: true, visibility: 'public' }, run).error.code, 'LICENSE_BLOCKED'); assert.equal(calls.length, 0); // v1 asset: license status unknown
+  assert.equal(licenseSet({ library: d, id: 'a', status: 'verified', redistribute: true, confirm: true }).ok, true);
   const r = publishLibrary({ library: d, repo: 'me/pub2', yes: true, visibility: 'public' }, run);
   assert.equal(r.ok, true); assert.ok(calls.some((c) => /^gh repo create me\/pub2 --public/.test(c)));
   assert.equal(publishLibrary({ library: d, repo: 'bad repo; rm -rf', yes: true }, run).error.code, 'BAD_INPUT');
@@ -104,4 +107,17 @@ test('new: refuses non-empty dir and bad names; secrets in names are not templat
   assert.equal(newLibrary({ name: '../x' }).error.code, 'BAD_INPUT');
   const r = newLibrary({ name: 'quoted', dir: join(tmp(), 'q'), description: 'he said "hi"\nnow' });
   assert.equal(r.ok, true); assert.equal(loadLibrary(r.data.dir).errors.length, 0);
+});
+
+test('add from a pixbuf-web project whose art module is nested (px16/chars): tag is schema-safe', async () => {
+  const proj = tmp('nested-proj');
+  mkdirSync(join(proj, 'src/core'), { recursive: true }); mkdirSync(join(proj, 'src/art/px16'), { recursive: true });
+  writeFileSync(join(proj, 'src/core/defs.js'), "export const ART = [{ name: 'hero', w: 2, h: 2, frames: 1, module: 'px16/chars', desc: 'hero' }];\n");
+  writeFileSync(join(proj, 'src/art/px16/chars.js'), "export function build() { return { hero: { w: 2, h: 2, rgba: new Uint8Array([255,0,0,255, 0,255,0,255, 0,0,255,255, 255,255,255,255]) } }; }\n");
+  const d = mkLib('addnested', []);
+  const r = await addAssets({ library: d, from: { project: proj, game: 'nested', types: ['sprite', 'character'] } });
+  assert.equal(r.ok, true, JSON.stringify(r.error));
+  assert.deepEqual(r.data.added, ['nested.hero']);
+  assert.ok(readJ(join(d, 'assets/nested.hero/asset.json')).tags.includes('module:px16-chars'));
+  assert.equal(loadLibrary(d).errors.length, 0);
 });

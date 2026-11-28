@@ -3,6 +3,7 @@
 import { readFileSync, readdirSync, existsSync, writeFileSync, mkdirSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveLanguage, languageContext, adaptText, adaptKits, adaptRole, webOnlyCommand, isNonWeb, VERIFY } from './language.mjs';
 
 export const FACTORY_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 export const SKILLS_DIR = join(FACTORY_ROOT, 'skills');
@@ -200,6 +201,9 @@ export function route(input = {}, opts = {}) {
   if (!goal) return fail('BAD_INPUT', 'goal is required (free text)');
   const ctx = input.context || {}, limit = Math.max(1, Math.min(10, input.limit || 5));
   if (ctx.budget && !COSTS.includes(ctx.budget)) return fail('BAD_INPUT', 'context.budget must be low|medium|high');
+  const lr = resolveLanguage({ language: input.language, dir: input.dir });
+  if (lr.error) return fail('BAD_INPUT', lr.error);
+  const lang = lr.language;
   const index = opts.index || loadIndex(), catalog = toCatalog(opts.capabilities);
   const gTokens = tokens(goal + ' ' + (ctx.assetNeeds || []).join(' '));
   let ranked = index.skills.map((s) => ({ s, ...scoreSkill(s, goal, gTokens, ctx) })).filter((x) => x.score > 0)
@@ -218,7 +222,7 @@ export function route(input = {}, opts = {}) {
   const byName = new Map(catalog.map((c) => [c.name, c]));
   const caps = [...capScore.entries()].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, 8)
     .map(([name, sc]) => ({ kind: 'capability', name, score: Math.round(sc * 100) / 100, summary: byName.get(name)?.summary || '', example: byName.get(name) ? fmtInput(byName.get(name)) : name, registered: byName.has(name) }));
-  const kits = uniq(ranked.flatMap(({ s }) => s.kits)).map((k) => ({ kind: 'kit', name: k, doc: 'docs/KITS.md' }));
+  const kits = adaptKits(uniq(ranked.flatMap(({ s }) => s.kits)).map((k) => ({ kind: 'kit', name: k, doc: 'docs/KITS.md' })), lang, !!input.includeWebOnly);
   // styles + assets via the registry (offline, optional)
   const styles = [], assets = [];
   const call = (n, i) => { const c = byName.get(n); if (!c) return null; try { return c.handler(i); } catch { return null; } };
@@ -239,10 +243,15 @@ export function route(input = {}, opts = {}) {
   }
   // steps + commands
   const top = ranked[0]?.s;
-  const steps = ranked.slice(0, 3).flatMap(({ s }, k) => s.steps.slice(0, k === 0 ? 6 : 3).map((t) => ({ skill: s.name, model: tierFor(s, ctx.budget), text: t })));
+  const steps = ranked.slice(0, 3).flatMap(({ s }, k) => s.steps.slice(0, k === 0 ? 6 : 3).map((t) => ({ skill: s.name, model: tierFor(s, ctx.budget), text: adaptText(t, lang) })));
   steps.forEach((s, i) => { s.n = i + 1; });
-  const commands = uniq([...(top ? top.commands : []), ...caps.slice(0, 3).map((c) => c.example)]);
+  let commands = uniq([...(top ? top.commands : []), ...caps.slice(0, 3).map((c) => c.example)]);
   const data = { goal, context: ctx, ranked: skills, capabilities: caps, kits, styles, assets, steps, commands };
+  if (lang) {
+    data.language = languageContext(lang, lr.source);
+    if (isNonWeb(lang)) { const v = VERIFY[lang]; commands = uniq([...commands.filter((c) => !webOnlyCommand(c)).map((c) => adaptText(c, lang)), v.test, v.build, v.run]); skills.forEach((x) => { x.commands = x.commands.filter((c) => !webOnlyCommand(c)); }); }
+    data.commands = commands;
+  }
   data.text = renderRoute(data);
   const next = skills.length ? [`guide.show {name: "${skills[0].name}"}`, 'guide.plan {goal}', 'guide.check {project}'] : ['guide.skills {}'];
   if (!skills.length) data.hint = 'no skill matched; try guide.skills {} to list them or rephrase the goal with a task word (sprite, swarm, music, ship...)';
@@ -254,6 +263,7 @@ export function renderRoute(d) {
   L.push('Skills (best first):');
   d.ranked.forEach((s, i) => L.push(`  ${i + 1}. ${s.name}  [model ${s.model}, cost ${s.cost}, score ${s.score}]`, `     ${s.summary}`, `     why: ${s.reasons.join('; ')}`));
   if (d.capabilities.length) { L.push('', 'Capabilities:'); for (const c of d.capabilities) L.push(`  - ${c.example}${c.summary ? '  ' + c.summary.slice(0, 80) : ''}`); }
+  if (d.language) L.push('', `Language: ${d.language.id} (${d.language.source}, ${d.language.template}); test: ${d.language.verify.test}`);
   if (d.kits.length) L.push('', `Kits: ${d.kits.map((k) => k.name).join(', ')} (docs/KITS.md)`);
   if (d.styles.length) L.push('', 'Style presets:', ...d.styles.map((s) => `  - ${s.id} (score ${s.score})  ${s.next}`));
   if (d.assets.length) L.push('', 'Existing assets:', ...d.assets.map((a) => `  - ${a.id} (${a.type})  library.install {assets: ["${a.id.split(':').pop()}"]}`));
@@ -272,6 +282,13 @@ const ROLE_BANK = [
   { id: 'ui', name: 'Render, HUD and screens', words: ['ui', 'hud', 'render', 'menu', 'screen', 'title', 'interface'], model: 'sonnet', phase: 'p2', owns: ['src/ui/', 'src/main.js', 'test/ui.test.mjs'], task: 'Canvas renderer, HUD, title and game-over screens; integrate the other modules.' },
   { id: 'bot', name: 'Autopilot and QA', words: ['bot', 'qa', 'autopilot', 'test', 'playtest'], model: 'sonnet', phase: 'p3', owns: ['src/bot/', 'test/bot.test.mjs'], task: 'Autopilot with look-ahead and watchdog; run over many seeds; mutation checks.' },
   { id: 'docs', name: 'Docs and site', words: ['docs', 'documentation', 'site', 'readme', 'pages'], model: 'haiku', phase: 'p3', owns: ['README.md', 'docs/HOW-TO-PLAY.md', 'docs/HOW-IT-WAS-MADE.md', 'docs/index.html'], task: 'Generate README, HOW-TO-PLAY, HOW-IT-WAS-MADE and the Pages site with docs-kit.' },
+  // 3D action game preset (disjoint owns); selected when the goal mentions 3d + action/boss/souls-like etc.
+  { id: 'camera3d', name: '3D camera and locomotion', words: ['camera3d', 'locomotion', 'third-person'], model: 'sonnet', phase: 'p1', owns: ['src/gameplay/camera/', 'src/gameplay/locomotion/', 'test/camera-loco.test.mjs'], task: 'Camera3d and locomotion3d configs per the contract; validate and simulate (camera3d.*, locomotion3d.*).', preset: '3d-action' },
+  { id: 'combat3d', name: 'Combat and animation graph', words: ['combat3d', 'combat', 'animgraph'], model: 'sonnet', phase: 'p1', owns: ['src/gameplay/combat/', 'src/gameplay/animgraph/', 'test/combat.test.mjs'], task: 'Combat3d moves, hitboxes and the animation graph; combat3d.* and animgraph.* validate and simulate.', preset: '3d-action' },
+  { id: 'ai3d', name: 'Enemy AI and navigation', words: ['ai3d', 'enemy', 'nav'], model: 'sonnet', phase: 'p1', owns: ['src/gameplay/ai/', 'src/gameplay/nav/', 'test/ai.test.mjs'], task: 'Enemy behaviours with ai3d.validate/simulate and nav.bake against the level.', preset: '3d-action' },
+  { id: 'boss3d', name: 'Boss fight and balance', words: ['boss3d', 'boss'], model: 'sonnet', phase: 'p2', owns: ['src/gameplay/boss/', 'test/boss.test.mjs'], task: 'Boss phases and attacks; boss3d.validate, fairness and balance must pass; never loosen thresholds.', preset: '3d-action' },
+  { id: 'level3d', name: 'Levels, limbs and VFX', words: ['level3d', 'limb', 'vfx3d'], model: 'sonnet', phase: 'p2', owns: ['src/levels/', 'src/gameplay/limb/', 'src/vfx/', 'test/level-vfx.test.mjs'], task: 'Level layout bake, limb3d rules and vfx3d presets; validate each and bake levels.', preset: '3d-action' },
+  { id: 'models3d', name: 'Models and Godot build', words: ['meshy', 'godot', 'img2model', 'models3d'], model: 'haiku', phase: 'p2', owns: ['assets/models/', 'godot/', 'test/godot.test.mjs'], task: 'Import Meshy or img2model models (meshy.*, img2model.*, anim.*), then godot.import-check, godot.test, parity.run and godot.export.', preset: '3d-action' },
 ];
 const defaultPreamble = () => {
   try { const t = readFileSync(join(FACTORY_ROOT, 'swarm/templates/SWARM.md'), 'utf8'); const m = /## @preamble\n([\s\S]*?)\n## /.exec(t); if (m) return m[1].trim(); } catch { /* fallback */ }
@@ -300,15 +317,19 @@ export function manifestText(project, tagline, agents, preamble = defaultPreambl
 export function plan(input = {}, opts = {}) {
   const goal = typeof input.goal === 'string' ? input.goal.trim() : '';
   if (!goal) return fail('BAD_INPUT', 'goal is required');
+  const lr = resolveLanguage({ language: input.language, dir: input.dir });
+  if (lr.error) return fail('BAD_INPUT', lr.error);
+  const lang = lr.language;
   const project = input.project || goal.split(/[.:,;]/)[0].slice(0, 40).trim() || 'My Game';
   const gT = new Set(tokens(goal));
   let agents;
   if (Array.isArray(input.agents) && input.agents.length) agents = input.agents.map((a) => ({ role: 'worker', phase: 'p1', model: 'sonnet', task: 'TODO: describe the task against the contract.', ...a }));
   else {
-    const picked = ROLE_BANK.filter((r) => r.words.some((w) => gT.has(stem(w))));
-    const base = ['core', 'art', 'audio', 'ui'];
+    const is3dAction = gT.has('3d') && ['action', 'boss', 'souls', 'combat', 'adventure', 'godot', 'meshy'].some((w) => gT.has(stem(w)));
+    const picked = ROLE_BANK.filter((r) => (!r.preset || is3dAction) && r.words.some((w) => gT.has(stem(w))));
+    const base = is3dAction ? ['core', 'camera3d', 'combat3d', 'ai3d', 'boss3d', 'level3d', 'models3d', 'ui'] : isNonWeb(lang) ? ['core', 'levels', 'ui'] : ['core', 'art', 'audio', 'ui'];
     const set = new Set([...base, ...picked.map((r) => r.id), 'bot', 'docs']);
-    agents = ROLE_BANK.filter((r) => set.has(r.id)).map((r) => ({ id: r.id, name: r.name, model: r.model, phase: r.phase, role: 'worker', owns: [...r.owns], task: r.task }));
+    agents = ROLE_BANK.filter((r) => set.has(r.id)).map(r => adaptRole(r, lang)).map((r) => ({ id: r.id, name: r.name, model: r.model, phase: r.phase, role: 'worker', owns: [...r.owns], task: r.task }));
     if (input.budget === 'low') agents = agents.map((a) => ({ ...a, model: a.model === 'sonnet' && ['fx', 'docs'].includes(a.id) ? 'haiku' : a.model }));
   }
   const errors = validatePlan(agents);
@@ -316,14 +337,14 @@ export function plan(input = {}, opts = {}) {
   const phases = {}; for (const a of agents) (phases[a.phase] ||= []).push(a.id);
   const waves = []; for (const p of Object.keys(phases).sort()) for (let i = 0; i < phases[p].length; i += concurrency) waves.push({ phase: p, agents: phases[p].slice(i, i + concurrency) });
   const manifest = manifestText(project, input.tagline || goal.slice(0, 120), agents, opts.preamble);
-  const data = { project, agents, waves, concurrency, errors, manifest, notes: ['Write the contract (ARCHITECTURE.md + defs) BEFORE launching wave 1.', 'Spawn with: "Read <root>/docs/swarm/prompts/<id>.md and execute it exactly."', `Max ${concurrency} agents at once; critical path first.`] };
+  const data = { project, ...(lang ? { language: languageContext(lang, lr.source) } : {}), agents, waves, concurrency, errors, manifest, notes: ['Write the contract (ARCHITECTURE.md + defs) BEFORE launching wave 1.', 'Spawn with: "Read <root>/docs/swarm/prompts/<id>.md and execute it exactly."', `Max ${concurrency} agents at once; critical path first.`] };
   if (input.out) {
     const f = resolve(input.out);
     if (existsSync(f) && !input.yes) return { ok: false, data, error: { code: 'EXISTS', message: `${input.out} exists; pass yes:true to overwrite` }, next: [] };
     if (!errors.length && !input.dryRun) { mkdirSync(dirname(f), { recursive: true }); writeFileSync(f, manifest); data.written = f; }
   }
   data.text = [`Plan for ${project}: ${agents.length} agents in ${waves.length} wave(s)`, ...waves.map((w, i) => `  wave ${i + 1} (${w.phase}): ${w.agents.map((id) => `${id}[${agents.find((a) => a.id === id).model}]`).join(', ')}`), ...(errors.length ? ['Problems:', ...errors.map((x) => '  ! ' + x)] : ['Plan is valid.'])].join('\n');
-  return errors.length ? { ok: false, data, error: { code: 'INVALID_PLAN', message: `${errors.length} problem(s)` }, next: [] } : ok(data, ['npm run plan', 'node tools/swarm-tracker/bin/track.mjs <id> start "<plan>"']);
+  return errors.length ? { ok: false, data, error: { code: 'INVALID_PLAN', message: `${errors.length} problem(s)` }, next: [] } : ok(data, ['npm run plan', 'node tools/swarm-tracker/bin/track.mjs <id> start "<plan>"', ...(isNonWeb(lang) ? [VERIFY[lang].test] : [])]);
 }
 
 // ---------- check ----------
@@ -338,10 +359,12 @@ export function check(input = {}) {
   const tests = listFiles(join(d, 'test'), /\.test\.m?js$/).length + listFiles(d, /\.test\.m?js$/, 1).length;
   if (!tests) add('no-tests', 'error', 'no *.test.mjs files found', 'add node:test suites under test/ and an npm "test" script', 'qa-with-bot');
   const pkg = readJsonSafe(join(d, 'package.json'));
+  // solo games (package.json game.solo, or docs/SOLO.md) have no swarm; swarm gaps are notes, not warnings
+  const solo = pkg?.game?.solo === true || has(d, 'docs/SOLO.md'), swarmSev = solo ? 'info' : 'warn';
   if (!pkg) add('no-package', 'warn', 'no package.json', 'copy templates/web-project/package.json (scripts: start, test, plan, tracker)', 'start-new-game');
   else if (!pkg.scripts?.test) add('no-test-script', 'warn', 'package.json has no "test" script', 'add "test": "node --test test/*.test.mjs"', 'qa-with-bot');
-  if (!has(d, 'tools/swarm-tracker') && !has(d, '.tracker')) add('no-tracker', 'warn', 'no swarm tracker installed', 'run `bin/factory sync <project>` then `npm run plan`', 'setup-tracker');
-  if (!has(d, 'ARCHITECTURE.md') && !has(d, 'docs/ARCHITECTURE.md')) add('no-contract', 'warn', 'no ARCHITECTURE.md contract', 'write the contract (modules, hooks, defs) before launching agents', 'plan-run-swarm');
+  if (!has(d, 'tools/swarm-tracker') && !has(d, '.tracker')) add('no-tracker', swarmSev, solo ? 'no swarm tracker (solo project)' : 'no swarm tracker installed', 'run `bin/factory sync <project>` then `npm run plan`', 'setup-tracker');
+  if (!has(d, 'ARCHITECTURE.md') && !has(d, 'docs/ARCHITECTURE.md')) add('no-contract', swarmSev, 'no ARCHITECTURE.md contract', 'write the contract (modules, hooks, defs) before launching agents', 'plan-run-swarm');
   if (!has(d, 'docs/swarm/SWARM.md')) add('no-manifest', 'info', 'no docs/swarm/SWARM.md manifest', 'use guide.plan {goal, out: "docs/swarm/SWARM.md"}', 'plan-run-swarm');
   const style = readJsonSafe(join(d, 'config/style.json')) || readJsonSafe(join(d, 'factory.config.json'))?.style;
   const styleObj = style && typeof style === 'object' ? style : null;
@@ -382,8 +405,15 @@ export function explain(input = {}, opts = {}) {
   if (sk) return ok({ kind: 'skill', name: sk.name, summary: sk.description, model: sk.model, cost: sk.cost, capabilities: sk.capabilities, kits: sk.kits, commands: sk.commands, text: `${sk.name}: ${sk.description}\nModel ${sk.model}, cost ${sk.cost}. Run guide.show {name: "${sk.name}"} for the full text.` }, [`guide.show {name: "${sk.name}"}`]);
   const kit = index.skills.filter((s) => s.kits.includes(q));
   if (kit.length) return ok({ kind: 'kit', name: q, skills: kit.map((s) => s.name), doc: 'docs/KITS.md', text: `Kit ${q}: see docs/KITS.md. Used by skills: ${kit.map((s) => s.name).join(', ')}.` }, [`guide.show {name: "${kit[0].name}"}`]);
-  const qt = tokens(q.replace(/[._-]/g, ' ')), cand = [...catalog.map((c) => c.name), ...index.skills.map((s) => s.name)].map((n) => ({ n, h: tokens(n.replace(/[._-]/g, ' ')).filter((t) => qt.includes(t)).length })).filter((x) => x.h).sort((a, b) => b.h - a.h || (a.n < b.n ? -1 : 1)).slice(0, 5).map((x) => x.n);
+  const qt = tokens(q.replace(/[._-]/g, ' ')), cand = [...catalog.map((c) => c.name), ...index.skills.map((s) => s.name)].map((n) => ({ n, h: tokens(n.replace(/[._-]/g, ' ')).filter((t) => qt.includes(t)).length, d: editDistance(n, q) })).filter((x) => x.h).sort((a, b) => b.h - a.h || a.d - b.d || (a.n < b.n ? -1 : 1)).slice(0, 5).map((x) => x.n);
   return fail('NOT_FOUND', `no capability, skill or kit named "${q}"`, { suggestions: cand }, cand.map((n) => `guide.explain {capability: "${n}"}`));
+}
+
+// Levenshtein distance: breaks token-overlap ties in favour of near-typos of the query.
+function editDistance(a, b) {
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) { const cur = [i]; for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = cur; }
+  return prev[b.length];
 }
 
 export function listSkills(input = {}, opts = {}) {

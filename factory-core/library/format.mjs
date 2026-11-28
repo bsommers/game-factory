@@ -4,14 +4,14 @@ import { existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync, readdirS
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateSchema } from './schema-lite.mjs';
-import { LIMITS, isSafeRel, readInside, readJson, resolveInside, sha256, stableJson, walkTree } from './safe.mjs';
+import { LIMITS, effectiveLimits, isSafeRel, readInside, readJson, resolveInside, sha256, stableJson, walkTree } from './safe.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const loadSchema = (n) => JSON.parse(readFileSync(join(here, 'schemas', n), 'utf8'));
 export const SCHEMAS = { library: loadSchema('library.schema.json'), asset: loadSchema('asset.schema.json'), index: loadSchema('index.schema.json'), registry: loadSchema('registry.schema.json'), lock: loadSchema('lock.schema.json') };
 export const ASSET_TYPES = SCHEMAS.library.properties.assetTypes.items.enum;
 export const FORMAT_VERSION = 1;
-const NEEDS_PREVIEW = new Set(['sprite', 'character', 'tileset', 'sfx', 'song', 'fx', 'font']);
+const NEEDS_PREVIEW = new Set(['sprite', 'character', 'tileset', 'sfx', 'song', 'fx', 'font', 'model', 'texture']);
 
 /** Content hash of an asset: sha256 over sorted "path\0sha256\n" lines (independent of descriptor metadata). */
 export const assetHash = (files) => sha256(Buffer.from([...files].sort((a, b) => (a.path < b.path ? -1 : 1)).map((f) => `${f.path}\0${f.sha256}\n`).join('')));
@@ -38,14 +38,20 @@ export function satisfies(v, range) {
  * Load and validate a library directory.
  * -> { dir, manifest, assets: [{ id, dir, descriptor }], errors: string[], warnings: string[] }
  */
-export function loadLibrary(dir) {
+export function loadLibrary(dir, opts = {}) {
   const root = resolve(dir), errors = [], warnings = [], assets = [];
   let manifest = null;
   const err = (m) => errors.push(m);
   if (!existsSync(root)) return { dir: root, manifest, assets, errors: [`not found: ${root}`], warnings };
-  const tree = walkTree(root); tree.problems.forEach(err);
-  try { manifest = readJson(join(root, 'library.json')); } catch (e) { err(`library.json: ${e.message}`); return { dir: root, manifest: null, assets, errors, warnings, bytes: tree.bytes }; }
-  validateSchema(SCHEMAS.library, manifest).forEach((m) => err(`library.json ${m}`));
+  // library.json first: its optional limits{fileBytes,libraryBytes} raise the per-file/per-library caps (old libraries keep 16 MiB / 128 MiB)
+  let rawManifest = null, manifestErr = null;
+  try { rawManifest = readJson(join(root, 'library.json')); } catch (e) { manifestErr = e; }
+  const schemaErrs = rawManifest ? validateSchema(SCHEMAS.library, rawManifest) : [];
+  const limits = effectiveLimits(rawManifest && !schemaErrs.some((m) => m.includes('limits')) ? rawManifest.limits : undefined, opts);
+  const tree = walkTree(root, limits); tree.problems.forEach(err);
+  if (manifestErr) { err(`library.json: ${manifestErr.message}`); return { dir: root, manifest: null, assets, errors, warnings, bytes: tree.bytes, limits }; }
+  manifest = rawManifest;
+  schemaErrs.forEach((m) => err(`library.json ${m}`));
   const adir = join(root, 'assets');
   let ids = [];
   if (existsSync(adir)) {
@@ -69,12 +75,16 @@ export function loadLibrary(dir) {
       if (f.path === 'asset.json') { err(`${where}: asset.json cannot list itself`); continue; }
       if (paths.has(f.path)) { err(`${where}: duplicate file ${f.path}`); continue; } paths.add(f.path);
       try {
-        const b = readInside(d, f.path);
+        const b = readInside(d, f.path, limits.maxFileBytes);
         if (b.length !== f.bytes) err(`${where}/${f.path}: size ${b.length} != descriptor ${f.bytes}`);
         if (sha256(b) !== f.sha256) err(`${where}/${f.path}: sha256 mismatch (file modified or descriptor stale)`);
       } catch (e) { err(`${where}/${f.path}: ${e.message}`); }
     }
     if (desc.hash !== assetHash(desc.files)) err(`${where}: content hash does not match files`);
+    if (desc.licenseInfo?.licenseFile) {
+      try { if (!readInside(d, desc.licenseInfo.licenseFile, 1 << 20).length) err(`${where}: licenseFile ${desc.licenseInfo.licenseFile} is empty`); } catch (e) { err(`${where}: licenseFile ${e.message}`); }
+    }
+    if (desc.licenseInfo?.spdx && desc.licenseInfo.spdx !== desc.license) warnings.push(`${where}: licenseInfo.spdx (${desc.licenseInfo.spdx}) differs from license (${desc.license})`);
     if (desc.preview) {
       try { readInside(d, desc.preview, 2 << 20); } catch (e) { err(`${where}: preview ${e.message}`); }
     } else if (NEEDS_PREVIEW.has(desc.type)) warnings.push(`${where}: no preview for ${desc.type}`);
@@ -97,7 +107,7 @@ export function loadLibrary(dir) {
   };
   for (const id of byId.keys()) visit(id, []);
   if (manifest && !assets.length) warnings.push('library has no assets');
-  return { dir: root, manifest, assets, errors: [...new Set(errors)], warnings, bytes: tree.bytes };
+  return { dir: root, manifest, assets, errors: [...new Set(errors)], warnings, bytes: tree.bytes, limits };
 }
 
 
@@ -110,6 +120,7 @@ export function buildIndex(lib) {
     const e = { id, type: d.type, version: d.version, tags: [...d.tags].sort(), license: d.license, author: d.author, hash: d.hash, descriptor: `assets/${id}/asset.json`, bytes: d.files.reduce((n, f) => n + f.bytes, 0) };
     for (const k of ['name', 'description', 'format', 'size', 'duration', 'palette', 'dependencies']) if (d[k] !== undefined) e[k] = d[k];
     if (d.preview) e.preview = `assets/${id}/${d.preview}`;
+    if (d.licenseInfo) e.licenseStatus = d.licenseInfo.status; // only for v2 descriptors, so v1 INDEX files stay byte-identical
     return e;
   });
   const libHash = sha256(Buffer.from(stableJson({ name: m.name, version: m.version, license: m.license, assets: assets.map((a) => [a.id, a.version, a.hash]) })));

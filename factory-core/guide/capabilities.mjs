@@ -5,6 +5,7 @@ import { capabilities as stylesCaps } from '../styles/capabilities.mjs';
 import { capabilities as libraryCaps } from '../library/capabilities.mjs';
 
 const result = { type: 'object', required: ['ok', 'data', 'error', 'next'], properties: { ok: { type: 'boolean' }, data: {}, error: { type: ['object', 'null'] }, next: { type: 'array', items: { type: 'string' } } } };
+const langOut = { ...result, properties: { ...result.properties, data: { type: ['object', 'null'], properties: { language: { type: 'object', description: 'present when a language is set/detected: {id, source: input|detected, template, verify:{test,build,check,run}}', properties: { id: { type: 'string', enum: ['web', 'rust', 'go', 'python'] }, source: { type: 'string' }, template: { type: 'string' }, verify: { type: 'object' } } } } } } };
 const str = (description) => ({ type: 'string', description });
 let live = null;      // registry given to registerGuide (optional)
 let reranker = null;  // optional LLM re-ranker hook: (ranked[{name,score}], goal) -> ordered names
@@ -20,13 +21,13 @@ const opts = () => ({ capabilities: catalog(), rerank: reranker });
 
 export const capabilities = [
   { name: 'guide.route', summary: 'Route a free-text goal to ranked skills, capabilities, kits, style presets and existing assets, with the next commands and a model tier per step. Deterministic keyword scoring, no network or LLM.',
-    inputSchema: { type: 'object', required: ['goal'], additionalProperties: false, properties: { goal: str('what you want to do, in plain words'), limit: { type: 'integer', minimum: 1, maximum: 10 },
+    inputSchema: { type: 'object', required: ['goal'], additionalProperties: false, properties: { goal: str('what you want to do, in plain words'), language: { type: 'string', enum: ['web', 'rust', 'go', 'python'], description: 'tailor commands, kits and file ownership to this language template (templates/<lang>-project); omitted: detected from dir, else unchanged' }, dir: str('project directory used to detect the language (Cargo.toml, go.mod, pyproject.toml, package.json)'), includeWebOnly: { type: 'boolean', description: 'keep JS-only kits in the result for a non-web language' }, limit: { type: 'integer', minimum: 1, maximum: 10 },
       context: { type: 'object', additionalProperties: false, properties: { state: { type: 'object', description: 'project state flags: hasProject, hasTests, hasTracker, hasStyle (booleans)' }, assetNeeds: { type: 'array', items: { type: 'string' }, description: 'e.g. ["cat sprite", "jungle song"]' }, budget: { type: 'string', enum: ['low', 'medium', 'high'] }, style: str('style preset id, restricts asset search to style:<id>'), registryHome: str('registry home dir (default ~/.game-factory)') } } } },
-    outputSchema: result, handler: (i = {}) => route(i, opts()) },
+    outputSchema: langOut, handler: (i = {}) => route(i, opts()) },
   { name: 'guide.plan', summary: 'Turn a goal into a draft swarm manifest skeleton (agents, owners, phases, model tiers, waves) in the SWARM.md format; validates unique ids and disjoint ownership. Optionally writes it.',
-    inputSchema: { type: 'object', required: ['goal'], additionalProperties: false, properties: { goal: str('what is being built'), project: str('project name'), tagline: str('one line'), budget: { type: 'string', enum: ['low', 'medium', 'high'] }, concurrency: { type: 'integer', minimum: 1, maximum: 8 },
+    inputSchema: { type: 'object', required: ['goal'], additionalProperties: false, properties: { goal: str('what is being built'), language: { type: 'string', enum: ['web', 'rust', 'go', 'python'], description: 'tailor commands, kits and file ownership to this language template (templates/<lang>-project); omitted: detected from dir, else unchanged' }, dir: str('project directory used to detect the language (Cargo.toml, go.mod, pyproject.toml, package.json)'), project: str('project name'), tagline: str('one line'), budget: { type: 'string', enum: ['low', 'medium', 'high'] }, concurrency: { type: 'integer', minimum: 1, maximum: 8 },
       agents: { type: 'array', description: 'explicit agents [{id,name,model,phase,owns[],task}] instead of the generated set', items: { type: 'object' } }, out: str('write the manifest to this file'), yes: { type: 'boolean' }, dryRun: { type: 'boolean' } } },
-    outputSchema: result, handler: (i = {}) => plan(i) },
+    outputSchema: langOut, handler: (i = {}) => plan(i) },
   { name: 'guide.check', summary: 'Inspect a project directory and report missing pieces (tests, tracker, contract, style/palette lock, docs, site, gitignore) with a fix and a skill for each.',
     inputSchema: { type: 'object', required: ['project'], additionalProperties: false, properties: { project: str('project directory'), skipAssets: { type: 'boolean' } } },
     outputSchema: result, handler: (i = {}) => check(i) },

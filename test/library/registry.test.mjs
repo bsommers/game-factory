@@ -94,10 +94,10 @@ test('search works with no network at all (local sources only) and no catalogue 
   const r = registrySearch({ ...h, query: 'hello' }); assert.equal(r.data.total, 1); assert.match(r.data.note, /no network/);
 });
 test('capabilities: core registry format, JSON-Schema I/O, unique names, register into array/Map/object', async () => {
-  assert.deepEqual(capabilities.map((c) => c.name), ['library.new', 'library.add', 'library.validate', 'library.index', 'library.publish', 'library.install', 'library.verify', 'registry.add', 'registry.remove', 'registry.list', 'registry.refresh', 'registry.search', 'registry.show']);
+  assert.deepEqual(capabilities.map((c) => c.name), ['library.new', 'library.add', 'library.validate', 'library.index', 'library.publish', 'library.install', 'library.verify', 'library.license-set', 'library.license-audit', 'library.attribution', 'library.ip-review', 'registry.add', 'registry.remove', 'registry.list', 'registry.refresh', 'registry.search', 'registry.show']);
   for (const c of capabilities) { assert.ok(c.summary && c.inputSchema && c.outputSchema && typeof c.handler === 'function', c.name); assert.equal(c.inputSchema.type, 'object'); }
   const a = []; registerLibrary(a); const m = new Map(); registerLibrary(m); const o = { n: 0, register() { this.n++; } }; registerLibrary(o);
-  assert.equal(a.length, 13); assert.equal(m.size, 13); assert.equal(o.n, 13);
+  assert.equal(a.length, 17); assert.equal(m.size, 17); assert.equal(o.n, 17);
   const d = mkLib('cap', [item('a')]);
   const call = async (n, i) => capabilities.find((c) => c.name === n).handler(i);
   const out = await call('library.validate', { library: d });

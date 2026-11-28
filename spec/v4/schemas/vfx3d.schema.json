@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "vfx3d.schema.json",
+  "title": "vfx3d",
+  "description": "Data-driven 3D effect (whirlpool, flood water, sludge, fire, steam, sparks). Y-up, metres, seconds. The `field` block is the SAME force data boss3d/locomotion3d use for physics; `water`, `visual` and `emitters` drive the renderer.",
+  "type": "object",
+  "required": ["id", "kind"],
+  "definitions": {
+    "vec3": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 },
+    "color": { "anyOf": [ { "type": "string", "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$" }, { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 4 } ] },
+    "range": { "anyOf": [ { "type": "number", "minimum": 0 }, { "type": "array", "items": { "type": "number", "minimum": 0 }, "minItems": 2, "maxItems": 2 } ] },
+    "area": { "type": "object", "properties": { "shape": { "enum": ["cylinder", "box"] }, "center": { "$ref": "#/definitions/vec3" }, "radius": { "type": "number", "minimum": 0 }, "height": { "type": "number", "minimum": 0 }, "size": { "$ref": "#/definitions/vec3" } } },
+    "pulse": { "type": "object", "required": ["period", "active"], "properties": { "period": { "type": "number", "minimum": 0 }, "active": { "type": "number", "minimum": 0 }, "telegraph": { "type": "number", "minimum": 0 }, "idle": { "type": "number", "minimum": 0 } } }
+  },
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string" },
+    "kind": { "enum": ["whirlpool", "water", "sludge", "fire", "steam", "spark"] },
+    "seed": { "type": "integer" },
+    "field": { "type": "object", "required": ["kind"], "description": "Gameplay force field. vortex fields are key-for-key the boss3d vortex hazard (center, radius, strength, falloff, swirl, ramp, coreRadius, coreDps, pulse, resistFactor); flow fields are the locomotion3d env.force/flow data.",
+      "properties": {
+        "kind": { "enum": ["none", "vortex", "flow"] },
+        "center": { "$ref": "#/definitions/vec3" }, "radius": { "type": "number", "minimum": 0 }, "strength": { "type": "number", "minimum": 0 }, "falloff": { "type": "number", "minimum": 0 }, "swirl": { "type": "number" },
+        "ramp": { "type": "number", "minimum": 0 }, "coreRadius": { "type": "number", "minimum": 0 }, "coreDps": { "type": "number", "minimum": 0 }, "resistFactor": { "type": "number", "minimum": 0, "maximum": 1 },
+        "flow": { "$ref": "#/definitions/vec3" }, "dps": { "type": "number", "minimum": 0 }, "area": { "$ref": "#/definitions/area" }, "pulse": { "$ref": "#/definitions/pulse" } } },
+    "water": { "type": "object", "required": ["waves"], "properties": {
+      "level": { "type": "number" }, "size": { "type": "array", "items": { "type": "number", "minimum": 0 }, "minItems": 2, "maxItems": 2 },
+      "rise": { "type": "object", "required": ["fromY", "toY", "seconds"], "properties": { "fromY": { "type": "number" }, "toY": { "type": "number" }, "seconds": { "type": "number", "minimum": 0 } } },
+      "waves": { "type": "array", "minItems": 1, "maxItems": 4, "items": { "type": "object", "required": ["dir", "wavelength", "amplitude"], "properties": {
+        "dir": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 }, "wavelength": { "type": "number", "minimum": 0 }, "amplitude": { "type": "number", "minimum": 0 },
+        "steepness": { "type": "number", "minimum": 0, "maximum": 1 }, "speed": { "type": "number", "minimum": 0 }, "phase": { "type": "number" } } } } } },
+    "visual": { "type": "object", "properties": {
+      "swirlRate": { "type": "number" }, "twist": { "type": "number" }, "arms": { "type": "number", "minimum": 1 }, "foam": { "type": "number", "minimum": 0, "maximum": 1 }, "depth": { "type": "number", "minimum": 0 }, "funnelPower": { "type": "number", "minimum": 0 }, "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+      "color": { "$ref": "#/definitions/color" }, "deepColor": { "$ref": "#/definitions/color" }, "foamColor": { "$ref": "#/definitions/color" } } },
+    "emitters": { "type": "array", "items": { "type": "object", "properties": {
+      "id": { "type": "string" }, "rate": { "type": "number", "minimum": 0 }, "burst": { "type": "object", "required": ["count"], "properties": { "count": { "type": "integer", "minimum": 1, "maximum": 999 }, "time": { "type": "number", "minimum": 0 }, "repeat": { "type": "number", "minimum": 0 } } },
+      "duration": { "type": "number", "minimum": 0 }, "lifetime": { "$ref": "#/definitions/range" }, "maxParticles": { "type": "integer", "minimum": 1, "maximum": 5000 },
+      "shape": { "type": "object", "properties": { "type": { "enum": ["point", "sphere", "box", "disc", "cone"] }, "radius": { "type": "number", "minimum": 0 }, "size": { "$ref": "#/definitions/vec3" } } },
+      "direction": { "$ref": "#/definitions/vec3" }, "spread": { "type": "number", "minimum": 0, "maximum": 180 }, "speed": { "$ref": "#/definitions/range" }, "gravity": { "$ref": "#/definitions/vec3" }, "drag": { "type": "number", "minimum": 0 },
+      "size": { "type": "object", "properties": { "start": { "type": "number", "minimum": 0 }, "end": { "type": "number", "minimum": 0 } } }, "blend": { "enum": ["add", "mix"] },
+      "color": { "type": "array", "items": { "type": "object", "required": ["t", "c"], "properties": { "t": { "type": "number", "minimum": 0, "maximum": 1 }, "c": { "$ref": "#/definitions/color" }, "a": { "type": "number", "minimum": 0, "maximum": 1 } } } } } } }
+  }
+}

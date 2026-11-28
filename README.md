@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/assets/logo.png" alt="Game Factory" width="900"></p>
+
 # game-factory
 
 Reusable tooling for building games with a swarm of AI coding agents: a task manifest and live dashboard, Godot test/screenshot/build scripts, asset fetching, procedural audio and Blender model generators, and notes on what went wrong so the next game goes faster.
@@ -11,11 +13,16 @@ Extracted from **KÄSEKRIEG: RAT OPS** (Godot 4.7 third-person shooter): https:/
 | `factory-core/` | Capability registry (styles, library/registry, guide, project, kits, swarm, docs): `{name, summary, inputSchema, outputSchema, handler}` returning `{ok,data,error,next}` |
 | `api/`, `mcp/` | `factory serve --port N` (127.0.0.1 REST + OpenAPI + SSE) and `factory mcp` (stdio MCP tools + resources) generated from the registry; see `docs/SURFACES.md`, `AGENTS.md` |
 | `swarm/` | Agent swarm tracker: `bin/swarm-plan.mjs` (manifest → per-agent prompts), `bin/track.mjs` (progress events), `dashboard/server.mjs` (live dashboard, serves `out/` and `dist/` images, follows symlinks), `PLAYBOOK.md`, `PROTOCOL.md`, templates |
+| `tools/brand/gen.mjs` | Regenerates the brand kit (`assets/logo.*`, `docs/assets/{logo,icon,social}.*`, `docs/assets/icons/icon-*.*`; PNGs via inkscape, `--no-png` to skip) |
 | `tools/` | `godot.sh`, `install_godot.sh`, `run_tests.sh` (headless Godot tests), `shot.sh` (GPU screenshots in a private Xvfb, no desktop window), `build.sh` (export linux/windows/macos), `qa.sh`, `fetch_assets.mjs` (CC0 Poly Haven/ambientCG fetcher), `blender_ipc/` (interactive Blender 5.0+ live GUI IPC bridge + sandbox-safe client), `print/stl_verify.py` (binary STL watertightness, 2-manifold & bilateral symmetry QA) |
+| `factory-core/languages/` | Language axis: `languages.list/show`, `project.new --lang gdscript\|js\|go\|rust\|python` (see `docs/LANGUAGES.md`) |
 | `templates/godot-project/` | Autoloads (events/settings/game/defs), test runner and screenshot harness, `project.godot` |
 | `examples/ratops/` | Real specimens: SWARM.md manifest, procedural Blender character/prop builders, audio synth, level converter |
+| `docs/MODELS.md` | Generate/export 3D models (obj, stl, ply, glb/gltf, 3mf) for printing, Blender, engines: `models.*` capabilities, mesh library |
 | `docs/LEARNINGS.md` | Mistakes and fixes from the first build |
 | `docs/LEARNINGS-PAWFALL.md` | Mistakes and fixes from the PawFall web-game swarm |
+| `docs/LEARNINGS-CHEESEMAGEDDON.md` | Bevy 0.20 API changes, Solari RT, headless GPU shots, cost routing from the Rust FPS swarm |
+| `templates/bevy-fps-project/` | Rust + Bevy 0.20 FPS starter (core contract, one Plugin per module, Solari RT + raster preset, `--shot`) |
 | `docs/NEXT-GAME.md` | Plan for an outdoor/open-world follow-up |
 
 ## Web-game extras (`factory new <dir> "<Title>" --web`)
@@ -24,12 +31,21 @@ Extracted from **KÄSEKRIEG: RAT OPS** (Godot 4.7 third-person shooter): https:/
 | `tools/serve.mjs`, `tools/shot.mjs` | zero-dep static server; headless-Chrome screenshots/frames/key-driving via CDP |
 | `tools/sheet.mjs <artModule>` | validates a PixBuf art module against `defs.artManifest()` and renders a contact-sheet PNG |
 | `tools/check-imports.mjs [src]` | integration lint: every relative import resolves and every named import is really exported (catches contract drift between parallel agents) |
+| `tools/validate-level.mjs <level.json>`, `tools/botplay.mjs --level id --seeds 1,2,3` | generic level validator (JSON + `id`, plus the game's own `src/levels/level.js` `validateLevel` if present); bot-play harness over the game's `src/sim` (exit 2 when the game has none) |
+| `scripts/verify.sh` (`npm run verify`) | post-build gate: lint:imports, tests, validate every `src/levels/*.json`, botplay each level |
+| `web.*` capabilities | `web.validate-level`, `web.botplay`, `web.sheet`, `web.verify`, `web.serve` drive the tools above through CLI (`factory call`), HTTP, MCP and the generated clients; they run the *project's own* `tools/*.mjs`, so a game can customise them |
+| `tools/build-web.mjs`, `tools/package-desktop.mjs`, `tools/desktop/` | `npm run build` (single-file + zip), `npm run package[:all]` (Neutralino desktop archives for linux/win/mac with launchers and installers), smoke tests; see `docs/BUILD-WEB.md` |
 | `tools/contact_sheet.sh`, `tools/smoke_web.sh` | labelled contact sheet of screenshots (ImageMagick); smoke test of the shipped single-file build |
 | `tools/swarm-tracker/bin/swarm-next.mjs` | scheduler: shows running/done, enforces concurrency + model-tier caps (`--cap 5 --fable 1 --opus 2`), prints the next spawn prompts |
-| `templates/web-project/src/kits/` | content kits copied by `--web`: art-kit, character-kit, audio-kit, fx-kit, docs-kit (see `docs/KITS.md`) |
+| `templates/web-project/src/kits/` | content kits, opt-in via `--web --with kits=a,b` (none by default; `--solo` drops swarm tooling): art-kit, character-kit, audio-kit, fx-kit, docs-kit (see `docs/KITS.md`) |
 | `templates/web-project/src/lib/` | gameplay engines copied by `--web`: platformer-physics, hazard-kit, world-gen (+ fairness validator), autopilot-kit; tests in `test/lib/` (see its README.md) |
 
 ## Quick start
+```sh
+scripts/bootstrap.sh                                  # check prerequisites, smoke-test the factory (--json for agents)
+scripts/bootstrap.sh --new ~/src/fun/my-game "My Game"   # ...and scaffold a web game with its own AGENTS.md
+```
+Or by hand:
 ```sh
 bin/factory new ~/src/fun/my-game "My Game"
 cd ~/src/fun/my-game && tools/install_godot.sh && tools/run_tests.sh

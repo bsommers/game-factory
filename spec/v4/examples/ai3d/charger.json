@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "duration": 10,
+  "seed": 5,
+  "configs": {
+    "boar": {
+      "version": 1, "id": "boar", "role": "charger",
+      "stats": { "moveSpeed": 3, "turnRate": 5 },
+      "perception": { "sightRange": 18, "fovDeg": 140, "hearRadius": 5, "memorySec": 3 },
+      "moves": { "gore": { "range": { "min": 0, "max": 2 }, "cooldown": 1, "duration": 0.5 } },
+      "tree": { "type": "selector", "children": [
+        { "type": "sequence", "children": [
+          { "type": "condition", "test": "canSee" },
+          { "type": "selector", "children": [
+            { "type": "cooldown", "id": "charge", "seconds": 4, "child": { "type": "sequence", "memory": true, "children": [
+              { "type": "condition", "test": "inRange", "min": 5, "max": 16 },
+              { "type": "action", "do": "charge", "windup": 0.8, "speed": 3.2, "maxDist": 14, "recover": 0.8, "hitDist": 1.4, "hitMove": "gore", "tell": "paw-ground" } ] } },
+            { "type": "weighted", "hold": 1, "children": [
+              { "type": "action", "do": "orbit", "radius": 6, "dir": "random", "speed": 0.7, "duration": 1.5, "weight": 2 },
+              { "type": "action", "do": "path", "to": "target", "stop": 2.5, "weight": 1 } ] } ] } ] },
+        { "type": "action", "do": "idle" } ] }
+    }
+  },
+  "agents": [ { "id": "boar1", "config": "boar", "pos": [0, 0, 0], "facing": [0, 0, 1] } ],
+  "target": { "id": "player", "noise": 0, "path": [ { "t": 0, "pos": [0, 0, 10] }, { "t": 10, "pos": [2, 0, 10] } ] }
+}

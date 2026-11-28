@@ -1,0 +1,28 @@
+# Cargo workspace for a game-factory Rust project.
+#   crates/engine  deterministic, dependency-free gameplay engines (ports of the factory JS libs)
+#   crates/game    macroquad 2D starter game that uses the engine
+#
+# `cargo test` only builds the engine (default-members) so it works offline and fast.
+# Build the game explicitly: `cargo run -p game` or `cargo check -p game` (needs the network once for macroquad).
+[workspace]
+resolver = "2"
+members = ["crates/engine", "crates/game"]
+default-members = ["crates/engine"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# Size-tuned release profile (good for wasm downloads and small native binaries).
+#   opt-level "z"  smallest code (use "s" for a bit more speed, "3" if you are CPU-bound)
+#   lto            whole-program optimisation, drops unused code
+#   codegen-units  1 = better optimisation, slower compile
+#   strip          remove symbols
+#   panic abort    no unwinding tables (note: autopilot::trajectory cannot catch panics then; it still swallows Err)
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

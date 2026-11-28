@@ -1,4 +1,4 @@
-# Content kits (`src/kits/`, copied by `factory new --web`)
+# Content kits (`src/kits/`, opt-in: `factory new --web --with kits=art,audio`)
 
 Zero-dependency, Node-safe, tested ES modules extracted from PawFall (and its sibling games). Each kit works in Node (tests, tools) and the browser. `src/kits/index.js` re-exports all of them as namespaces (`art`, `character`, `audio`, `fx`, `docs`). Tests: `node --test test/kits/*.test.mjs`. Examples live in `src/kits/examples/` and write to `out/`.
 
@@ -43,3 +43,6 @@ Publish `docs/index.html` with GitHub Pages (Settings, Pages, branch main, folde
 
 ## Using the kits in a swarm
 Hand each content agent the kit name in its prompt so it reuses the helpers instead of re-inventing PixBuf, the synth or the particle code. Kit code is a starting point: copy and specialise inside your game (do not edit the factory copy in a game repo expecting it to flow back).
+
+## raytrace-kit
+`createRaytracer(canvas, scene, { prefer })` never throws: WebGPU compute path tracer (flat BVH buffers), else WebGL2 SDF ray-marcher, else Canvas2D painter; `.tier`/`.errors` say what happened. Pure helpers `sceneToBuffers`, `cameraBasis`, `primaryRay`, `intersectBuffers`, `detectCapabilities`, `sdfUniforms` are unit-tested in Node. Buffer layout in `kits/raytrace-kit/README.md`; offline renders via `tools/render/pathtrace.mjs` (docs/RENDERING.md).

@@ -1,0 +1,8 @@
+{
+  "fighters": ["hero.json", "enemy-swipe.json"],
+  "frames": 240, "distance": 1.4, "seed": 7,
+  "script": {
+    "hero": [{ "at": 1, "action": "light" }, { "at": 2, "action": "light" }, { "at": 3, "action": "heavy" }],
+    "ghoul": [{ "at": 60, "action": "swipe" }, { "at": 150, "action": "swipe" }]
+  }
+}

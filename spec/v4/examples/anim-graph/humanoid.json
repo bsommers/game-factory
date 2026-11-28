@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "name": "humanoid-locomotion-attack",
+  "parameters": {
+    "speed": { "type": "float", "default": 0 },
+    "grounded": { "type": "bool", "default": true },
+    "attack": { "type": "trigger" },
+    "hurt": { "type": "trigger" }
+  },
+  "rootMotion": { "mode": "none", "bone": "spine", "axes": "xz" },
+  "clips": {
+    "Running": { "rootMotion": "inplace" },
+    "Walking": { "rootMotion": "inplace" }
+  },
+  "layers": [
+    {
+      "name": "base",
+      "entry": "locomotion",
+      "states": {
+        "locomotion": {
+          "blend": { "param": "speed", "points": [ { "at": 0, "clip": "Idle" }, { "at": 1.5, "clip": "Walking" }, { "at": 4, "clip": "Running" } ] },
+          "events": [ { "name": "footstep", "at": 0.25 }, { "name": "footstep", "at": 0.75 } ]
+        },
+        "hurt": { "clip": "Hurt", "loop": false, "events": [ { "name": "i_frame_on", "at": 0 }, { "name": "i_frame_off", "at": 0.8 } ] }
+      },
+      "transitions": [
+        { "from": "*", "to": "hurt", "conditions": [ { "param": "hurt" } ], "duration": 0.05, "interrupt": true },
+        { "from": "hurt", "to": "locomotion", "exitTime": 1, "duration": 0.15 }
+      ]
+    },
+    {
+      "name": "upper-attack",
+      "entry": "none",
+      "weight": 1,
+      "mask": { "bones": [ "spine.001" ] },
+      "states": {
+        "none": { "empty": true },
+        "attack": {
+          "clip": "Boxing_Practice", "loop": false, "speed": 2.5,
+          "events": [ { "name": "hit_start", "at": 0.2 }, { "name": "hit_end", "at": 0.35 }, { "name": "attack_end", "at": 0.9 } ]
+        }
+      },
+      "transitions": [
+        { "from": "none", "to": "attack", "conditions": [ { "param": "attack" }, { "param": "grounded", "value": true } ], "duration": 0.08 },
+        { "from": "attack", "to": "none", "exitTime": 0.9, "duration": 0.12 }
+      ]
+    },
+    {
+      "name": "breathing",
+      "entry": "on",
+      "blend": "additive",
+      "weight": 0.5,
+      "mask": { "bones": [ "spine.001" ] },
+      "states": { "on": { "clip": "Breathe" } },
+      "transitions": []
+    }
+  ]
+}

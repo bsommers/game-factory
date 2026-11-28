@@ -1,0 +1,42 @@
+{
+  "id": "vortex-maw",
+  "name": "River Maw",
+  "pos": [0, 0, 0],
+  "arena": { "radius": 18, "platforms": [
+    { "center": [11, 0, 0], "radius": 1.8, "y": 1.6 }, { "center": [-11, 0, 0], "radius": 1.8, "y": 1.6 },
+    { "center": [0, 0, 11], "radius": 1.8, "y": 1.6 }, { "center": [0, 0, -11], "radius": 1.8, "y": 1.6 } ] },
+  "core": { "hp": 224, "pos": [0, -1, 0], "radius": 2.5, "exposedWhen": { "phase": "p3", "stunned": true } },
+  "parts": [
+    { "id": "throat", "hp": 84, "pos": [0, -0.5, 0], "radius": 2.2, "weakPoint": { "multiplier": 3, "open": ["recovery"] }, "armor": 0.25, "stagger": { "threshold": 40, "duration": 3, "decayPerSec": 4 }, "regrow": { "time": 15, "hpFrac": 0.5 }, "onDeath": { "coreDamageFrac": 0.2, "stagger": 5 } },
+    { "id": "lip_east", "hp": 42, "pos": [5, 0, 0], "radius": 1.5, "armor": 0, "onDeath": { "coreDamageFrac": 0.05, "stagger": 1 } },
+    { "id": "lip_west", "hp": 42, "pos": [-5, 0, 0], "radius": 1.5, "armor": 0, "onDeath": { "coreDamageFrac": 0.05, "stagger": 1 } }
+  ],
+  "phases": [
+    { "id": "p1", "openingDelay": 2, "gap": [2, 3], "maxConcurrent": 1,
+      "attacks": [
+        { "id": "debris_arc", "weight": 2, "cooldown": 3, "windup": 1.4, "active": 0.25, "recovery": 1.0, "damage": 40, "zone": { "shape": "circle", "at": "target", "r": 2.8, "lockFrac": 0.35 }, "warning": { "vfx": "ripples", "sfx": "splash_rise", "decal": "circle" } },
+        { "id": "surge_ring", "weight": 1, "cooldown": 6, "windup": 1.3, "active": 0.3, "recovery": 1.5, "damage": 46, "zone": { "shape": "ring", "rInner": 5, "rOuter": 8, "maxY": 0.9 }, "warning": { "vfx": "water_drop", "sfx": "hum_rise", "decal": "ring" } },
+        { "id": "gulp", "part": "throat", "weight": 1, "cooldown": 7, "windup": 1.2, "active": 0.3, "recovery": 3, "damage": 33, "zone": { "shape": "circle", "r": 3.2 }, "warning": { "vfx": "level_drop", "sfx": "gulp_rise", "decal": "circle" } }
+      ] },
+    { "id": "p2", "enter": { "partsDown": 1 }, "transition": { "invuln": 1.5 }, "reviveParts": ["lip_east", "lip_west"], "gap": [1.6, 2.4], "maxConcurrent": 2,
+      "adds": [{ "at": 10, "kind": "drum_bomb", "count": 2, "radius": 10 }],
+      "attacks": [
+        { "id": "debris_arc", "weight": 2, "cooldown": 2.5, "windup": 1.3, "active": 0.25, "recovery": 0.9, "damage": 40, "zone": { "shape": "circle", "at": "target", "r": 2.8, "lockFrac": 0.35 }, "warning": { "vfx": "ripples", "sfx": "splash_rise", "decal": "circle" } },
+        { "id": "surge_ring", "weight": 1, "cooldown": 5, "windup": 1.2, "active": 0.3, "recovery": 1.3, "damage": 46, "zone": { "shape": "ring", "rInner": 5, "rOuter": 8, "maxY": 0.9 }, "warning": { "vfx": "water_drop", "sfx": "hum_rise", "decal": "ring" } },
+        { "id": "current_sweep", "weight": 1, "cooldown": 7, "windup": 1.2, "active": 1.4, "recovery": 1.4, "damage": 46, "zone": { "shape": "sweep", "r": 14, "width": 1.8, "arc": [-120, 120], "maxY": 0.8 }, "warning": { "vfx": "current_line", "sfx": "rush_rise", "decal": "arc" } },
+        { "id": "gulp", "part": "throat", "weight": 1, "cooldown": 6, "windup": 1.1, "active": 0.3, "recovery": 3, "damage": 33, "zone": { "shape": "circle", "r": 3.2 }, "warning": { "vfx": "level_drop", "sfx": "gulp_rise", "decal": "circle" } }
+      ] },
+    { "id": "p3", "enter": { "hpBelow": 0.55 }, "transition": { "invuln": 2 }, "gap": [1.4, 2.0], "maxConcurrent": 2,
+      "attacks": [
+        { "id": "debris_arc", "weight": 2, "cooldown": 2.2, "windup": 1.2, "active": 0.25, "recovery": 0.8, "damage": 40, "zone": { "shape": "circle", "at": "target", "r": 3, "lockFrac": 0.35 }, "warning": { "vfx": "ripples", "sfx": "splash_rise", "decal": "circle" } },
+        { "id": "funnel_ring", "weight": 1, "cooldown": 5, "windup": 1.2, "active": 0.3, "recovery": 1.2, "damage": 50, "zone": { "shape": "ring", "rInner": 4, "rOuter": 7.5, "maxY": 0.9 }, "warning": { "vfx": "water_drop", "sfx": "hum_rise", "decal": "ring" } },
+        { "id": "gulp", "part": "throat", "weight": 1, "cooldown": 5, "windup": 1.0, "active": 0.3, "recovery": 3, "damage": 33, "requires": { "partsAlive": ["throat"] }, "zone": { "shape": "circle", "r": 3.2 }, "warning": { "vfx": "level_drop", "sfx": "gulp_rise", "decal": "circle" } }
+      ] }
+  ],
+  "hazards": [
+    { "id": "whirl", "kind": "vortex", "start": 1, "center": [0, 0, 0], "radius": 17, "strength": 3.2, "falloff": 1.2, "swirl": 0.5, "ramp": 3, "coreRadius": 2.2, "coreDps": 12, "resistFactor": 0.3, "pulse": { "period": 12, "active": 4, "telegraph": 1.5, "idle": 0.3 }, "warning": { "vfx": "hum_ring", "sfx": "hum_rise", "ui": "ring_pulse" } },
+    { "id": "debris_rain", "kind": "debris", "phase": "p2", "start": 4, "interval": 3, "count": 2, "r": 2.2, "damage": 12, "telegraph": 1.4, "aimAtTarget": 0.4, "area": { "center": [0, 0, 0], "radius": 16 }, "warning": { "vfx": "shadow_circle", "sfx": "whistle" } },
+    { "id": "tide", "kind": "flood", "phase": "p2", "start": 6, "fromY": 0, "toY": 1.2, "rise": 14, "duration": 22, "dps": 6, "warning": { "vfx": "water_rise", "sfx": "gush" } }
+  ],
+  "enrage": { "afterSeconds": 170, "speedMult": 1.15, "damageMult": 1.1, "windupMult": 1 }
+}

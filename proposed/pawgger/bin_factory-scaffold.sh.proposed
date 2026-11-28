@@ -1,0 +1,12 @@
+--- a/bin/factory-scaffold.sh	2026-11-21 08:44:29.508126647 -0500
++++ b/bin/factory-scaffold.sh	2026-11-21 08:44:29.525067264 -0500
+@@ -24,6 +24,9 @@
+       cp "$FACT/swarm/templates/SWARM.md" "$D/docs/swarm/SWARM.md"; cp "$FACT/swarm/templates/CHECKPOINT.md" "$D/docs/CHECKPOINT.md"
+       cp "$FACT/swarm/templates/LEARNINGS.md" "$D/docs/LEARNINGS.md"; cp "$FACT/swarm/PLAYBOOK.md" "$D/docs/PLAYBOOK.md"
+       printf '.tracker/\nout/\ndist/\n*.log\nnode_modules/\ndocs/CHECKPOINT.md\ndocs/swarm/prompts/\ndocs/swarm/progress/\n' > "$D/.gitignore"
++      cp "$FACT/templates/web-project/README.template.md" "$D/README.template.md"; cp "$FACT/templates/web-project/shots.config.json" "$D/shots.config.json"
++      cp "$FACT/templates/web-project/tools/shots.mjs" "$FACT/templates/web-project/tools/make-gif.sh" "$D/tools/"
++      mkdir -p "$D/.github/workflows" "$D/docs/screenshots"; cp "$FACT/templates/web-project/.github/workflows/pages.yml" "$D/.github/workflows/"; cp "$FACT/templates/web-project/docs/README.md" "$D/docs/README.md"; cp "$FACT/docs/SHIP-SHOWCASE.md" "$D/docs/SHIP-SHOWCASE.md"
+       printf '# %s\n\nScaffolded by `game-factory new --web`. `npm start` serves the game (port 4781); `npm run plan` then `npm run tracker` opens the swarm tracker (port 4780).\n' "$NAME" > "$D/README.md"
+       (cd "$D" && git init -q -b main); echo "created web game $D"; exit 0
+     fi

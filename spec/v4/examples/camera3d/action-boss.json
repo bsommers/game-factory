@@ -1,0 +1,5 @@
+{ "version": 1,
+  "follow": { "distance": 6.5, "height": 1.8, "shoulder": 0.4, "pitch": 0.3, "positionLag": 0.1, "probeRadius": 0.3 },
+  "lockOn": { "maxRange": 30, "framing": 0.6, "maxExtraDistance": 5, "framingDistancePerMetre": 0.2 },
+  "fov": { "base": 65, "kickDecay": 0.25 },
+  "shake": { "maxOffset": 0.2, "decay": 0.9, "seed": 7 } }

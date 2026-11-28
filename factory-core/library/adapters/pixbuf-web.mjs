@@ -3,7 +3,7 @@
 // src/art/<module>.js exports build() -> { name: PixBuf | PixBuf[] }; src/audio/sfx.js exports describe/renderSfx/duration;
 // src/audio/music.js exports describeMusic/renderMusic.
 // NOTE: this imports the PROJECT's own code (the project is yours); never point it at an untrusted checkout.
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { previewOf, stripOf, encodePNG, waveformPNG, wavBytes } from '../png.mjs';
@@ -40,22 +40,35 @@ export async function collect({ project, types, names, game, styleTag }) {
   for (const mod of mods) {
     const rows = ART.filter((r) => r.module === mod && want(typeOfRow(r), r.name));
     if (!rows.length) continue;
-    const built = (await imp(join(project, 'src', 'art', `${mod}.js`))).build();
-    for (const r of rows) {
-      const v = built[r.name], frames = (Array.isArray(v) ? v : [v]).filter((p) => p && p.rgba);
-      if (!frames.length) throw new Error(`art module ${mod} did not build ${r.name}`);
-      const strip = stripOf(frames.map((p) => ({ w: p.w, h: p.h, rgba: p.rgba }))), type = typeOfRow(r), pal = new Set();
-      for (let i = 0; i < strip.rgba.length; i += 4) if (strip.rgba[i + 3] >= 128) pal.add(hexOf(strip.rgba[i], strip.rgba[i + 1], strip.rgba[i + 2]));
-      const it = {
-        id: `${g}.${r.name.replace(/_/g, '-')}`, type, name: r.name, description: r.desc || r.name, format: 'png-strip-rgba',
-        size: { w: frames[0].w, h: frames[0].h, frames: frames.length },
-        tags: [g, `module:${mod}`, 'pixel-art', ...(frames.length > 1 ? ['animated'] : []), ...styleTags],
-        provenance: { game: gameName, generator: `src/art/${mod}.js build() (deterministic, procedural)` },
-        files: [{ path: `${r.name}.png`, data: encodePNG(strip.w, strip.h, strip.rgba) }],
-        preview: { path: 'preview.png', data: previewOf(strip, 256, 2) },
-      };
-      if (pal.size && pal.size <= 256) it.palette = [...pal].sort();
-      items.push(it);
+    // Resolution variants: a module like px16/chars may have siblings px32/chars (same names, bigger frames). Each is exported as
+    // `<name>-px32` with tag variant:px32; the base item keeps its id. Multi-frame items also ship per-frame PNGs.
+    const m = /^(px\d+)\/(.+)$/.exec(mod);
+    const variantMods = [mod];
+    if (m && existsSync(join(project, 'src', 'art'))) {
+      for (const d of readdirSync(join(project, 'src', 'art'))) if (/^px\d+$/.test(d) && d !== m[1] && existsSync(join(project, 'src', 'art', d, `${m[2]}.js`))) variantMods.push(`${d}/${m[2]}`);
+    }
+    for (const vmod of variantMods) {
+      const vtag = vmod === mod ? null : vmod.split('/')[0];
+      let built;
+      try { built = (await imp(join(project, 'src', 'art', `${vmod}.js`))).build(); } catch (e) { if (!vtag) throw e; continue; }
+      for (const r of rows) {
+        const v = built[r.name], frames = (Array.isArray(v) ? v : [v]).filter((p) => p && p.rgba);
+        if (!frames.length) { if (vtag) continue; throw new Error(`art module ${vmod} did not build ${r.name}`); }
+        const strip = stripOf(frames.map((p) => ({ w: p.w, h: p.h, rgba: p.rgba }))), type = typeOfRow(r), pal = new Set();
+        for (let i = 0; i < strip.rgba.length; i += 4) if (strip.rgba[i + 3] >= 128) pal.add(hexOf(strip.rgba[i], strip.rgba[i + 1], strip.rgba[i + 2]));
+        const files = [{ path: `${r.name}.png`, data: encodePNG(strip.w, strip.h, strip.rgba) }];
+        if (frames.length > 1) frames.forEach((f, k) => files.push({ path: `${r.name}_${k}.png`, data: encodePNG(f.w, f.h, f.rgba) }));
+        const it = {
+          id: `${g}.${r.name.replace(/_/g, '-')}${vtag ? '-' + vtag : ''}`, type, name: vtag ? `${r.name}-${vtag}` : r.name, description: r.desc || r.name, format: 'png-strip-rgba',
+          size: { w: frames[0].w, h: frames[0].h, frames: frames.length },
+          tags: [g, `module:${vmod.replace(/[^a-z0-9._-]+/gi, "-").toLowerCase()}`, 'pixel-art', ...(frames.length > 1 ? ['animated'] : []), ...(vtag ? [`variant:${vtag}`] : []), ...styleTags],
+          provenance: { game: gameName, generator: `src/art/${vmod}.js build() (deterministic, procedural)` },
+          files,
+          preview: { path: 'preview.png', data: previewOf(strip, 256, 2) },
+        };
+        if (pal.size && pal.size <= 256) it.palette = [...pal].sort();
+        items.push(it);
+      }
     }
   }
   if (!types || !types.length || types.includes('sfx')) {

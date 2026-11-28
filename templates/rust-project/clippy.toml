@@ -1,0 +1,4 @@
+# Gate: cargo clippy -p engine -- -D warnings
+# The engines are straight ports of JS with many numeric parameters; keep the thresholds permissive.
+too-many-arguments-threshold = 10
+type-complexity-threshold = 400

@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "duration": 12,
+  "seed": 11,
+  "group": { "id": "pack", "maxAttackers": 2, "ttl": 1.5 },
+  "configs": {
+    "thug": {
+      "version": 1, "id": "thug", "role": "melee",
+      "stats": { "moveSpeed": 3.2, "turnRate": 8 },
+      "perception": { "sightRange": 20, "fovDeg": 360, "hearRadius": 8, "memorySec": 5 },
+      "moves": { "club": { "range": { "min": 0, "max": 2 }, "cooldown": 1, "duration": 0.7, "tokens": 1 } },
+      "tree": { "type": "selector", "children": [
+        { "type": "sequence", "children": [
+          { "type": "condition", "test": "hasTarget" },
+          { "type": "selector", "children": [
+            { "type": "sequence", "children": [
+              { "type": "condition", "test": "tokenAvailable" },
+              { "type": "selector", "children": [
+                { "type": "action", "do": "attack", "move": "club" },
+                { "type": "action", "do": "path", "to": "target", "stop": 1.5 } ] } ] },
+            { "type": "action", "do": "surround", "radius": 4 } ] } ] },
+        { "type": "action", "do": "idle" } ] }
+    }
+  },
+  "agents": [
+    { "id": "a", "config": "thug", "pos": [-6, 0, 6] },
+    { "id": "b", "config": "thug", "pos": [0, 0, 8] },
+    { "id": "c", "config": "thug", "pos": [6, 0, 6] },
+    { "id": "d", "config": "thug", "pos": [0, 0, -7] }
+  ],
+  "target": { "id": "player", "noise": 0, "path": [ { "t": 0, "pos": [0, 0, 0] }, { "t": 12, "pos": [0, 0, 0] } ] }
+}

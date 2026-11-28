@@ -21,6 +21,7 @@ tools/library/          standalone validator and indexer (zero dependencies, Nod
 node tools/library/validate-cli.mjs validate .       # schema, hashes, paths, dependencies
 node tools/library/validate-cli.mjs index .          # regenerate INDEX.json / INDEX.md
 node tools/library/validate-cli.mjs index . --check  # fail when the index is stale (CI)
+node tools/library/validate-cli.mjs audit . --public # license gate: every asset needs a verified licenseInfo before a public push
 ```
 
 Add assets with the factory: `factory library add <this dir> --from <game project>` (or the `library.add` capability),

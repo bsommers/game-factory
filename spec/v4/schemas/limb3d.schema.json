@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "limb3d.schema.json",
+  "title": "limb3d config",
+  "description": "Procedural limb (hydra neck, tentacle). Cross-field rules (sever.minKeep < segments, sweep needs arc, per-segment lengths count) are checked by limb3d.validate.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["segments", "radius"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "id": { "type": "string" },
+    "description": { "type": "string" },
+    "segments": { "type": "integer", "minimum": 1, "maximum": 64 },
+    "segmentLength": { "type": "number", "exclusiveMinimum": 0 },
+    "segmentLengths": { "type": "array", "items": { "type": "number", "exclusiveMinimum": 0 } },
+    "lengthTaper": { "type": "number", "exclusiveMinimum": 0, "description": "tip segment length / base segment length" },
+    "radius": { "oneOf": [ { "type": "number", "exclusiveMinimum": 0 }, { "type": "object", "additionalProperties": false, "required": ["base"], "properties": { "base": { "type": "number", "exclusiveMinimum": 0 }, "tip": { "type": "number", "exclusiveMinimum": 0 } } } ] },
+    "root": { "type": "object", "additionalProperties": false, "properties": { "pos": { "$ref": "#/definitions/vec3" }, "dir": { "$ref": "#/definitions/vec3" } } },
+    "solver": { "enum": ["fabrik", "follow"] },
+    "iterations": { "type": "integer", "minimum": 1, "maximum": 32 },
+    "maxBend": { "type": "number", "exclusiveMinimum": 0, "maximum": 170, "description": "degrees between adjacent segments" },
+    "maxBase": { "type": "number", "exclusiveMinimum": 0, "maximum": 170, "description": "degrees between segment 0 and root.dir" },
+    "restFrac": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+    "seek": { "type": "object", "additionalProperties": false, "properties": { "range": { "type": "number", "exclusiveMinimum": 0 }, "speed": { "type": "number", "exclusiveMinimum": 0 }, "height": { "type": "number" } } },
+    "sway": { "type": "object", "additionalProperties": false, "properties": { "amp": { "type": "number", "minimum": 0 }, "freq": { "type": "number", "minimum": 0 } } },
+    "sever": { "type": "object", "additionalProperties": false, "properties": { "allowed": { "type": "boolean" }, "minKeep": { "type": "integer", "minimum": 1 } } },
+    "regrow": { "type": "object", "additionalProperties": false, "properties": { "delay": { "type": "number", "minimum": 0 }, "interval": { "type": "number", "minimum": 0 } } },
+    "motions": { "type": "object", "additionalProperties": { "$ref": "#/definitions/motion" } }
+  },
+  "definitions": {
+    "vec3": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 },
+    "motion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "windup", "strike", "recover"],
+      "properties": {
+        "kind": { "enum": ["strike", "sweep", "slam"] },
+        "windup": { "type": "number", "exclusiveMinimum": 0 },
+        "strike": { "type": "number", "exclusiveMinimum": 0 },
+        "recover": { "type": "number", "exclusiveMinimum": 0 },
+        "curves": { "type": "object", "additionalProperties": false, "properties": { "windup": { "$ref": "#/definitions/ease" }, "strike": { "$ref": "#/definitions/ease" }, "recover": { "$ref": "#/definitions/ease" } } },
+        "damage": { "type": "number", "minimum": 0 },
+        "hitSegments": { "type": "integer", "minimum": 1 },
+        "retract": { "type": "number", "minimum": 0 },
+        "lift": { "type": "number" },
+        "arc": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
+        "radius": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number" },
+        "warning": { "type": "object" }
+      }
+    },
+    "ease": { "enum": ["linear", "easeIn", "easeOut", "easeInOut"] }
+  }
+}

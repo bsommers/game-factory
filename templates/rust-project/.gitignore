@@ -1,0 +1,10 @@
+target/
+dist/
+out/
+.tracker/
+*.log
+__pycache__/
+.venv/
+docs/CHECKPOINT.md
+docs/swarm/prompts/
+docs/swarm/progress/

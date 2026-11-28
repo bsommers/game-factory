@@ -1,0 +1,13 @@
+# build output
+/game
+/game.exe
+/dist/
+/out/
+*.wasm
+wasm_exec.js
+# tooling
+.tracker/
+*.log
+docs/CHECKPOINT.md
+docs/swarm/prompts/
+docs/swarm/progress/

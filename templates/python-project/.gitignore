@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+build/
+dist/
+*.egg-info/
+out/
+.tracker/
+*.log
+docs/CHECKPOINT.md
+docs/swarm/prompts/
+docs/swarm/progress/

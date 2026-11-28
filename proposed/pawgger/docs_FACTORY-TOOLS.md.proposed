@@ -1,0 +1,12 @@
+--- a/docs/FACTORY-TOOLS.md	2026-11-21 08:44:29.509149332 -0500
++++ b/docs/FACTORY-TOOLS.md	2026-11-21 08:44:29.525507172 -0500
+@@ -26,6 +26,9 @@
+ | `src/lib/hazard-kit.js` | hazard behaviour registry, contact resolution (lethal/points/solidTop), patroller/roller/cycler/spawner/taunting-boss patterns | PawFall hazards.js |
+ | `src/lib/world-gen.js` | seeded circular level generator from a rule table (ramp, set-pieces, spacing, collectibles) + fairness validator with a reachability predicate | PawFall levels/gen.js, validate-level |
+ | `src/lib/autopilot-kit.js` | look-ahead bot parts: trajectory, robust macro search, watchdog, skill humaniser | PawFall autopilot.js |
++| `tools/shots.mjs` + `shots.config.json` | every shot x every style via `tools/shot.mjs` into `docs/screenshots`; `--hero` also builds the GIF | Pawgger |
++| `tools/make-gif.sh` | frames to GIF with ffmpeg: crop, then two-pass palette | Pawgger |
++| `.github/workflows/pages.yml` | test, assemble docs/ + `play/`, deploy to Pages | Pawgger |
+ 
+ ## Learnings worth reusing
+ - Pin the orientation convention (models face -Z) in the contract AND in a test; two agents guessed differently.

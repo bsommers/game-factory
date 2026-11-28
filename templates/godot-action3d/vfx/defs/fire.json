@@ -1,0 +1,129 @@
+{
+  "id": "fire",
+  "name": "Brazier fire",
+  "kind": "fire",
+  "seed": 5,
+  "field": {
+    "kind": "flow",
+    "flow": [
+      0,
+      0,
+      0
+    ],
+    "dps": 8,
+    "area": {
+      "shape": "cylinder",
+      "center": [
+        0,
+        0,
+        0
+      ],
+      "radius": 1.1,
+      "height": 2
+    }
+  },
+  "emitters": [
+    {
+      "id": "flame",
+      "rate": 60,
+      "lifetime": [
+        0.6,
+        1.1
+      ],
+      "maxParticles": 150,
+      "shape": {
+        "type": "disc",
+        "radius": 0.45
+      },
+      "direction": [
+        0,
+        1,
+        0
+      ],
+      "spread": 14,
+      "speed": [
+        1.2,
+        2.4
+      ],
+      "gravity": [
+        0,
+        1.5,
+        0
+      ],
+      "drag": 0.8,
+      "size": {
+        "start": 0.5,
+        "end": 0.05
+      },
+      "blend": "add",
+      "color": [
+        {
+          "t": 0,
+          "c": "#ffd36a",
+          "a": 0.55
+        },
+        {
+          "t": 0.35,
+          "c": "#ff8a1f",
+          "a": 0.5
+        },
+        {
+          "t": 0.75,
+          "c": "#c02a12",
+          "a": 0.3
+        },
+        {
+          "t": 1,
+          "c": "#401008",
+          "a": 0
+        }
+      ]
+    },
+    {
+      "id": "embers",
+      "rate": 18,
+      "lifetime": [
+        1.5,
+        3
+      ],
+      "maxParticles": 80,
+      "shape": {
+        "type": "disc",
+        "radius": 0.5
+      },
+      "direction": [
+        0,
+        1,
+        0
+      ],
+      "spread": 35,
+      "speed": [
+        1.5,
+        3.5
+      ],
+      "gravity": [
+        0,
+        0.4,
+        0
+      ],
+      "drag": 0.3,
+      "size": {
+        "start": 0.05,
+        "end": 0.01
+      },
+      "blend": "add",
+      "color": [
+        {
+          "t": 0,
+          "c": "#ffd27a",
+          "a": 1
+        },
+        {
+          "t": 1,
+          "c": "#ff4a12",
+          "a": 0
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "name": "meshy-parkway-pete",
+  "parameters": {
+    "speed": { "type": "float", "default": 0 },
+    "punch": { "type": "trigger" }
+  },
+  "rootMotion": { "mode": "extract", "bone": "spine", "axes": "xz" },
+  "layers": [
+    {
+      "name": "base",
+      "entry": "move",
+      "states": {
+        "move": { "blend": { "param": "speed", "points": [ { "at": 1.2, "clip": "Walking" }, { "at": 3.5, "clip": "Running" } ] } }
+      },
+      "transitions": []
+    },
+    {
+      "name": "upper",
+      "entry": "idle",
+      "mask": { "bones": [ "spine.001" ] },
+      "states": {
+        "idle": { "empty": true },
+        "punch": { "clip": "Boxing_Practice", "loop": false, "speed": 3, "events": [ { "name": "hit_start", "at": 0.1 }, { "name": "hit_end", "at": 0.2 } ] }
+      },
+      "transitions": [
+        { "from": "idle", "to": "punch", "conditions": [ { "param": "punch" } ], "duration": 0.1 },
+        { "from": "punch", "to": "idle", "exitTime": 0.95, "duration": 0.1 }
+      ]
+    }
+  ]
+}

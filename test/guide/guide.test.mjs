@@ -7,7 +7,8 @@ import { loadSkills, buildIndex, indexJson, parseSkill, validateSkill, route, pl
 import { capabilities, registerGuide, catalog, setReranker } from '../../factory-core/guide/capabilities.mjs';
 
 const tmp = (p) => mkdtempSync(join(process.env.CLAUDE_CODE_TMPDIR || tmpdir(), p));
-const cat = () => catalog();
+import { buildRegistry } from '../../factory-core/index.mjs';
+const cat = () => { buildRegistry(); return catalog(); }; // the real registry, so skills may reference any capability area
 
 // ---- skills + frontmatter ----
 test('all skills load and validate', () => {
@@ -194,6 +195,14 @@ test('check: healthy project has no errors or warnings', () => {
   const r = check({ project: d });
   assert.deepEqual(r.data.findings.filter((f) => f.severity !== 'info'), []);
   assert.equal(r.data.score, 100);
+});
+test('check: solo projects get swarm gaps as info, not warnings', () => {
+  for (const files of [{ 'package.json': '{"game":{"solo":true},"scripts":{"test":"x"}}' }, { 'docs/SOLO.md': '#' }]) {
+    const r = check({ project: fx(files) });
+    for (const id of ['no-tracker', 'no-contract']) assert.equal(r.data.findings.find((f) => f.id === id).severity, 'info', id);
+  }
+  const plain = check({ project: fx({ 'package.json': '{"scripts":{"test":"x"}}' }) });
+  assert.equal(plain.data.findings.find((f) => f.id === 'no-tracker').severity, 'warn');
 });
 test('check: unlocked pixel palette and missing test script', () => {
   const d = fx({ 'package.json': '{}', 'config/style.json': JSON.stringify({ id: 'p', palette: { policy: 'free' }, render: { tech: 'canvas2d-pixel' } }) });

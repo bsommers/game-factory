@@ -218,12 +218,29 @@ async function walkImages(base, kind, acc) {
     }
   }
 }
+// Optional .tracker/media.json: {"shots":["out","docs/screens"],"chars":["assets/models"],"textures":["assets/textures"]}
+// extra image dirs (relative to ROOT) shown in the gallery as kinds shot / char / tex. Top-level of "out" is non-recursive.
+let MEDIA_DIRS = [];
+async function loadMediaCfg() {
+  try { const c = JSON.parse(await fsp.readFile(join(TRK, 'media.json'), 'utf8')); return c; } catch { return {}; }
+}
 async function loadGallery() {
   const acc = [];
+  const cfg = await loadMediaCfg();
+  MEDIA_DIRS = [];
+  for (const [k, kind] of [['shots', 'shot'], ['chars', 'char'], ['textures', 'tex']]) {
+    for (const d of cfg[k] || []) {
+      MEDIA_DIRS.push(d);
+      const before = acc.length;
+      await walkImages(join(ROOT, d), kind, acc);
+      if (kind === 'tex') { const keep = acc.slice(0, before).concat(acc.slice(before).filter(g => /_(color|diff)\.(jpe?g|png)$/i.test(g.name))); acc.length = 0; acc.push(...keep); }
+    }
+  }
   await walkImages(join(ROOT, 'out', 'previews'), 'preview', acc);
   await walkImages(join(ROOT, 'out', 'shots'), 'shot', acc);
   acc.sort((a, b) => b.mtime - a.mtime);
-  return acc.slice(0, 200);
+  const seen = new Set(); const out = acc.filter(g => !seen.has(g.path) && seen.add(g.path));
+  return out.slice(0, 400);
 }
 async function loadArtifacts() {
   const acc = [];
@@ -314,11 +331,15 @@ async function loadMedia(gallery, audio) {
 
 // ---------- state assembly ----------
 const RANK = { failed: 0, blocked: 1, running: 2, queued: 3, done: 4 };
+async function loadTokens() {
+  try { return JSON.parse(await fsp.readFile(join(TRK, 'tokens.json'), 'utf8')); } catch { return null; }
+}
 async function buildState() {
   const [plan, evs, checks, scan, gallery, artifacts, audio] = await Promise.all([
     loadPlan(), loadEvents(), loadChecks(), scanTree(), loadGallery(), loadArtifacts(), loadAudio(),
   ]);
   const media = await loadMedia(gallery, audio);
+  const tokens = await loadTokens();
   const planAgents = Array.isArray(plan.agents) ? plan.agents.filter(a => a && a.id) : [];
   const ids = new Set(planAgents.map(a => str(a.id)));
   const agentsIn = planAgents.map(a => ({ ...a, id: str(a.id), inPlan: true }));
@@ -353,6 +374,7 @@ async function buildState() {
       phase: str(a.phase), desc: str(a.desc), owns: Array.isArray(a.owns) ? a.owns.map(x => str(x)) : [],
       inPlan: a.inPlan, order: idx,
       state, pct: state === 'done' ? 100 : pct, lastMsg, lastT, startedAt, endedAt,
+      tokens: tokens?.agents?.[a.id] || null,
       eventCount: list.length, loc: own.loc, ownedFiles: own.files, segments: segs,
       marks: list.filter(e => e.t && e.state !== 'start').slice(-60).map(e => [e.t, e.state]),
     };
@@ -376,6 +398,7 @@ async function buildState() {
     agents, counts, progress,
     feed: feed.slice(0, 120),
     checks, gallery, artifacts, audio, media,
+    tokens: tokens ? { updatedAt: tokens.updatedAt, estimate: true, total: tokens.total, byTier: tokens.byTier } : null,
     totals: scan.totals,
     loc: history.slice(-1500),
     recent,
@@ -436,7 +459,7 @@ const server = http.createServer(async (req, res) => {
       const rel = url.searchParams.get('f') || '';
       const n = Math.max(8, Math.min(512, parseInt(url.searchParams.get('n') || '96', 10) || 96));
       const abs = resolve(ROOT, rel);
-      const okBase = ['out', 'dist'].some(b => abs.startsWith(join(ROOT, b) + sep));
+      const okBase = ['out', 'dist', ...MEDIA_DIRS].some(b => abs.startsWith(join(ROOT, b) + sep));
       if (!rel || rel.includes('\0') || !okBase || !/\.wav$/i.test(abs)) { res.writeHead(403, { 'Content-Type': 'text/plain' }); return res.end('forbidden'); }
       let st; try { st = await fsp.stat(abs); } catch { st = null; }
       if (!st || !st.isFile() || st.size > 64 * 1024 * 1024) { res.writeHead(404, { 'Content-Type': 'text/plain' }); return res.end('not found'); }
@@ -454,14 +477,14 @@ const server = http.createServer(async (req, res) => {
       let rel;
       try { rel = decodeURIComponent(path.slice(7)); } catch { rel = ''; }
       const abs = resolve(ROOT, rel);
-      const okBase = ['out', 'dist'].some(b => abs.startsWith(join(ROOT, b) + sep));
+      const okBase = ['out', 'dist', ...MEDIA_DIRS].some(b => abs.startsWith(join(ROOT, b) + sep));
       if (!rel || rel.includes('\0') || !okBase) { res.writeHead(403, { 'Content-Type': 'text/plain' }); return res.end('forbidden'); }
       let st;
       try { st = await fsp.stat(abs); } catch { st = null; }
       if (!st || !st.isFile()) { res.writeHead(404, { 'Content-Type': 'text/plain' }); return res.end('not found'); }
       const real = await fsp.realpath(abs).catch(() => abs);
       const bases = [];
-      for (const b of ['out', 'dist']) {
+      for (const b of ['out', 'dist', ...MEDIA_DIRS]) {
         bases.push(join(ROOT, b) + sep);
         const rb = await fsp.realpath(join(ROOT, b)).catch(() => null); // out/ and dist/ may be symlinks to another disk
         if (rb) bases.push(rb + sep);

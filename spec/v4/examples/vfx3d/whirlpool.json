@@ -1,0 +1,15 @@
+{
+  "id": "whirlpool",
+  "name": "River Maw whirlpool",
+  "kind": "whirlpool",
+  "seed": 7,
+  "field": { "kind": "vortex", "center": [0, 0, 0], "radius": 17, "strength": 3.2, "falloff": 1.2, "swirl": 0.5, "ramp": 3, "coreRadius": 2.2, "coreDps": 12, "resistFactor": 0.3,
+    "pulse": { "period": 12, "active": 4, "telegraph": 1.5, "idle": 0.3 } },
+  "water": { "level": 0, "size": [40, 40], "waves": [
+    { "dir": [1, 0.3], "wavelength": 9, "amplitude": 0.18, "steepness": 0.35 },
+    { "dir": [-0.4, 1], "wavelength": 5, "amplitude": 0.09, "steepness": 0.3 } ] },
+  "visual": { "swirlRate": 1.6, "twist": 3.5, "arms": 5, "foam": 0.7, "depth": 2.6, "funnelPower": 2, "color": "#2a6f7c", "deepColor": "#04161d", "foamColor": "#d8f1f2" },
+  "emitters": [
+    { "id": "spray", "rate": 120, "lifetime": [0.8, 1.6], "maxParticles": 400, "shape": { "type": "disc", "radius": 3 }, "direction": [0, 1, 0], "spread": 25, "speed": [1.5, 3.5],
+      "gravity": [0, -6, 0], "size": { "start": 0.12, "end": 0.04 }, "blend": "mix", "color": [{ "t": 0, "c": "#e6f6f7", "a": 0.8 }, { "t": 1, "c": "#bfe4e8", "a": 0 }] } ]
+}

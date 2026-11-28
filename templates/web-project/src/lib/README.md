@@ -21,3 +21,14 @@ Patterns: `patroller`, `roller` (wrap + optional hop), `stationary`, `cycler` (o
 Game-agnostic bot parts: `trajectory` (step cloned hazards ahead), `searchMacros` (robust macro-plan search), `makeWatchdog`, `humanize` (skill < 1 late take-offs), `createAutopilot({decide, progressKey, time, skill})`. The game supplies `decide(g)` and its own state mirror; PawFall's full bot (`src/sim/autopilot.js`) is the specimen and was left in place because it mirrors PawFall's player rules.
 
 Run the tests: `node --test test/lib/*.test.mjs`. Example: `node src/lib/examples/hazards-and-physics.mjs`.
+
+## collision3d.js / bvh.js (3D)
+Y-UP, right-handed (unlike the y-down 2D libs), Float64, flat typed arrays, deterministic. Specs and vectors: `spec/v3/collision3d.md`, `spec/v3/bvh.md`, `spec/v3/vectors/`.
+- `collision3d`: `vec3`, primitives (`aabb`, `sphere`, `capsule`, `obb`/`obbFromQuat`, `plane`), overlap + contact `{normal, depth}` (`sphereSphere`, `sphereAABB`, `aabbAABB`, `obbOBB`, `capsuleCapsule`, `capsuleTriangle`, ...), rays (`raySphere/AABB/OBB/Capsule/Plane`, Moller-Trumbore `rayTriangle`), closest points, `sweepSphere`/`sweepCapsule` against a flat triangle soup (9 numbers per tri), and a kinematic capsule controller: `createCharacter({pos, radius, height, stepHeight})` then `moveAndSlide(ch, vel, dt, world)` (slopes, steps, ground snap; pos = feet centre).
+- `bvh`: `buildTriangles(tris)` / `buildAABBs(boxes)` (SAH-binned, stable ties), `raycast`/`rayAny`, `queryAABB`/`querySphere` (ascending original indices), `refit` for moving geometry, `serialize`/`deserialize` (the GPU upload buffer), `asWorld(bvh)` to feed sweeps and the controller with a BVH broad phase.
+
+## mesh.js / mesh-io.js (3D models for print, Blender, engines)
+Deterministic, browser-safe. Mesh = `{positions, indices, normals?, uvs?, colors?, materials?, faceMaterial?}`, mm, Z up. `mesh.js`: primitives (box, sphere, icosphere, cylinder, cone, capsule, torus, plane/grid, lathe, extrude with holes, heightmap), ops (transform, merge, mirror, weld, normals, scaleToHeight, fitToBed, addPlinth...) and `validate` (watertight/2-manifold, orientation, shells, volume). No boolean ops. `mesh-io.js`: read/write OBJ+MTL, STL (binary/ascii), PLY, GLB/glTF, 3MF (own STORE zip + CRC32) with units/up-axis options; `writeMesh/readMesh` dispatch. Factory side: `docs/MODELS.md`, `models.*` capabilities. Tests: `test/lib/mesh.test.mjs`.
+
+## gltf-anim.js (animated .glb)
+Browser-safe. `parseAnimGLB(bytes)` -> `{nodes, meshes, skins, animations, materials, images, warnings}`; `AnimPlayer` (play/setState/crossfade/update, `skinned()` CPU skinning, `jointMatrices()` for GPU), lower-level `poseAt`, `worldMatrices`, `jointMatrices`, `skinPrimitive`, `posedBounds`, `guessStates`, `mergeAnimGLB(base, [{data, name, prefix?, clips?, rename?}])`. glTF = metres, Y up. Draco/meshopt rejected with `UnsupportedError`. Factory side: `anim.inspect|import|merge|sample`, skill `animated-models`.

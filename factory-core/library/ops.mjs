@@ -4,16 +4,19 @@ import { basename, dirname, join, resolve, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { ASSET_TYPES, FORMAT_VERSION, SCHEMAS, assetHash, fingerprint, loadLibrary, writeIndex } from './format.mjs';
-import { isSafeRel, readInside, readJson, resolveInside, sha256, stableJson, walkTree } from './safe.mjs';
+import { LIMITS, isSafeRel, readInside, readJson, resolveInside, sha256, stableJson, walkTree } from './safe.mjs';
 import { validateSchema } from './schema-lite.mjs';
 import { resolveLibraryDir } from './registry.mjs';
+import { auditLoaded, meshyDerive } from './license.mjs';
+import { glbStats } from './glb.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const FACTORY_ROOT = resolve(here, '..', '..');
 export const ok = (data, next = []) => ({ ok: true, data, error: null, next });
 export const fail = (code, message, data = null, next = []) => ({ ok: false, data, error: { code, message }, next });
 const NAME_RE = /^[a-z0-9][a-z0-9-]{0,63}$/;
-const CORE_FILES = ['schema-lite.mjs', 'safe.mjs', 'format.mjs', 'validate-cli.mjs', 'png.mjs'];
+const CORE_FILES = ['schema-lite.mjs', 'safe.mjs', 'format.mjs', 'validate-cli.mjs', 'png.mjs', 'license.mjs', 'ip.mjs'];
+const NEW_TYPES = new Set(['model', 'animation', 'texture', 'material', 'hdri', 'music']);
 
 // ------------------------------------------------------------------ library.new
 export function newLibrary(i = {}) {
@@ -50,7 +53,13 @@ export function validateLibrary(i = {}) {
     const c = writeIndex(r.dir, { check: true });
     if (!c.ok) { data.errors = [...c.errors]; data.stale = c.stale; return fail('STALE_INDEX', 'INDEX files are out of date; run library.index', data, [`library.index {library: "${r.dir}"}`]); }
   }
-  return r.errors.length ? fail('INVALID', `${r.errors.length} problem(s)`, data) : ok(data);
+  if (r.errors.length) return fail('INVALID', `${r.errors.length} problem(s)`, data);
+  if (i.target) {
+    const a = auditLoaded(r, { target: i.target === 'public' ? 'public' : 'private' });
+    data.licenseAudit = a;
+    if (!a.ok) return fail('LICENSE_BLOCKED', `${a.blocked.length} asset(s) block a public release`, data, [`library.license-audit {library: "${r.dir}"}`]);
+  }
+  return ok(data);
 }
 export function indexLibrary(i = {}) {
   if (!i.library) return fail('BAD_INPUT', 'library (path) is required');
@@ -62,11 +71,12 @@ export function indexLibrary(i = {}) {
 // ------------------------------------------------------------------ library.add
 const bumpPatch = (v) => v.replace(/^(\d+)\.(\d+)\.(\d+)/, (_, a, b, c) => `${a}.${b}.${+c + 1}`);
 /** items: [{ id, type, name?, description?, tags?, format?, size?, duration?, palette?, provenance?, dependencies?, files:[{path,data}], preview?:{path,data} }] */
-export function addItems(libDir, items, { update = false, author, license, tags = [] } = {}) {
+export function addItems(libDir, items, { update = false, author, license, tags = [], allowDuplicate = false } = {}) {
   const lib = loadLibrary(libDir);
   if (lib.errors.length) return fail('INVALID', 'target library is invalid; fix it first', { errors: lib.errors });
-  const m = lib.manifest, added = [], updated = [], unchanged = [], conflicts = [], plan = [];
+  const m = lib.manifest, added = [], updated = [], unchanged = [], conflicts = [], plan = [], duplicates = [];
   const existing = new Map(lib.assets.map((a) => [a.id, a.descriptor]));
+  const shaOwner = new Map(); for (const a of lib.assets) for (const f of a.descriptor.files) if (!shaOwner.has(f.sha256)) shaOwner.set(f.sha256, a.id);
   for (const it of items) {
     const errs = [];
     if (!it.id || !/^[a-z0-9][a-z0-9._-]{0,95}$/.test(it.id)) errs.push(`bad id ${JSON.stringify(it.id)}`);
@@ -77,6 +87,8 @@ export function addItems(libDir, items, { update = false, author, license, tags 
     if (errs.length) return fail('BAD_INPUT', `${it.id}: ${errs.join('; ')}`);
     const files = [...it.files].sort((a, b) => (a.path < b.path ? -1 : 1)).map((f) => ({ path: f.path, sha256: sha256(f.data), bytes: f.data.length }));
     const hash = assetHash(files), prev = existing.get(it.id);
+    for (const f of files) { const o = shaOwner.get(f.sha256); if (o && o !== it.id) duplicates.push({ id: it.id, file: f.path, duplicateOf: o }); }
+    if (NEW_TYPES.has(it.type) && !allowDuplicate && duplicates.some((x) => x.id === it.id)) return fail('DUPLICATE', `${it.id}: file content already exists in ${[...new Set(duplicates.filter((x) => x.id === it.id).map((x) => x.duplicateOf))].join(', ')} (pass allowDuplicate:true)`, { duplicates });
     const meta = { tags: [...new Set([...(it.tags || []), ...tags])].sort(), license: it.license || license || m.license, author: it.author || author || m.authors?.[0] || 'unknown' };
     const previewSame = !prev || !it.preview || (prev.preview === it.preview.path);
     if (prev && prev.hash === hash && previewSame && JSON.stringify(prev.tags) === JSON.stringify(meta.tags)) { unchanged.push(it.id); continue; }
@@ -93,7 +105,20 @@ export function addItems(libDir, items, { update = false, author, license, tags 
     for (const f of it.files) { const p = resolveInside(d, f.path); mkdirSync(dirname(p), { recursive: true }); writeFileSync(p, f.data); }
     if (it.preview) { const p = resolveInside(d, it.preview.path); mkdirSync(dirname(p), { recursive: true }); writeFileSync(p, it.preview.data); }
     const desc = { id: it.id, type: it.type, version: prev ? (prev.hash === hash ? prev.version : bumpPatch(prev.version)) : (it.version || '1.0.0'), tags: meta.tags, license: meta.license, author: meta.author, files, hash };
-    for (const k of ['name', 'description', 'format', 'size', 'duration', 'palette', 'provenance', 'dependencies']) if (it[k] !== undefined) desc[k] = it[k];
+    for (const k of ['name', 'description', 'format', 'size', 'duration', 'palette', 'provenance', 'dependencies', 'licenseInfo', 'ipReview', 'model', 'animation', 'audio', 'thumbnail']) if (it[k] !== undefined) desc[k] = it[k];
+    // v2: GLB stats from the file itself (explicit values win)
+    const glb = it.files.find((f) => /\.glb$/i.test(f.path)), st = glb && (it.type === 'model' || it.type === 'animation') ? glbStats(glb.data) : null;
+    if (st && it.type === 'model') desc.model = { format: 'glb', tris: st.tris, verts: st.verts, materials: st.materials, rig: st.rig, ...(st.clips.length ? { clips: st.clips.map((c) => ({ ...c, file: glb.path })) } : {}), ...(st.extensionsRequired.length ? { extensionsRequired: st.extensionsRequired } : {}), ...(it.model || {}) };
+    if (st && it.type === 'animation') desc.animation = { ...(st.rig.skeletonHash ? { skeletonHash: st.rig.skeletonHash } : {}), clips: st.clips.map((c) => ({ ...c, file: glb.path })), ...(it.animation || {}) };
+    if (prev?.licenseInfo && !desc.licenseInfo) {
+      desc.licenseInfo = { ...prev.licenseInfo };
+      if (prev.hash !== hash && ['verified', 'self-owned'].includes(desc.licenseInfo.status)) { desc.licenseInfo.status = 'needs-review'; delete desc.licenseInfo.verifiedBy; delete desc.licenseInfo.verifiedAt; } // content changed since sign-off
+    }
+    if (prev?.ipReview && !desc.ipReview) desc.ipReview = prev.ipReview;
+    if (!desc.licenseInfo && m.formatVersion >= 2) desc.licenseInfo = { spdx: desc.license, status: 'needs-review' };
+    if (!desc.licenseInfo && it.provenance?.generator && /meshy/i.test(it.provenance.generator)) desc.licenseInfo = { spdx: desc.license, status: 'needs-review' };
+    if (m.formatVersion >= 2) desc.contentId = hash;
+    if (/meshy/i.test(desc.provenance?.generator || '') && !['verified', 'self-owned'].includes(desc.licenseInfo?.status)) Object.assign(desc, meshyDerive(desc));
     if (it.preview) desc.preview = it.preview.path;
     const errs = validateSchema(SCHEMAS.asset, desc);
     if (errs.length) return fail('BAD_INPUT', `${it.id}: ${errs.join('; ')}`);
@@ -104,7 +129,7 @@ export function addItems(libDir, items, { update = false, author, license, tags 
   if (types.size !== m.assetTypes.length) { m.assetTypes = ASSET_TYPES.filter((t) => types.has(t)); writeFileSync(join(lib.dir, 'library.json'), stableJson(m)); }
   const idx = writeIndex(lib.dir);
   if (!idx.ok) return fail('INVALID', 'library invalid after add', { errors: idx.errors });
-  return ok({ library: lib.dir, added, updated, unchanged, total: idx.index.counts.total }, [`library.validate {library: "${lib.dir}"}`, `library.publish {library: "${lib.dir}", repo: "owner/${m.name}"}`]);
+  return ok({ library: lib.dir, added, updated, unchanged, duplicates, total: idx.index.counts.total }, [`library.validate {library: "${lib.dir}"}`, `library.license-audit {library: "${lib.dir}", target: "public"}`, `library.publish {library: "${lib.dir}", repo: "owner/${m.name}"}`]);
 }
 
 export async function addAssets(i = {}) {
@@ -123,14 +148,15 @@ export async function addAssets(i = {}) {
       const src = resolve(f.path), st = lstatSync(src);
       if (!st.isFile() || st.isSymbolicLink()) return fail('BAD_INPUT', `not a regular file: ${f.path}`);
       const data = readFileSync(src), ext = extname(src).slice(1).toLowerCase(), id = f.id || basename(src, extname(src)).toLowerCase().replace(/[^a-z0-9._-]+/g, '-');
-      const type = f.type || ({ png: 'sprite', wav: 'sfx', ogg: 'sfx', ttf: 'font', woff2: 'font', md: 'doc', json: 'level', js: 'code-kit', mjs: 'code-kit' }[ext] || 'doc');
-      items.push({ id, type, name: f.name || id, description: f.description, tags: f.tags || [], format: ext, files: [{ path: basename(src), data }], preview: ext === 'png' ? { path: 'preview.png', data } : undefined, provenance: { source: f.source || 'imported file' } });
+      const type = f.type || ({ png: 'sprite', wav: 'sfx', ogg: 'sfx', mp3: 'music', ttf: 'font', woff2: 'font', md: 'doc', json: 'level', js: 'code-kit', mjs: 'code-kit', glb: 'model', ktx2: 'texture', hdr: 'hdri' }[ext] || 'doc');
+      const extra = {}; for (const k of ['license', 'licenseInfo', 'ipReview', 'model', 'animation', 'audio', 'version']) if (f[k] !== undefined) extra[k] = f[k];
+      items.push({ id, type, name: f.name || id, description: f.description, tags: f.tags || [], format: ext, files: [{ path: basename(src), data }], preview: ext === 'png' ? { path: 'preview.png', data } : undefined, ...extra, provenance: { source: f.source || 'imported file', ...(f.provenance || {}) } });
     } catch (e) { return fail('BAD_INPUT', `${f.path}: ${e.message}`); }
   }
   if (!items.length) return fail('BAD_INPUT', 'nothing to add: pass from {project} and/or files [{path}]');
   const typeFilter = i.types && i.types.length ? new Set(i.types) : null;
   const sel = items.filter((x) => (!typeFilter || typeFilter.has(x.type)));
-  return addItems(i.library, sel, { update: !!i.update, author: i.author, license: i.license, tags: i.tags || [] });
+  return addItems(i.library, sel, { update: !!i.update, author: i.author, license: i.license, tags: i.tags || [], allowDuplicate: !!i.allowDuplicate });
 }
 
 // ------------------------------------------------------------------ library.publish
@@ -156,8 +182,13 @@ export function publishLibrary(i = {}, run = (cmd, args, o) => spawnSync(cmd, ar
   if (!/^([A-Za-z0-9-]{1,39}\/)?[A-Za-z0-9._-]{1,100}$/.test(repo)) return fail('BAD_INPUT', 'repo must be "name" or "owner/name"');
   const hits = scanSecrets(dir);
   if (hits.length) return fail('SECRETS_FOUND', `refusing to publish: ${hits.length} possible secret(s)`, { hits });
+  let audit = null;
+  if (vis === 'public') {
+    audit = auditLoaded(loadLibrary(dir), { target: 'public' });
+    if (!audit.ok) return fail('LICENSE_BLOCKED', `refusing a public publish: ${audit.blocked.length} asset(s) and ${audit.libraryReasons.length} library check(s) fail the license gate`, { blocked: audit.blocked, libraryReasons: audit.libraryReasons, counts: audit.counts }, [`library.license-audit {library: "${dir}", target: "public"}`]);
+  }
   const commands = [!existsSync(join(dir, '.git')) ? 'git init -b main' : null, 'git add -A', `git commit -m "Publish ${v.data.name} ${v.data.version}"`, `gh repo create ${repo} --${vis} --source . --push --description "<library description>"`].filter(Boolean);
-  const plan = { repo, visibility: vis, library: dir, assets: v.data.assets, commands, note: 'This creates a GitHub repository and pushes the whole library directory.' };
+  const plan = { repo, visibility: vis, library: dir, assets: v.data.assets, ...(audit ? { audit: audit.counts } : {}), commands, note: 'This creates a GitHub repository and pushes the whole library directory.' };
   if (!i.yes) return fail('CONFIRM_REQUIRED', 'publishing is confirm-first: re-run with yes:true (CLI --yes) after reviewing the plan', plan, [`library.publish {library: "${dir}", repo: "${repo}", yes: true}`]);
   const desc = (loadLibrary(dir).manifest?.description || '').slice(0, 300);
   const steps = [];
@@ -183,7 +214,7 @@ function installImpl(i) {
   if (!isSafeRel(dest)) return fail('BAD_INPUT', `unsafe dest ${dest}`);
   const proj = resolve(i.project);
   if (!existsSync(proj)) return fail('BAD_INPUT', `project not found: ${proj}`);
-  const lib = loadLibrary(libDir);
+  const lib = loadLibrary(libDir, { maxFileBytes: i.maxFileBytes });
   if (lib.errors.length) return fail('INVALID', 'library failed validation; nothing installed', { errors: lib.errors });
   const byId = new Map(lib.assets.map((a) => [a.id, a]));
   const want = i.assets?.length ? i.assets : (i.all ? [...byId.keys()] : null);
@@ -199,7 +230,7 @@ function installImpl(i) {
     const a = byId.get(id), d = a.descriptor, base = `${dest}/${id}`;
     const payload = [...d.files.map((f) => f.path), 'asset.json', ...(d.preview && !d.files.some((f) => f.path === d.preview) ? [d.preview] : [])];
     const bufs = [];
-    for (const p of payload) { const b = readInside(a.dir, p); if (p !== 'asset.json' && !d.files.some((f) => f.path === p)) { bufs.push([p, b]); continue; } const f = d.files.find((x) => x.path === p); if (f && sha256(b) !== f.sha256) return fail('INTEGRITY', `${id}/${p}: hash mismatch, aborting`); bufs.push([p, b]); }
+    for (const p of payload) { const b = readInside(a.dir, p, lib.limits.maxFileBytes); if (p !== 'asset.json' && !d.files.some((f) => f.path === p)) { bufs.push([p, b]); continue; } const f = d.files.find((x) => x.path === p); if (f && sha256(b) !== f.sha256) return fail('INTEGRITY', `${id}/${p}: hash mismatch, aborting`); bufs.push([p, b]); }
     let same = true, exists = false;
     for (const [p, b] of bufs) { const t = resolveInside(proj, `${base}/${p}`); if (existsSync(t)) { exists = true; if (!readFileSync(t).equals(b)) same = false; } else same = false; }
     const prior = lock.assets.find((x) => x.id === id);
@@ -213,7 +244,7 @@ function installImpl(i) {
   for (const c of copies) {
     for (const [p, b] of c.bufs) { const t = resolveInside(proj, `${c.base}/${p}`); mkdirSync(dirname(t), { recursive: true }); writeFileSync(t, b); }
     // verify what actually landed on disk
-    for (const f of c.desc.files) { const got = sha256(readInside(proj, `${c.base}/${f.path}`)); if (got !== f.sha256) return fail('INTEGRITY', `${c.desc.id}/${f.path}: post-copy hash mismatch`); }
+    for (const f of c.desc.files) { const got = sha256(readInside(proj, `${c.base}/${f.path}`, lib.limits.maxFileBytes)); if (got !== f.sha256) return fail('INTEGRITY', `${c.desc.id}/${f.path}: post-copy hash mismatch`); }
     const entry = { id: c.desc.id, version: c.desc.version, type: c.desc.type, library: { name: lib.manifest.name, version: lib.manifest.version, ...(i.source ? { source: String(i.source) } : {}) }, hash: c.desc.hash, dest: c.base, files: c.desc.files.map((f) => ({ path: f.path, sha256: f.sha256, bytes: f.bytes })) };
     lock.assets = lock.assets.filter((x) => x.id !== entry.id); lock.assets.push(entry); installed.push(entry.id);
   }
@@ -233,7 +264,7 @@ export function verifyInstalled(i = {}) {
     if (!isSafeRel(a.dest)) { problems.push({ id: a.id, problem: 'unsafe dest in lock' }); continue; }
     for (const f of a.files) {
       if (!isSafeRel(f.path)) { problems.push({ id: a.id, file: f.path, problem: 'unsafe path in lock' }); continue; }
-      let b; try { b = readInside(proj, `${a.dest}/${f.path}`); } catch (e) { problems.push({ id: a.id, file: f.path, problem: /ENOENT/.test(e.message) ? 'missing' : e.message }); continue; }
+      let b; try { b = readInside(proj, `${a.dest}/${f.path}`, Math.max(f.bytes, LIMITS.maxFileBytes)); } catch (e) { problems.push({ id: a.id, file: f.path, problem: /ENOENT/.test(e.message) ? 'missing' : e.message }); continue; }
       if (b.length !== f.bytes || sha256(b) !== f.sha256) problems.push({ id: a.id, file: f.path, problem: 'modified (hash mismatch)' });
     }
     if (assetHash(a.files) !== a.hash) problems.push({ id: a.id, problem: 'lock entry hash does not match its files (lock edited)' });

@@ -1,0 +1,41 @@
+# __NAME__
+
+Rust game scaffolded by game-factory (`__SLUG__`). Cargo workspace:
+
+| Crate | What |
+|---|---|
+| `crates/engine` | Deterministic, dependency-free engines ported from the factory JS libs: PCG32/FNV/legacy streams (`rng`), `physics` (platformer-physics), `hazard` (hazard-kit), `worldgen` (+ fairness validator), `autopilot`. `#![forbid(unsafe_code)]`. |
+| `crates/game` | macroquad 2D starter: window, fixed 60 Hz step, one-screen platformer demo. |
+
+`spec/` (copied from the factory) holds the language-neutral engine specs and golden vectors. The engines must keep passing
+`crates/engine/tests/vectors.rs`; JS stays the reference. Never edit `spec/vectors/*.json` by hand.
+
+## Gates
+```sh
+export CARGO_TARGET_DIR=/datanapps/cargo-target/__SLUG__   # never /tmp
+cargo fmt --check
+cargo clippy -p engine --all-targets -- -D warnings
+cargo test            # default-members = engine only: offline, fast, runs the vectors
+cargo check -p game   # needs the network once to fetch macroquad
+```
+`FACTORY_SPEC_DIR` overrides where the vectors are found (default: search upward for `spec/vectors/rng.json`).
+
+## Run
+```sh
+cargo run -p game --release
+```
+Linux native builds need the usual X11/ALSA dev packages; see the macroquad docs.
+
+## Web build (wasm32-unknown-unknown)
+```sh
+rustup target add wasm32-unknown-unknown
+cargo build -p game --release --target wasm32-unknown-unknown
+mkdir -p dist && cp $CARGO_TARGET_DIR/wasm32-unknown-unknown/release/game.wasm dist/
+```
+Serve `dist/` with an `index.html` that loads macroquad's `mq_js_bundle.js` (from the macroquad repo) and calls
+`load("game.wasm")` on a `<canvas id="glcanvas">`. Release profile is size-tuned (`opt-level="z"`, LTO, strip,
+`panic="abort"`); note `autopilot::trajectory` cannot swallow panics under `panic=abort`.
+
+## Determinism rules
+f64 only, integer-only RNG (`engine::rng`), no clock or `rand` inside engine code, fixed-step simulation. Tolerances in vectors:
+ints exact, floats 1e-9.

@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "boss3d.schema.json",
+  "title": "boss3d",
+  "description": "Data-driven multi-phase, multi-part 3D boss. Y-up, metres, seconds in data (converted to 60 Hz frames by the runtime).",
+  "type": "object",
+  "required": ["id", "arena", "phases"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string" },
+    "pos": { "$ref": "#/definitions/vec3" },
+    "hp": { "type": "number", "minimum": 0, "description": "core hp when core.hp is absent" },
+    "arena": { "type": "object", "required": ["radius"], "properties": {
+      "radius": { "type": "number", "minimum": 0 },
+      "platforms": { "type": "array", "items": { "type": "object", "required": ["center", "radius", "y"], "properties": { "center": { "$ref": "#/definitions/vec3" }, "radius": { "type": "number" }, "y": { "type": "number" } } } } } },
+    "core": { "type": "object", "properties": {
+      "hp": { "type": "number", "minimum": 0 }, "pos": { "$ref": "#/definitions/vec3" }, "radius": { "type": "number" }, "armor": { "type": "number", "minimum": 0, "maximum": 1 }, "stunMult": { "type": "number" },
+      "exposedWhen": { "oneOf": [ { "const": "always" }, { "type": "object", "properties": {
+        "partsDownAtLeast": { "type": "integer" }, "phase": { "type": "string" }, "phaseIndexAtLeast": { "type": "integer" }, "stunned": { "type": "boolean" }, "flag": { "type": "string" } } } ] } } },
+    "parts": { "type": "array", "items": { "$ref": "#/definitions/part" } },
+    "phases": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/phase" } },
+    "hazards": { "type": "array", "items": { "$ref": "#/definitions/hazard" } },
+    "enrage": { "type": "object", "properties": {
+      "afterSeconds": { "type": "number" }, "hpBelow": { "type": "number" }, "phase": { "type": "string" },
+      "speedMult": { "type": "number", "exclusiveMinimum": 0 }, "damageMult": { "type": "number" }, "windupMult": { "type": "number" } } }
+  },
+  "definitions": {
+    "vec3": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 },
+    "warning": { "type": "object", "description": "cue data for VFX/audio/UI; at least one of vfx, sfx, decal", "properties": { "vfx": { "type": "string" }, "sfx": { "type": "string" }, "decal": { "type": "string" }, "ui": { "type": "string" } } },
+    "zone": { "type": "object", "required": ["shape"], "properties": {
+      "shape": { "enum": ["circle", "cone", "line", "ring", "sweep"] },
+      "at": { "enum": ["self", "target"], "description": "circle/ring only: centre on the owner (default) or the target" },
+      "offset": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2, "description": "[side, forward] relative to the aim" },
+      "r": { "type": "number" }, "angle": { "type": "number", "description": "cone full angle, degrees" }, "length": { "type": "number" }, "width": { "type": "number" },
+      "rInner": { "type": "number" }, "rOuter": { "type": "number" }, "arc": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2, "description": "sweep start/end angle relative to aim, degrees" },
+      "maxY": { "type": "number", "description": "player above this height is safe (jump over)" },
+      "lockFrac": { "type": "number", "minimum": 0, "maximum": 1, "description": "fraction of windup during which a target-aimed zone keeps tracking" } } },
+    "part": { "type": "object", "required": ["id", "hp", "pos"], "properties": {
+      "id": { "type": "string" }, "hp": { "type": "number" }, "pos": { "$ref": "#/definitions/vec3" }, "radius": { "type": "number" }, "armor": { "type": "number" }, "stunMult": { "type": "number" }, "coreShare": { "type": "number" },
+      "weakPoint": { "type": "object", "properties": { "multiplier": { "type": "number" }, "open": { "oneOf": [ { "const": "always" }, { "type": "array", "items": { "enum": ["idle", "windup", "active", "recovery", "stun"] } } ] } } },
+      "stagger": { "type": "object", "required": ["threshold", "duration"], "properties": { "threshold": { "type": "number" }, "duration": { "type": "number" }, "decayPerSec": { "type": "number" } } },
+      "regrow": { "type": "object", "required": ["time"], "properties": { "time": { "type": "number" }, "hpFrac": { "type": "number" }, "blockedBy": { "type": "string" }, "noRegrowOnSever": { "type": "boolean" } } },
+      "onDeath": { "type": "object", "properties": { "coreDamageFrac": { "type": "number" }, "stagger": { "type": "number" }, "enrageSpeed": { "type": "number" }, "clearAttacks": { "type": "boolean" }, "hazard": { "type": "string" }, "setFlag": { "type": "string" },
+        "spawn": { "type": "object", "properties": { "kind": { "type": "string" }, "count": { "type": "integer" }, "radius": { "type": "number" } } } } } } },
+    "attack": { "type": "object", "required": ["id", "zone"], "properties": {
+      "id": { "type": "string" }, "part": { "type": "string", "description": "owner part id; absent = body" }, "weight": { "type": "number" }, "cooldown": { "type": "number" },
+      "windup": { "type": "number", "exclusiveMinimum": 0, "description": "telegraph seconds" }, "active": { "type": "number" }, "recovery": { "type": "number" },
+      "damage": { "type": "number" }, "dps": { "type": "number" }, "rehit": { "type": "number" }, "minDist": { "type": "number" }, "maxDist": { "type": "number" },
+      "requires": { "type": "object", "properties": { "partsAlive": { "type": "array", "items": { "type": "string" } }, "partsDead": { "type": "array", "items": { "type": "string" } }, "hpBelow": { "type": "number" }, "hpAbove": { "type": "number" }, "enraged": { "type": "boolean" }, "flag": { "type": "string" } } },
+      "zone": { "$ref": "#/definitions/zone" }, "warning": { "$ref": "#/definitions/warning" } } },
+    "phase": { "type": "object", "required": ["id", "attacks"], "properties": {
+      "id": { "type": "string" },
+      "enter": { "type": "object", "description": "any-of; required for every phase after the first", "properties": { "hpBelow": { "type": "number" }, "totalHpBelow": { "type": "number" }, "time": { "type": "number" }, "partsDown": { "type": "integer" }, "phaseSeconds": { "type": "number" }, "flag": { "type": "string" } } },
+      "transition": { "type": "object", "properties": { "invuln": { "type": "number" }, "heal": { "type": "number" }, "clearAttacks": { "type": "boolean" } } },
+      "reviveParts": { "type": "array", "items": { "type": "string" } }, "openingDelay": { "type": "number" }, "maxConcurrent": { "type": "integer", "minimum": 1 },
+      "gap": { "oneOf": [ { "type": "number" }, { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 } ] },
+      "music": { "type": "string" }, "camera": { "type": "string" },
+      "attacks": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/attack" } },
+      "adds": { "type": "array", "items": { "type": "object", "required": ["kind"], "properties": { "at": { "type": "number" }, "kind": { "type": "string" }, "count": { "type": "integer" }, "radius": { "type": "number" }, "center": { "$ref": "#/definitions/vec3" } } } } } },
+    "hazard": { "type": "object", "required": ["id", "kind"], "properties": {
+      "id": { "type": "string" }, "kind": { "enum": ["flood", "vortex", "debris", "gas"] }, "phase": { "type": "string" }, "start": { "type": "number" }, "duration": { "type": "number" }, "manual": { "type": "boolean" }, "endsWithPhase": { "type": "boolean" },
+      "center": { "$ref": "#/definitions/vec3" }, "radius": { "type": "number" }, "ramp": { "type": "number" }, "warning": { "$ref": "#/definitions/warning" },
+      "fromY": { "type": "number" }, "toY": { "type": "number" }, "rise": { "type": "number" }, "dps": { "type": "number" },
+      "strength": { "type": "number", "description": "vortex drift speed m/s at the centre" }, "falloff": { "type": "number" }, "swirl": { "type": "number" }, "coreRadius": { "type": "number" }, "coreDps": { "type": "number" }, "resistFactor": { "type": "number" },
+      "pulse": { "type": "object", "required": ["period", "active"], "properties": { "period": { "type": "number" }, "active": { "type": "number" }, "telegraph": { "type": "number" }, "idle": { "type": "number" } } },
+      "interval": { "type": "number" }, "count": { "type": "integer" }, "r": { "type": "number" }, "damage": { "type": "number" }, "telegraph": { "type": "number" }, "aimAtTarget": { "type": "number" }, "area": { "type": "object" },
+      "windup": { "type": "number" }, "growTo": { "type": "number" }, "grow": { "type": "number" }, "maxY": { "type": "number" } } }
+  }
+}

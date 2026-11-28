@@ -1,0 +1,2 @@
+# toon-library theming
+Palette: flat cel colours, outline #1a1a1a (the character-library house style), 3-band skies. Characters come from installed library assets (CC0), cut with library-sprites; the rest is drawn through toon-kit. Derive missing views (e.g. back) in code with overlays; derive hit/death frames with squash scale, source-atop tint and destination-out masks. Keep provenance and license in a manifest.json next to the PNGs. Pitfall: JPEG sheets have grey fringes: cut with a border flood fill plus fringe snap to the ink colour.

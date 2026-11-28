@@ -1,5 +1,7 @@
 # Learnings from building RAT OPS with an agent swarm (Godot 4.7 + Blender)
 
+See also `docs/LEARNINGS-PAWFALL.md` (web) and `docs/LEARNINGS-CHEESEMAGEDDON.md` (Rust + Bevy 0.20, Solari RT, headless GPU shots).
+
 Real mistakes and fixes from the first game built with this factory. Generic swarm rules are in `swarm/PLAYBOOK.md`.
 
 ## Orchestration
@@ -46,3 +48,12 @@ Real mistakes and fixes from the first game built with this factory. Generic swa
 - **Blender 5.0 API breaks 3.x/4.x scripts:** use `bpy.ops.wm.obj_export` and `bpy.ops.wm.stl_export(..., global_scale=1000.0)` (meters → mm); `Principled BSDF` sockets are `'Specular IOR Level'`, `'Sheen Weight'`, `'Coat Weight'`; `mesh.use_auto_smooth` was removed (set `poly.use_smooth = True`).
 - **Mirror + Bisect before Voxel Remesh:** running Mirror+Bisect *after* Voxel Remesh leaves non-manifold / open edges along `X=0`. Apply Mirror+Bisect *before* Voxel Remesh and strip tiny detached specks by keeping only the largest connected shell; verify with `tools/print/stl_verify.py`.
 - **Keep turntable orbit off by default:** continuous `bpy.app.timers` camera orbiting fights the user's mouse when parked — enable orbit only on explicit request.
+
+## 3D export (models.*)
+- Blender 5.x has no built-in 3MF importer (`models.blender-check` falls back to a zip+XML parser) and its OBJ importer defaults to Y-up/-Z-forward, so a Z-up (print) OBJ looks rotated unless you pass `up:"Y"` on export or set axes on import.
+- Capability names cannot contain underscores (registry test regex); MCP tool names keep the hyphen (`models_print-prep`).
+
+## Web builds and smoke (from the Lantern Run dogfood)
+- **`fetch(new URL('./levels/x.json', import.meta.url))` works from `src/` and breaks in the single-file build** (`dist/<game>.html`): there is no `src/` next to the file and `import.meta.url` is the page. The packaged game loaded clean, rendered a menu, and could not load a single level. Import levels as modules (`export default {...}` / a generated `levels/index.js`) or inline them; keep the `fetch` loaders to dev-only tooling. Node tools read `src/levels/*.json` through `levels/load-node.js`; the browser must not.
+- **Smoke must prove the sim ran, not just that the page loaded.** Convention: `?autostart=1&seed=N` skips the menu and `window.__game = {t, outcome, snapshot()}` is published; `tools/smoke_web.sh` asserts `t > 0` after the wait. A blank canvas with no console error passes a screenshot-only smoke.
+- **A bot is only a difficulty oracle if it does not stall.** A force-sum bot (goal pull minus hazard push) parks at the equilibrium and scored worse than a less skilled one. Use the look-ahead reference bot (`src/sim/autopilot.js`) and run `tools/balance.mjs`: if skill 0 clears 100%, the level is untested for humans. See `docs/BOTPLAY.md`.

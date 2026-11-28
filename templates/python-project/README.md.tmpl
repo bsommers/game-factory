@@ -1,0 +1,23 @@
+# __NAME__
+
+Python game scaffolded by game-factory. The engine (`src/game/engine/`) is stdlib-only, deterministic, and verified
+against the factory's golden vectors (`spec/vectors/`, copied into `spec/` by the scaffolder).
+
+## Run
+```
+python3 -m venv .venv && . .venv/bin/activate
+pip install -e ".[game,dev]"
+python -m game.main        # pygame-ce window; arrows + space
+python -m pytest -q        # or: python -m unittest discover -s tests
+```
+Vectors are found by searching upward for `spec/vectors/rng.json`, or set `FACTORY_SPEC_DIR`.
+
+## Layout
+- `src/game/engine/`: `rng` (PCG32, FNV seeding, legacy mulberry32/botRng), `platformer_physics`, `hazard_kit`, `world_gen` (+ `validate_world`), `autopilot_kit`
+- `src/game/main.py`: fixed-step pygame-ce starter (pygame imported lazily)
+- `tests/`: `test_vectors.py` + `runners.py` (spec vector adapters); add your own tests beside them
+
+Rules: never use `random` or the clock in sim code; use `Pcg32`. Floats are f64; use `math.fmod` (not `%`) where the spec says fmod.
+
+## Packaging
+See `docs/PACKAGING.md`.

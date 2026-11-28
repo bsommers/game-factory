@@ -1,0 +1,79 @@
+{
+  "$schema": "../../schemas/locomotion3d.schema.json",
+  "name": "small-fast",
+  "body": {
+    "radius": 0.25,
+    "height": 1,
+    "stepHeight": 0.25,
+    "slopeLimitDeg": 50
+  },
+  "ground": {
+    "walkSpeed": 2.8,
+    "runSpeed": 6.5,
+    "sprintSpeed": 10,
+    "runThreshold": 0.6,
+    "accel": 70,
+    "decel": 80,
+    "turnRateDeg": 1080
+  },
+  "air": {
+    "accel": 30,
+    "decel": 6,
+    "turnRateDeg": 360,
+    "gravity": 24,
+    "fallGravityMul": 1.1,
+    "maxFallSpeed": 40
+  },
+  "jump": {
+    "speed": 8.5,
+    "coyoteTime": 0.12,
+    "bufferTime": 0.12,
+    "cutMultiplier": 0.45,
+    "airJumps": 1,
+    "airJumpSpeed": 7.5,
+    "inheritPlatform": true
+  },
+  "land": {
+    "minSpeed": 5,
+    "time": 0.05,
+    "hardSpeed": 18,
+    "hardTime": 0.25,
+    "hardMoveMul": 0.2
+  },
+  "dodge": {
+    "distance": 5,
+    "duration": 0.4,
+    "iframeStart": 0.02,
+    "iframeEnd": 0.32,
+    "cooldown": 0.15,
+    "exitSpeed": 4,
+    "airDodges": 1,
+    "curve": "easeOut",
+    "turnToDir": true
+  },
+  "swim": {
+    "wadeDepth": 0.15,
+    "swimDepth": 0.7,
+    "wadeSpeedMul": 0.7,
+    "speed": 3.6,
+    "accel": 10,
+    "floatOffset": 0.8,
+    "buoyancy": 4,
+    "maxVerticalSpeed": 3,
+    "verticalDamp": 8,
+    "exitJumpMul": 0.8,
+    "exitJumpWindow": 0.4
+  },
+  "slide": {
+    "minAngleDeg": 42,
+    "accel": 22,
+    "maxSpeed": 12,
+    "control": 0.25
+  },
+  "knockback": {
+    "groundDecel": 14,
+    "airDecel": 1.5,
+    "stunDefault": 0.5
+  },
+  "description": "Small agile critter: quick turns, double jump, long i-frame dash, floaty fall."
+}

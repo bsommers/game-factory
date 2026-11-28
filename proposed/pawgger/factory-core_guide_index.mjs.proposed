@@ -1,0 +1,12 @@
+--- a/factory-core/guide/index.mjs	2026-11-21 08:44:29.507255747 -0500
++++ b/factory-core/guide/index.mjs	2026-11-21 08:44:29.525329552 -0500
+@@ -353,6 +353,9 @@
+   }
+   if (!has(d, 'src/kits') && !has(d, 'src/lib')) add('no-kits', 'info', 'factory kits are not in the project', 'scaffold with `factory new --web` or copy templates/web-project/src/kits', 'start-new-game');
+   if (!has(d, 'README.md')) add('no-readme', 'warn', 'no README.md', 'node src/kits/docs-kit/cli.mjs docs.config.json .', 'write-docs-site');
++  if (has(d, 'README.md')) { const rm = readFileSync(join(d, 'README.md'), 'utf8'); if (!/!\[[^\]]*\]\([^)]*\.(png|gif)\)|<img[^>]+src="[^"]+\.(png|gif)"/i.test(rm)) add('no-readme-shots', 'error', 'README.md has no screenshots', 'node tools/shots.mjs, then embed docs/screenshots/*.png in README.md', 'ship-showcase'); }
++  if (!has(d, 'docs/hero.gif')) add('no-hero', 'warn', 'no docs/hero.gif', 'node tools/shots.mjs --hero (needs ffmpeg)', 'ship-showcase');
++  if (!has(d, '.github/workflows/pages.yml') && !listFiles(join(d, '.github/workflows'), /pages.*\.ya?ml$/, 1).length) add('no-pages-workflow', 'error', 'no GitHub Pages workflow', 'copy templates/web-project/.github/workflows/pages.yml', 'ship-showcase');
+   if (!has(d, 'docs/index.html') && !has(d, 'docs/site/index.html')) add('no-site', 'info', 'no docs site (docs/index.html)', 'generate with docs-kit and enable GitHub Pages', 'ship-github-pages');
+   const gi = has(d, '.gitignore') ? readFileSync(join(d, '.gitignore'), 'utf8') : '';
+   if (!gi) add('no-gitignore', 'warn', 'no .gitignore', 'ignore .tracker/, out/, dist/, node_modules/, docs/swarm/prompts/', 'setup-tracker');
