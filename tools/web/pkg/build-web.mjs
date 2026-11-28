@@ -43,7 +43,7 @@ function stageEntry(log) {
     if (out !== text) { writeFileSync(f, out); patchedFiles++; }
   }
   if (!patchedFiles) log('WARN no import(variable) found in src/; bundling as-is');
-  const mods = walk(join(tmp, 'src')).map((f) => relative(join(tmp, 'src'), f).split('\\').join('/')).filter((f) => f.endsWith('.js') && f !== 'main.js').sort();
+  const mods = walk(join(tmp, 'src')).map((f) => relative(join(tmp, 'src'), f).split('\\').join('/')).filter((f) => f.endsWith('.js') && f !== 'main.js' && !/['"]node:/.test(readFileSync(join(tmp, 'src', f), 'utf8'))).sort(); // node-only modules (load-node.js, ...) cannot ship to a browser
   const lines = mods.map((f, i) => `import * as m${i} from './src/${f}';`);
   lines.push(`const mods = {${mods.map((f, i) => ` ${JSON.stringify(f)}: m${i}`).join(',')} };`,
     `window.__mods = mods;`,
