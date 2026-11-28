@@ -1132,10 +1132,13 @@ func (c *Client) ParityRun(ctx context.Context, in ParityRunInput) (*Envelope, e
 
 // ProjectNewInput is the input of project.new.
 type ProjectNewInput struct {
-	Dir   string  `json:"dir"`             // target directory (must not exist)
-	Lang  *string `json:"lang,omitempty"`  // language: gdscript|js|go|rust|python (default gdscript)
-	Title *string `json:"title,omitempty"` // game title
-	Web   *bool   `json:"web,omitempty"`   // browser (Canvas/ES-module) game instead of Godot (alias for lang js)
+	Dir   string   `json:"dir"`             // target directory (must not exist)
+	Kits  []string `json:"kits,omitempty"`  // web only: kit names to copy (same as with "kits=a,b")
+	Lang  *string  `json:"lang,omitempty"`  // language: gdscript|js|go|rust|python (default gdscript)
+	Solo  *bool    `json:"solo,omitempty"`  // web only: single-author game, no swarm tracker/SWARM.md/PLAYBOOK (guide.check treats swarm gaps as info)
+	Title *string  `json:"title,omitempty"` // game title
+	Web   *bool    `json:"web,omitempty"`   // browser (Canvas/ES-module) game instead of Godot (alias for lang js)
+	With  *string  `json:"with,omitempty"`  // web only: opt-in extras, e.g. "kits=art,audio" (kits: art,character,audio,fx,docs,raytrace,all; default none)
 }
 
 // ProjectNew calls project.new: Scaffold a new game repo (web = zero-dep browser game with kits and tracker; otherwise a Godot project). Same as `factory new`.

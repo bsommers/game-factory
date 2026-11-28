@@ -359,10 +359,12 @@ export function check(input = {}) {
   const tests = listFiles(join(d, 'test'), /\.test\.m?js$/).length + listFiles(d, /\.test\.m?js$/, 1).length;
   if (!tests) add('no-tests', 'error', 'no *.test.mjs files found', 'add node:test suites under test/ and an npm "test" script', 'qa-with-bot');
   const pkg = readJsonSafe(join(d, 'package.json'));
+  // solo games (package.json game.solo, or docs/SOLO.md) have no swarm; swarm gaps are notes, not warnings
+  const solo = pkg?.game?.solo === true || has(d, 'docs/SOLO.md'), swarmSev = solo ? 'info' : 'warn';
   if (!pkg) add('no-package', 'warn', 'no package.json', 'copy templates/web-project/package.json (scripts: start, test, plan, tracker)', 'start-new-game');
   else if (!pkg.scripts?.test) add('no-test-script', 'warn', 'package.json has no "test" script', 'add "test": "node --test test/*.test.mjs"', 'qa-with-bot');
-  if (!has(d, 'tools/swarm-tracker') && !has(d, '.tracker')) add('no-tracker', 'warn', 'no swarm tracker installed', 'run `bin/factory sync <project>` then `npm run plan`', 'setup-tracker');
-  if (!has(d, 'ARCHITECTURE.md') && !has(d, 'docs/ARCHITECTURE.md')) add('no-contract', 'warn', 'no ARCHITECTURE.md contract', 'write the contract (modules, hooks, defs) before launching agents', 'plan-run-swarm');
+  if (!has(d, 'tools/swarm-tracker') && !has(d, '.tracker')) add('no-tracker', swarmSev, solo ? 'no swarm tracker (solo project)' : 'no swarm tracker installed', 'run `bin/factory sync <project>` then `npm run plan`', 'setup-tracker');
+  if (!has(d, 'ARCHITECTURE.md') && !has(d, 'docs/ARCHITECTURE.md')) add('no-contract', swarmSev, 'no ARCHITECTURE.md contract', 'write the contract (modules, hooks, defs) before launching agents', 'plan-run-swarm');
   if (!has(d, 'docs/swarm/SWARM.md')) add('no-manifest', 'info', 'no docs/swarm/SWARM.md manifest', 'use guide.plan {goal, out: "docs/swarm/SWARM.md"}', 'plan-run-swarm');
   const style = readJsonSafe(join(d, 'config/style.json')) || readJsonSafe(join(d, 'factory.config.json'))?.style;
   const styleObj = style && typeof style === 'object' ? style : null;

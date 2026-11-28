@@ -318,9 +318,9 @@ class Capabilities:
         """parity.run: Cross-runtime parity: run the JS reference (combat3d / boss3d) and the GDScript mirror in Godot headless on the same example JSON, diff event-log hashes (pinned duel hash 6fedb1fe, boss simulate hash) and key numbers, and return per-case pass/fail. NOT_FOUND when Godot is absent."""
         return self.call("parity.run", {"module": module, "cases": cases, "godot": godot, "keep": keep, "timeoutMs": timeoutMs})
 
-    def project_new(self, *, dir: str, lang: str | None = None, title: str | None = None, web: bool | None = None):
+    def project_new(self, *, dir: str, kits: list[str] | None = None, lang: str | None = None, solo: bool | None = None, title: str | None = None, web: bool | None = None, with_: str | None = None):
         """project.new: Scaffold a new game repo (web = zero-dep browser game with kits and tracker; otherwise a Godot project). Same as `factory new`."""
-        return self.call("project.new", {"dir": dir, "lang": lang, "title": title, "web": web})
+        return self.call("project.new", {"dir": dir, "kits": kits, "lang": lang, "solo": solo, "title": title, "web": web, "with": with_})
 
     def project_run(self, *, task: str, args: list[str] | None = None, project: str | None = None):
         """project.run: Run a project task without a shell: test (npm test or tools/run_tests.sh), plan (swarm-plan), check-imports, shot (tools/shot.mjs|.sh, extra args), build (tools/build.sh, extra args)."""
