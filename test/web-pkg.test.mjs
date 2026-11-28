@@ -23,6 +23,21 @@ test('scaffold ships build, packaging, installers and npm scripts', () => {
   assert.match(readFileSync(join(proj, '.gitignore'), 'utf8'), /assets-cache/);
 });
 
+test('npm test recurses under test/ (nested dirs like test/sim/)', () => {
+  const tpl = JSON.parse(readFileSync(join(FACT, 'templates/web-project/package.json'), 'utf8'));
+  const pkg = JSON.parse(readFileSync(join(proj, 'package.json'), 'utf8'));
+  for (const script of [tpl.scripts.test, pkg.scripts.test]) {
+    assert.match(script, /^node --test test\/$/);
+    assert.doesNotMatch(script, /test\/\w+\/\*/);
+  }
+});
+
+test('package-desktop rejects unbundled web output', () => {
+  const src = readFileSync(join(FACT, 'tools/web/pkg/package-desktop.mjs'), 'utf8');
+  assert.match(src, /bundled/);
+  assert.match(src, /dist\/web\/app\.js|join\(webDir,\s*'app\.js'\)/);
+});
+
 test('project-info derives slug/title/appId from package.json and index.html', () => {
   const sh = execFileSync('node', [join(proj, 'tools/project-info.mjs'), '--sh'], { encoding: 'utf8' });
   assert.match(sh, /SLUG='moon-s-lantern'/);
