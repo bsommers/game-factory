@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Generic bot-play harness. node tools/botplay.mjs [--level id] [--seeds 1,2,3] [--skill n] [--max-t sec] [--diff tier] [--size n]
 // Convention (the game provides these; MicroMaze is the reference): src/levels/load-node.js (loadLevel), src/sim/game.js (createGame),
-// src/sim/autopilot.js (createBot), src/core/events.js (createBus), src/core/defs.js (DT). Optional: src/levels/difficulty.js / size.js.
+// src/sim/autopilot.js (createBot({skill, seed})), src/core/events.js (createBus), src/core/defs.js (DT). Optional: src/levels/difficulty.js / size.js.
 // Prints one `seed=N win=bool reason=R score=S t=T` line per seed. Exit 0 when >=80% cleared (any win if <=3 seeds), 1 otherwise, 2 when the game lacks the sim modules.
 import { existsSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
@@ -30,7 +30,7 @@ try { level = loadLevel(args.level); } catch (e) { console.error(e.message || e)
 let wins = 0;
 for (const seed of args.seeds) {
   const g = createGame({ seed, level: applyDifficulty(applySize(level, args.size), args.diff), bus: createBus() });
-  const bot = createBot({ skill: args.skill });
+  const bot = createBot({ skill: args.skill, seed });
   let nan = false;
   for (let i = 0, n = Math.floor(args.maxT / DT); i < n && !g.outcome; i++) {
     g.update(DT, bot.decide(g));

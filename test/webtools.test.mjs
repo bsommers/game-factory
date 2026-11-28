@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { buildRegistry } from '../factory-core/index.mjs';
 
 const MM = process.env.MICROMAZE_DIR || new URL('../../micromaze', import.meta.url).pathname;
@@ -42,15 +42,17 @@ test('scaffolded web project ships web tools and web.verify passes with a discov
   const root = mkdtempSync(join(process.env.CLAUDE_CODE_TMPDIR || tmpdir(), 'wt-')); t.after(() => rmSync(root, { recursive: true, force: true }));
   const dir = join(root, 'g');
   assert.equal((await r.call('project.new', { dir, title: 'G', web: true })).ok, true);
-  for (const f of ['tools/validate-level.mjs', 'tools/botplay.mjs', 'tools/sheet.mjs', 'tools/serve.mjs', 'scripts/verify.sh']) assert.ok(ex(join(dir, f)), f);
+  for (const f of ['tools/validate-level.mjs', 'tools/botplay.mjs', 'tools/sheet.mjs', 'tools/serve.mjs', 'tools/balance.mjs', 'tools/smoke_web.sh', 'scripts/verify.sh']) assert.ok(ex(join(dir, f)), f);
   mk(join(dir, 'src/levels'), { recursive: true });
   writeFileSync(join(dir, 'src/levels/a.json'), '{"id":"a"}');
   const v = await r.call('web.validate-level', { project: dir, file: 'src/levels/a.json' });
   assert.equal(v.ok, true, JSON.stringify(v));
   writeFileSync(join(dir, 'src/levels/bad.json'), '{"name":"x"}');
   assert.equal((await r.call('web.validate-level', { project: dir, file: 'src/levels/bad.json' })).error.code, 'INVALID_LEVEL');
-  // a game with no sim: botplay says so (BAD_INPUT), not a crash
-  assert.equal((await r.call('web.botplay', { project: dir, level: 'a' })).error.code, 'BAD_INPUT');
+  // a game with no sim: botplay says so (BAD_INPUT), not a crash; once the template ships src/sim/* the trivial level {"id":"a"} is clearable
+  const hasSim = ex(join(dir, 'src/sim/game.js'));
+  if (hasSim) assert.equal((await r.call('web.botplay', { project: dir, level: 'a' })).ok, true);
+  else assert.equal((await r.call('web.botplay', { project: dir, level: 'a' })).error.code, 'BAD_INPUT');
   const bad = await r.call('web.verify', { project: dir });
   assert.equal(bad.ok, false, 'bad.json must fail the gate');
   rmSync(join(dir, 'src/levels/bad.json'));
@@ -64,4 +66,10 @@ test('web.* appear on HTTP /openapi.json and MCP tools/list', async (t) => {
   await new Promise((res) => app.listen(0, '127.0.0.1', res)); t.after(() => app.close());
   const spec = await (await fetch(`http://127.0.0.1:${app.address().port}/openapi.json`)).json();
   for (const n of ['web.validate-level', 'web.botplay', 'web.sheet', 'web.verify', 'web.serve']) assert.ok(spec.paths[`/api/${n}`], n);
+});
+
+test('smoke_web.sh asserts the sim advanced (window.__game.t > 0) and LEARNINGS records the single-file fetch pitfall', () => {
+  const sh = readFileSync(new URL('../tools/web/smoke_web.sh', import.meta.url), 'utf8');
+  assert.match(sh, /autostart=1/); assert.match(sh, /--eval/); assert.match(sh, /window\.__game/); assert.match(sh, /t > 0|g\.t > 0/);
+  assert.match(readFileSync(new URL('../docs/LEARNINGS.md', import.meta.url), 'utf8'), /fetch\(new URL\(.*import\.meta\.url/);
 });
